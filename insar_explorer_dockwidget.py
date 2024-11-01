@@ -26,6 +26,8 @@ import os
 
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
+from .src.connect_signals import connect_signals
+from .src.setup_frames import setupTsFrame
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'insar_explorer_dockwidget_base.ui'))
@@ -44,6 +46,11 @@ class InsarExplorerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+
+        # set Frames
+        setupTsFrame(self)
+        # set Signals
+        connect_signals(self)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
