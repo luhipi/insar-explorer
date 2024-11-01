@@ -1,0 +1,47 @@
+# This file contains metadata for your plugin.
+
+# This file should be included when you package your plugin.# Mandatory items:
+
+[general]
+name=InSAR Explorer
+qgisMinimumVersion=3.0
+description=InSAR Explorer is a QGIS plugin that allows for dynamic visualization and analysis of InSAR time series data
+version=0.1
+author=Mahmud Haghighi
+email=mahmud@ipi.uni-hannover.de
+
+about=InSAR Explorer is a QGIS plugin designed for interactive visualization and analysis of InSAR time series results. With a user-friendly interface, it allows users to dynamically plot and explore ground displacement data over time.
+
+tracker=http://bugs
+repository=http://repo
+# End of mandatory metadata
+
+# Recommended items:
+
+hasProcessingProvider=no
+# Uncomment the following line and add your changelog:
+# changelog=
+
+# Tags are comma separated with spaces allowed
+tags=python, InSAR,time series,plot,deformation,displacement,Sentinel,Sentinel-1,TerraSAR-X
+
+homepage=http://homepage
+category=Plugins
+icon=icon.png
+# experimental flag
+experimental=True
+
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+
+# Since QGIS 3.8, a comma separated list of plugins to be installed
+# (or upgraded) can be specified.
+# Check the documentation for more information.
+# plugin_dependencies=
+
+Category of the plugin: Raster, Vector, Database or Web
+# category=
+
+# If the plugin can run on QGIS Server.
+server=False
+
