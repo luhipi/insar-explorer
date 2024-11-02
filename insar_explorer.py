@@ -31,6 +31,8 @@ from .resources import *
 from .insar_explorer_dockwidget import InsarExplorerDockWidget
 import os.path
 
+from .src.gui_controller import GuiController
+
 
 class InsarExplorer:
     """QGIS Plugin Implementation."""
@@ -73,6 +75,8 @@ class InsarExplorer:
         self.pluginIsActive = False
         self.dockwidget = None
 
+        # add GUI controller
+        self.gui_controller = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -230,3 +234,5 @@ class InsarExplorer:
             # TODO: fix to allow choice of dock location
             self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
+
+        self.gui_controller = GuiController(self)
