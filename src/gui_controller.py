@@ -7,7 +7,7 @@ class GuiController():
     def __init__(self, plugin):
         self.iface = plugin.iface
         self.ui = plugin.dockwidget
-        self.map_click_handler = cph.MapClickHandler(plugin)
+        self.choose_point_click_handler = cph.TSClickHandler(plugin)
         self.click_tool = None #plugin.click_tool
         self.initializeClickTool()
         setup_frames.setupTsFrame(self.ui)
@@ -16,7 +16,7 @@ class GuiController():
     def initializeClickTool(self):
         if not self.click_tool:
             self.click_tool = QgsMapToolEmitPoint(self.iface.mapCanvas())
-            self.click_tool.canvasClicked.connect(lambda point: self.map_click_handler.identifyClickedFeature(point))
+            self.click_tool.canvasClicked.connect(lambda point: self.choose_point_click_handler.choosePointClicked(point))
 
     def removeClickTool(self):
         self.iface.mapCanvas().unsetMapTool(self.click_tool)
@@ -30,7 +30,7 @@ class GuiController():
 
     def handleUiClose(self, visible):
         if not visible:
-            self.map_click_handler.clearFeatureHighlight()
+            self.choose_point_click_handler.clearFeatureHighlight()
             self.removeClickTool()
 
     def activatePointSelection(self):

@@ -1,8 +1,14 @@
 from qgis.PyQt.QtWidgets import QMessageBox, QApplication
 from qgis.PyQt.QtCore import Qt
-from qgis.core import QgsPointXY, QgsGeometry, QgsMapLayer, QgsRectangle, QgsFeatureRequest, QgsSettings, Qgis
+from qgis.core import QgsPointXY, QgsGeometry, QgsMapLayer, QgsRectangle, QgsFeatureRequest, QgsSettings, Qgis, QgsFeature
 from qgis.gui import QgsHighlight
 from PyQt5.QtGui import QCursor
+
+import numpy as np
+import re
+from datetime import datetime
+
+from . import plot_timeseries as pts
 
 
 class MapClickHandler:
@@ -69,9 +75,6 @@ class MapClickHandler:
             )
             self.ui.label_message.setText(f"Identify Result: Closest feature attributes:\n{attributes_text}")
             self.highlightSelectedFeatures(closest_feature.geometry())
-
-        from . import plot_timeseries as pts
-        pts.plotTs(self.ui)
 
         return closest_feature
 
@@ -143,3 +146,46 @@ class MapClickHandler:
 
         QApplication.restoreOverrideCursor()
         return ret
+
+
+class TSClickHandler(MapClickHandler):
+    def __init__(self, plugin):
+        super().__init__(plugin)
+        self.plot_ts = pts.PlotTs(self.ui)
+
+    def choosePointClicked(self, point: QgsPointXY):
+        feature = self.identifyClickedFeature(point)
+
+        if feature:
+            attributes = getFeatureAttributes(feature)
+            date_values = extractDateValueAttributes(attributes)
+            self.ui.label_message.setText(f"Feature attributes: {date_values}")
+            self.plot_ts.plotTs(date_values)
+
+def getFeatureAttributes(feature: QgsFeature) -> dict:
+    """
+    Get the attributes of a feature as a dictionary.
+    :param feature: QgsFeature
+    :return: Dictionary of feature attributes
+    """
+    return {field.name(): feature[field.name()] for field in feature.fields()}
+
+
+
+def extractDateValueAttributes(attributes: dict) -> list:
+    """
+    Extract attributes with keys in the format 'DYYYYMMDD' and return a list of tuples with datetime and float value.
+    :param attributes: Dictionary of feature attributes
+    :return: List of tuples (datetime, float)
+    """
+    date_value_pattern = re.compile(r'^D(\d{8})$')
+    date_value_list = []
+
+    for key, value in attributes.items():
+        match = date_value_pattern.match(key)
+        if match:
+            date_str = match.group(1)
+            date_obj = datetime.strptime(date_str, '%Y%m%d')
+            date_value_list.append((date_obj, float(value)))
+
+    return np.array(date_value_list, dtype=object)
