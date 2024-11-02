@@ -33,8 +33,8 @@ class MapClickHandler:
         if not (layer and layer.isValid()):
             self.ui.label_message.setText("Invalid Layer: Please select a valid layer.")
             return
-        elif layer.type() == QgsMapLayer.RasterLayer:
-            self.ui.label_message.setText("Raster Layer currently not supported: Please select a valid vector layer.")
+        elif not (layer.type() == QgsMapLayer.VectorLayer):
+            self.ui.label_message.setText("Only vector layers supported: Please select a valid vector layer.")
             return
         elif not (layer.geometryType() == 0):
             self.ui.label_message.setText("Invalid Layer: Please select a valid point layer.")
@@ -69,8 +69,6 @@ class MapClickHandler:
             )
             self.ui.label_message.setText(f"Identify Result: Closest feature attributes:\n{attributes_text}")
             self.highlightSelectedFeatures(closest_feature.geometry())
-        else:
-            self.ui.label_message.setText("Identify Result: No nearby point found.")
 
         return closest_feature
 
