@@ -32,6 +32,7 @@ class GuiController():
         if not visible:
             self.choose_point_click_handler.clearFeatureHighlight()
             self.removeClickTool()
+            self.ui.pb_choose_point.setChecked(False)
 
     def activatePointSelection(self, status):
         if status:
