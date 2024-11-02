@@ -70,6 +70,9 @@ class MapClickHandler:
             self.ui.label_message.setText(f"Identify Result: Closest feature attributes:\n{attributes_text}")
             self.highlightSelectedFeatures(closest_feature.geometry())
 
+        from . import plot_timeseries as pts
+        pts.plotTs(self.ui)
+
         return closest_feature
 
     def highlightSelectedFeatures(self, geometry: QgsGeometry, layer: QgsMapLayer = None) -> None:
