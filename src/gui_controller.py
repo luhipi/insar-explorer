@@ -33,8 +33,13 @@ class GuiController():
             self.choose_point_click_handler.clearFeatureHighlight()
             self.removeClickTool()
 
-    def activatePointSelection(self):
-        self.iface.mapCanvas().setMapTool(self.click_tool)
+    def activatePointSelection(self, status):
+        if status:
+            if not self.click_tool:
+                self.initializeClickTool()
+            self.iface.mapCanvas().setMapTool(self.click_tool)
+        else:
+            self.removeClickTool()
 
     def addSelectedLayers(self):
         """
