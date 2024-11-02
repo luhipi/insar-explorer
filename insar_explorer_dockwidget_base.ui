@@ -126,10 +126,16 @@
                   <property name="enabled">
                    <bool>false</bool>
                   </property>
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="minimumSize">
                    <size>
                     <width>0</width>
-                    <height>20</height>
+                    <height>0</height>
                    </size>
                   </property>
                   <property name="selectionMode">
@@ -165,7 +171,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>288</width>
-                 <height>72</height>
+                 <height>113</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_6">
