@@ -15,17 +15,23 @@ class PlotTs():
         self.plot_values = 0
         self.marker = 'o'
 
-    def prepareTsValues(self, *, ts_values=None, ref_values=None):
-        self.ts_values = ts_values if ts_values is not None else 0.
-        self.ref_values = ref_values if ref_values is not None else 0.
+    def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
+        if dates is not None:
+            self.dates = dates
+
+        if ts_values is not None:
+            self.ts_values = ts_values
+
+        if ref_values is not None:
+            self.ref_values = ref_values
+
         self.plot_values = self.ts_values - self.ref_values
 
-    def plotTs(self, *, dates, ts_values, ref_values=None, marker='o'):
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker='o'):
         self.ui.figure.clear()
         self.ax = self.ui.figure.add_subplot(111)
 
-        self.dates = dates
-        self.prepareTsValues(ts_values=ts_values, ref_values=ref_values)
+        self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
 
         self.ax.plot(self.dates, self.plot_values, marker)
         self.decoratePlot()

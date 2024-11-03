@@ -28,6 +28,7 @@ class GuiController():
         self.ui.visibilityChanged.connect(self.handleUiClose)
         self.ui.pb_choose_point.clicked.connect(self.activatePointSelection)
         self.ui.pb_set_reference.clicked.connect(self.activateReferencePointSelection)
+        self.ui.pb_reset_reference.clicked.connect(self.resetReferencePoint)
         self.ui.pb_add_layers.clicked.connect(self.addSelectedLayers)
         self.ui.pb_remove_layers.clicked.connect(self.removeSelectedLayers)
 
@@ -52,8 +53,12 @@ class GuiController():
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
         else:
+            self.ui.pb_set_reference.setChecked(False)
             self.removeClickTool()
 
+    def resetReferencePoint(self):
+        self.choose_point_click_handler.resetReferencePoint()
+        self.activateReferencePointSelection(status=False)
 
     def addSelectedLayers(self):
         """

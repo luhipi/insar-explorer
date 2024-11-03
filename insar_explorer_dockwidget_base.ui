@@ -59,7 +59,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>314</width>
+             <width>321</width>
              <height>400</height>
             </rect>
            </property>
@@ -82,13 +82,23 @@
                <layout class="QVBoxLayout" name="verticalLayout_5">
                 <item>
                  <layout class="QGridLayout" name="gridLayout_3">
-                  <item row="1" column="0">
+                  <item row="2" column="0">
                    <widget class="QPushButton" name="pb_add_layers">
                     <property name="enabled">
                      <bool>false</bool>
                     </property>
                     <property name="text">
                      <string>Add Layers</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QPushButton" name="pb_remove_layers">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="text">
+                     <string>Remove Layers</string>
                     </property>
                    </widget>
                   </item>
@@ -116,12 +126,9 @@
                    </widget>
                   </item>
                   <item row="1" column="1">
-                   <widget class="QPushButton" name="pb_remove_layers">
-                    <property name="enabled">
-                     <bool>false</bool>
-                    </property>
+                   <widget class="QPushButton" name="pb_reset_reference">
                     <property name="text">
-                     <string>Remove Layers</string>
+                     <string>Reset Reference</string>
                     </property>
                    </widget>
                   </item>
@@ -176,8 +183,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>288</width>
-                 <height>113</height>
+                 <width>295</width>
+                 <height>96</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_6">

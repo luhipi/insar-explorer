@@ -173,8 +173,8 @@ class TSClickHandler(MapClickHandler):
     def __init__(self, plugin):
         super().__init__(plugin)
         self.plot_ts = pts.PlotTs(self.ui)
-        self.ts_values = None
-        self.ref_values = None
+        self.ts_values = 0
+        self.ref_values = 0
 
     def choosePointClicked(self, point: QgsPointXY, ref=False):
         feature = self.identifyClickedFeature(point, ref=ref)
@@ -191,6 +191,11 @@ class TSClickHandler(MapClickHandler):
 
             dates = date_values[:, 0]
             self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
+
+    def resetReferencePoint(self):
+        self.ref_values = 0
+        self.clearReferenceFeatureHighlight()
+        self.plot_ts.plotTs(ref_values=self.ref_values)
 
 def getFeatureAttributes(feature: QgsFeature) -> dict:
     """
