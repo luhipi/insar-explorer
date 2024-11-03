@@ -65,7 +65,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>321</width>
+             <width>323</width>
              <height>400</height>
             </rect>
            </property>
@@ -146,7 +146,7 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset resource="resources.qrc">
+                     <iconset>
                       <normaloff>:/icons/icons/reference_point.png</normaloff>:/icons/icons/reference_point.png</iconset>
                     </property>
                     <property name="iconSize">
@@ -181,7 +181,7 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset resource="resources.qrc">
+                     <iconset>
                       <normaloff>:/icons/icons/select_point.png</normaloff>:/icons/icons/select_point.png</iconset>
                     </property>
                     <property name="iconSize">
@@ -247,7 +247,7 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset resource="resources.qrc">
+                     <iconset>
                       <normaloff>:/icons/icons/reset_reference_point.png</normaloff>:/icons/icons/reset_reference_point.png</iconset>
                     </property>
                     <property name="iconSize">
@@ -302,107 +302,6 @@
                 <string>Plot setting</string>
                </attribute>
                <layout class="QGridLayout" name="gridLayout_4">
-                <item row="1" column="3">
-                 <widget class="QGroupBox" name="groupBox_11">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>no fit</string>
-                  </property>
-                  <property name="title">
-                   <string>Plot setting</string>
-                  </property>
-                  <layout class="QGridLayout" name="gridLayout_2">
-                   <property name="leftMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="topMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="rightMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="bottomMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="spacing">
-                    <number>0</number>
-                   </property>
-                   <item row="0" column="1">
-                    <widget class="QLineEdit" name="le_ts_replica">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="minimumSize">
-                      <size>
-                       <width>10</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>28</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="0">
-                    <widget class="QPushButton" name="pb_ts_replica">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>40</width>
-                       <height>40</height>
-                      </size>
-                     </property>
-                     <property name="toolTip">
-                      <string>Replicate Time Series</string>
-                     </property>
-                     <property name="toolTipDuration">
-                      <number>3000</number>
-                     </property>
-                     <property name="text">
-                      <string/>
-                     </property>
-                     <property name="icon">
-                      <iconset resource="resources.qrc">
-                       <normaloff>:/icons/icons/plot_ts_duplicate_gray.png</normaloff>
-                       <normalon>:/icons/icons/plot_ts_duplicate_blue.png</normalon>:/icons/icons/plot_ts_duplicate_gray.png</iconset>
-                     </property>
-                     <property name="iconSize">
-                      <size>
-                       <width>20</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="checkable">
-                      <bool>true</bool>
-                     </property>
-                     <property name="flat">
-                      <bool>false</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="2">
-                    <widget class="QLabel" name="label">
-                     <property name="text">
-                      <string>mm</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </widget>
-                </item>
                 <item row="1" column="1">
                  <widget class="QGroupBox" name="groupBox_10">
                   <property name="sizePolicy">
@@ -500,7 +399,7 @@
                       <string/>
                      </property>
                      <property name="icon">
-                      <iconset resource="resources.qrc">
+                      <iconset>
                        <normaloff>:/icons/icons/plot_fit_poly1_gray.png</normaloff>
                        <normalon>:/icons/icons/plot_fit_poly1_blue.png</normalon>:/icons/icons/plot_fit_poly1_gray.png</iconset>
                      </property>
@@ -545,7 +444,7 @@
                       <string/>
                      </property>
                      <property name="icon">
-                      <iconset resource="resources.qrc">
+                      <iconset>
                        <normaloff>:/icons/icons/plot_fit_poly2_gray.png</normaloff>
                        <normalon>:/icons/icons/plot_fit_poly2_blue.png</normalon>:/icons/icons/plot_fit_poly2_gray.png</iconset>
                      </property>
@@ -593,7 +492,7 @@
                       <string/>
                      </property>
                      <property name="icon">
-                      <iconset resource="resources.qrc">
+                      <iconset>
                        <normaloff>:/icons/icons/plot_fit_poly3_gray.png</normaloff>
                        <normalon>:/icons/icons/plot_fit_poly3_blue.png</normalon>:/icons/icons/plot_fit_poly3_gray.png</iconset>
                      </property>
@@ -641,7 +540,7 @@
                       <string/>
                      </property>
                      <property name="icon">
-                      <iconset resource="resources.qrc">
+                      <iconset>
                        <normaloff>:/icons/icons/plot_fit_exp_gray.png</normaloff>
                        <disabledon>:/icons/icons/plot_fit_exp_blue.png</disabledon>:/icons/icons/plot_fit_exp_gray.png</iconset>
                      </property>
@@ -683,7 +582,7 @@
                       <string/>
                      </property>
                      <property name="icon">
-                      <iconset resource="resources.qrc">
+                      <iconset>
                        <normaloff>:/icons/icons/plot_fit_seasonal_gray.png</normaloff>
                        <normalon>:/icons/icons/plot_fit_seasonal_blue.png</normalon>:/icons/icons/plot_fit_seasonal_gray.png</iconset>
                      </property>
@@ -704,7 +603,102 @@
                   </layout>
                  </widget>
                 </item>
-                <item row="1" column="2">
+                <item row="1" column="3">
+                 <widget class="QGroupBox" name="groupBox_11">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>no fit</string>
+                  </property>
+                  <property name="title">
+                   <string>Plot setting</string>
+                  </property>
+                  <layout class="QGridLayout" name="gridLayout_2">
+                   <property name="leftMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="spacing">
+                    <number>0</number>
+                   </property>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="label">
+                     <property name="text">
+                      <string>mm</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QSpinBox" name="sb_ts_replica">
+                     <property name="minimum">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <number>999</number>
+                     </property>
+                     <property name="value">
+                      <number>28</number>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QPushButton" name="pb_ts_replica">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>40</width>
+                       <height>40</height>
+                      </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>Replicate Time Series</string>
+                     </property>
+                     <property name="toolTipDuration">
+                      <number>3000</number>
+                     </property>
+                     <property name="text">
+                      <string/>
+                     </property>
+                     <property name="icon">
+                      <iconset>
+                       <normaloff>:/icons/icons/plot_ts_duplicate_gray.png</normaloff>
+                       <normalon>:/icons/icons/plot_ts_duplicate_blue.png</normalon>:/icons/icons/plot_ts_duplicate_gray.png</iconset>
+                     </property>
+                     <property name="iconSize">
+                      <size>
+                       <width>20</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                     <property name="checkable">
+                      <bool>true</bool>
+                     </property>
+                     <property name="flat">
+                      <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item row="1" column="4">
                  <spacer name="horizontalSpacer">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -753,8 +747,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>295</width>
-                 <height>84</height>
+                 <width>297</width>
+                 <height>88</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_6">
