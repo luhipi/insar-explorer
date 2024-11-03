@@ -234,5 +234,9 @@ class InsarExplorer:
             # TODO: fix to allow choice of dock location
             self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
+        else: # this will reload the widget when button clicked again
+            self.iface.removeDockWidget(self.dockwidget)
+            self.dockwidget = None
+            self.pluginIsActive = False
 
         self.gui_controller = GuiController(self)

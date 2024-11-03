@@ -61,6 +61,7 @@ class GuiController():
             self.choose_point_click_handler.clearReferenceFeatureHighlight()
             self.removeClickTool()
             self.ui.pb_choose_point.setChecked(False)
+            self.ui.pb_set_reference.setChecked(False)
 
     def activatePointSelection(self, status):
         self.ui.pb_set_reference.setChecked(False)
