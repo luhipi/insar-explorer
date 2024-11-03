@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.dates as mdates
 import matplotlib.ticker as ticker
-from datetime import timedelta
+from datetime import datetime, timedelta
 
+from .model_fitting import FittingModels
 
 class PlotTs():
 
@@ -12,8 +13,11 @@ class PlotTs():
         self.dates = None
         self.ts_values = 0
         self.ref_values = 0
-        self.plot_values = 0
+        self.plot_values = None
         self.marker = 'o'
+        self.fit_plot_list = []
+        self.fit_models = []
+        self.fit_seasonal_flag = False
 
     def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
         if dates is not None:
@@ -35,7 +39,27 @@ class PlotTs():
 
         self.ax.plot(self.dates, self.plot_values, marker)
         self.decoratePlot()
+        self.fitModel()
         self.ui.canvas.draw()
+
+    def fitModel(self):
+        [plot.remove() for plot in self.fit_plot_list]
+        self.ui.canvas.draw_idle()
+        self.fit_plot_list = []
+        if self.plot_values is None:
+            return
+        if self.fit_models is []:
+            return
+
+        fit_line_type = '--'
+        fit_line_color = 'black'
+        fit_seasonal = self.fit_seasonal_flag
+        for fit_model in self.fit_models:
+            _, model_x, model_y = (
+                FittingModels(self.dates, self.plot_values, model=fit_model).fit(seasonal=fit_seasonal))
+            plot = self.ax.plot(model_x, model_y, fit_line_type, color=fit_line_color)
+            self.fit_plot_list.append(plot[0])
+            self.ui.canvas.draw_idle()
 
     def decoratePlot(self):
         self.setXticks()

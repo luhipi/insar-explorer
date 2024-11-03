@@ -31,6 +31,29 @@ class GuiController():
         self.ui.pb_reset_reference.clicked.connect(self.resetReferencePoint)
         self.ui.pb_add_layers.clicked.connect(self.addSelectedLayers)
         self.ui.pb_remove_layers.clicked.connect(self.removeSelectedLayers)
+        # TS fit handler
+        self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
+        self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
+
+    def timeseriesPlotFit(self):
+        selected_buttons = [button for button in self.ui.gb_ts_fit.buttons() if
+                            button.isChecked()]
+        check_box_lookup = {self.ui.pb_ts_nofit: [],
+                            self.ui.pb_ts_fit_poly1: "poly-1",
+                            self.ui.pb_ts_fit_poly2: "poly-2",
+                            self.ui.pb_ts_fit_poly3: "poly-3",
+                            self.ui.pb_ts_fit_exp: "exp", }
+
+        if self.ui.pb_ts_nofit.isChecked():
+            self.choose_point_click_handler.plot_ts.fit_models = []
+        else:
+            self.choose_point_click_handler.plot_ts.fit_models = [check_box_lookup[button] for button in
+                                                                  selected_buttons]
+
+        self.ui.label_message.setText(f"Selected models: {self.choose_point_click_handler.plot_ts.fit_models}")
+        self.choose_point_click_handler.plot_ts.fit_seasonal_flag = self.ui.pb_ts_fit_seasonal.isChecked()
+
+        self.choose_point_click_handler.plot_ts.fitModel()
 
     def handleUiClose(self, visible):
         if not visible:
