@@ -1,5 +1,25 @@
 <RCC>
-    <qresource prefix="/plugins/insar_explorer" >
-        <file>icon.png</file>
-    </qresource>
+  <qresource prefix="/plugins/insar_explorer">
+    <file>icon.png</file>
+  </qresource>
+  <qresource prefix="icons">
+    <file>icons/plot_fit_exp_amber.png</file>
+    <file>icons/plot_ts_duplicate_amber.png</file>
+    <file>icons/plot_ts_duplicate_gray.png</file>
+    <file>icons/plot_ts_duplicate_blue.png</file>
+    <file>icons/plot_fit_exp_blue.png</file>
+    <file>icons/plot_fit_exp_gray.png</file>
+    <file>icons/plot_fit_poly1_amber.png</file>
+    <file>icons/plot_fit_poly1_blue.png</file>
+    <file>icons/plot_fit_poly1_gray.png</file>
+    <file>icons/plot_fit_poly2_amber.png</file>
+    <file>icons/plot_fit_poly2_blue.png</file>
+    <file>icons/plot_fit_poly2_gray.png</file>
+    <file>icons/plot_fit_poly3_amber.png</file>
+    <file>icons/plot_fit_poly3_blue.png</file>
+    <file>icons/plot_fit_poly3_gray.png</file>
+    <file>icons/plot_fit_seasonal_amber.png</file>
+    <file>icons/plot_fit_seasonal_blue.png</file>
+    <file>icons/plot_fit_seasonal_gray.png</file>
+  </qresource>
 </RCC>
