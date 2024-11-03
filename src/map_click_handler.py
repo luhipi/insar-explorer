@@ -25,6 +25,7 @@ class MapClickHandler:
         self.ui = plugin.dockwidget
         self.iface = plugin.iface
         self.highlight = None
+        self.reference_highlight = None
 
     def identifyClickedFeatureID(self, point: QgsPointXY, layer: QgsMapLayer = None) -> int:
         """
@@ -56,11 +57,12 @@ class MapClickHandler:
 
         return closest_feature_id
 
-    def identifyClickedFeature(self, point: QgsPointXY, layer: QgsMapLayer = None) -> QgsGeometry:
+    def identifyClickedFeature(self, point: QgsPointXY, layer: QgsMapLayer = None, ref=False) -> QgsGeometry:
         """
         Identify the closest feature to the clicked point and display its attributes
         :param point: QgsPointXY
         :param layer: QgsMapLayer
+        :param ref: bool
         :return: closest feature
         """
         if not layer:
@@ -74,7 +76,10 @@ class MapClickHandler:
                 [f"{field.name()}: {value}" for field, value in zip(layer.fields(), closest_feature.attributes())]
             )
             self.ui.label_message.setText(f"Identify Result: Closest feature attributes:\n{attributes_text}")
-            self.highlightSelectedFeatures(closest_feature.geometry())
+            if not ref:
+                self.highlightSelectedFeatures(closest_feature.geometry())
+            else:
+                self.highlightSelectedReferenceFeature(closest_feature.geometry())
 
         return closest_feature
 
@@ -91,10 +96,26 @@ class MapClickHandler:
         self.highlight.setColor(Qt.yellow)
         self.highlight.show()
 
+    def highlightSelectedReferenceFeature(self, geometry: QgsGeometry, layer: QgsMapLayer = None) -> None:
+        if not layer:
+            layer = self.iface.activeLayer()
+        self.clearReferenceFeatureHighlight()
+        self.reference_highlight = QgsHighlight(self.iface.mapCanvas(), geometry, layer)
+        self.reference_highlight.setColor(Qt.red)
+        self.reference_highlight.show()
+
     def clearFeatureHighlight(self) -> None:
         if self.highlight:
             self.highlight.hide()
             self.highlight = None
+
+    def clearReferenceFeatureHighlight(self) -> None:
+        """
+        Clear reference feature highlight
+        """
+        if self.reference_highlight:
+            self.reference_highlight.hide()
+            self.reference_highlight = None
 
     @classmethod
     def findFeatureAtPoint(cls, layer, point, canvas, only_the_closest_one=True, only_ids=False):
@@ -156,7 +177,7 @@ class TSClickHandler(MapClickHandler):
         self.ref_values = None
 
     def choosePointClicked(self, point: QgsPointXY, ref=False):
-        feature = self.identifyClickedFeature(point)
+        feature = self.identifyClickedFeature(point, ref=ref)
 
         if feature:
             attributes = getFeatureAttributes(feature)

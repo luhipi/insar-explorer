@@ -34,6 +34,7 @@ class GuiController():
     def handleUiClose(self, visible):
         if not visible:
             self.choose_point_click_handler.clearFeatureHighlight()
+            self.choose_point_click_handler.clearReferenceFeatureHighlight()
             self.removeClickTool()
             self.ui.pb_choose_point.setChecked(False)
 
