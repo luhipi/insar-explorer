@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.dates as mdates
 import matplotlib.ticker as ticker
+from datetime import timedelta
 
 
 class PlotTs():
@@ -8,22 +9,34 @@ class PlotTs():
     def __init__(self, ui):
         self.ui = ui
         self.ax = None
-        self.date_values = None
-        self.dates = []
-        self.ts_values = []
+        self.dates = None
+        self.ts_values = 0
+        self.ref_values = 0
+        self.plot_values = 0
         self.marker = 'o'
 
-    def plotTs(self, date_values, marker='o'):
+    def prepareTsValues(self, *, ts_values=None, ref_values=None):
+        self.ts_values = ts_values if ts_values is not None else 0.
+        self.ref_values = ref_values if ref_values is not None else 0.
+        self.plot_values = self.ts_values - self.ref_values
+
+    def plotTs(self, *, dates, ts_values, ref_values=None, marker='o'):
         self.ui.figure.clear()
         self.ax = self.ui.figure.add_subplot(111)
-        self.dates = date_values[:, 0]
-        self.ts_values = date_values[:, 1]
-        self.ax.plot(self.dates, self.ts_values, marker)
+
+        self.dates = dates
+        self.prepareTsValues(ts_values=ts_values, ref_values=ref_values)
+
+        self.ax.plot(self.dates, self.plot_values, marker)
+        self.decoratePlot()
+        self.ui.canvas.draw()
+
+    def decoratePlot(self):
         self.setXticks()
         self.setYticks()
         self.setGrid(True)
+        self.setXlims()
         self.setYlims()
-        self.ui.canvas.draw()
 
     def setGrid(self, status):
         self.ax.grid(status)
@@ -54,9 +67,30 @@ class PlotTs():
         self.ax.yaxis.set_minor_locator(ticker.MultipleLocator(1))
         self.ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.0f}'))
 
+    def setXlims(self, *, use_data_xlim=True, padding=30):
+        """
+        Set the x-axis limits.
+
+        :param use_data_xlim: bool
+            If True, set the x-axis limits to the min and max of the data.
+            If False, set the x-axis limits to the start and end of the year.
+        :param padding: int
+            Number of days to pad the x-axis limits.
+        """
+        min_date = np.min(self.dates)
+        max_date = np.max(self.dates)
+
+        if use_data_xlim:
+            self.ax.set_xlim(min_date-timedelta(days=padding),
+                             max_date+timedelta(days=padding))
+        else:
+            start_of_year = mdates.num2date(mdates.datestr2num(f'{min_date.year}-01-01'))
+            end_of_year = mdates.num2date(mdates.datestr2num(f'{max_date.year+1}-01-01'))
+            self.ax.set_xlim(start_of_year, end_of_year)
+
     def setYlims(self):
-        y_min = np.min(self.ts_values)
-        y_max = np.max(self.ts_values)
+        y_min = np.min(self.plot_values)
+        y_max = np.max(self.plot_values)
         y_min_rounded = np.floor(y_min / 10) * 10
         y_max_rounded = np.ceil(y_max / 10) * 10
         self.ax.set_ylim(y_min_rounded, y_max_rounded)

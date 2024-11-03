@@ -16,7 +16,9 @@ class GuiController():
     def initializeClickTool(self):
         if not self.click_tool:
             self.click_tool = QgsMapToolEmitPoint(self.iface.mapCanvas())
-            self.click_tool.canvasClicked.connect(lambda point: self.choose_point_click_handler.choosePointClicked(point))
+            # self.click_tool.canvasClicked.connect(lambda point: self.choose_point_click_handler.choosePointClicked(point))
+            self.click_tool.canvasClicked.connect(lambda point: self.choose_point_click_handler.choosePointClicked(
+                                                  point, self.ui.pb_set_reference.isChecked()))
 
     def removeClickTool(self):
         self.iface.mapCanvas().unsetMapTool(self.click_tool)
@@ -25,6 +27,7 @@ class GuiController():
     def connectUiSignals(self):
         self.ui.visibilityChanged.connect(self.handleUiClose)
         self.ui.pb_choose_point.clicked.connect(self.activatePointSelection)
+        self.ui.pb_set_reference.clicked.connect(self.activateReferencePointSelection)
         self.ui.pb_add_layers.clicked.connect(self.addSelectedLayers)
         self.ui.pb_remove_layers.clicked.connect(self.removeSelectedLayers)
 
@@ -35,12 +38,21 @@ class GuiController():
             self.ui.pb_choose_point.setChecked(False)
 
     def activatePointSelection(self, status):
+        self.ui.pb_set_reference.setChecked(False)
         if status:
-            if not self.click_tool:
-                self.initializeClickTool()
+            self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
         else:
             self.removeClickTool()
+
+    def activateReferencePointSelection(self, status):
+        self.ui.pb_choose_point.setChecked(False)
+        if status:
+            self.initializeClickTool()
+            self.iface.mapCanvas().setMapTool(self.click_tool)
+        else:
+            self.removeClickTool()
+
 
     def addSelectedLayers(self):
         """
