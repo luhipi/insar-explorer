@@ -61,7 +61,6 @@ class GuiController():
     def timeseriesReplica(self):
         if self.ui.pb_ts_replica.isChecked():
             self.choose_point_click_handler.plot_ts.replicate_flag = True
-            # todo: get replica value from ui
             self.choose_point_click_handler.plot_ts.replicate_value = int(self.ui.sb_ts_replica.text())
         else:
             self.choose_point_click_handler.plot_ts.replicate_flag = False

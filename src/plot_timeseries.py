@@ -105,6 +105,7 @@ class PlotTs():
         self.ax.yaxis.set_major_locator(ticker.MultipleLocator(10))
         self.ax.yaxis.set_minor_locator(ticker.MultipleLocator(1))
         self.ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.0f}'))
+        self.ax.set_ylabel('[mm]')
 
     def setXlims(self, *, use_data_xlim=True, padding=30):
         """
