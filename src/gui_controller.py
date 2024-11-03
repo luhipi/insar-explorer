@@ -34,6 +34,8 @@ class GuiController():
         # TS fit handler
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
+        # Replica
+        self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
 
     def timeseriesPlotFit(self):
         selected_buttons = [button for button in self.ui.gb_ts_fit.buttons() if
@@ -54,6 +56,17 @@ class GuiController():
         self.choose_point_click_handler.plot_ts.fit_seasonal_flag = self.ui.pb_ts_fit_seasonal.isChecked()
 
         self.choose_point_click_handler.plot_ts.fitModel()
+
+    def timeseriesReplica(self):
+        if self.ui.pb_ts_replica.isChecked():
+            self.choose_point_click_handler.plot_ts.replicate_flag = True
+            # todo: get replica value from ui
+            self.choose_point_click_handler.plot_ts.replicate_value = int(self.ui.le_ts_replica.text())
+        else:
+            self.choose_point_click_handler.plot_ts.replicate_flag = False
+        self.choose_point_click_handler.plot_ts.plotTs()
+
+
 
     def handleUiClose(self, visible):
         if not visible:

@@ -51,6 +51,12 @@
         </property>
         <item>
          <widget class="QScrollArea" name="scrollArea">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>1</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
@@ -67,7 +73,7 @@
             <item>
              <widget class="QTabWidget" name="tabWidget">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -326,8 +332,27 @@
                    <property name="spacing">
                     <number>0</number>
                    </property>
+                   <item row="0" column="1">
+                    <widget class="QLineEdit" name="le_ts_replica">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>10</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>28</string>
+                     </property>
+                    </widget>
+                   </item>
                    <item row="0" column="0">
-                    <widget class="QPushButton" name="pb_ts_replicate">
+                    <widget class="QPushButton" name="pb_ts_replica">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                        <horstretch>0</horstretch>
@@ -368,13 +393,20 @@
                      </property>
                     </widget>
                    </item>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="label">
+                     <property name="text">
+                      <string>mm</string>
+                     </property>
+                    </widget>
+                   </item>
                   </layout>
                  </widget>
                 </item>
                 <item row="1" column="1">
                  <widget class="QGroupBox" name="groupBox_10">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -694,16 +726,25 @@
               <property name="orientation">
                <enum>Qt::Vertical</enum>
               </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Preferred</enum>
+              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
-                <height>40</height>
+                <height>0</height>
                </size>
               </property>
              </spacer>
             </item>
             <item>
              <widget class="QScrollArea" name="scrollArea_2">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="widgetResizable">
                <bool>true</bool>
               </property>
@@ -736,8 +777,8 @@
       </widget>
       <widget class="QWidget" name="widget_temporal_uw_bperp_plot_2" native="true">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-         <horstretch>3</horstretch>
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>5</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>

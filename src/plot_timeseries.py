@@ -18,6 +18,9 @@ class PlotTs():
         self.fit_plot_list = []
         self.fit_models = []
         self.fit_seasonal_flag = False
+        self.replicate_flag = False
+        self.plot_replicates = []
+        self.replicate_value = 5.6/2
 
     def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
         if dates is not None:
@@ -31,13 +34,19 @@ class PlotTs():
 
         self.plot_values = self.ts_values - self.ref_values
 
-    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker='o'):
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker='o', marker_replicate='.k'):
         self.ui.figure.clear()
         self.ax = self.ui.figure.add_subplot(111)
 
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
 
         self.ax.plot(self.dates, self.plot_values, marker)
+        if self.replicate_flag:
+            replicate_up = self.ax.plot(self.dates, self.plot_values + self.replicate_value,
+                                        marker_replicate, color='gray')
+            replicate_dn = self.ax.plot(self.dates, self.plot_values - self.replicate_value,
+                                        marker_replicate, color='gray')
+            self.plot_replicates.append([replicate_up, replicate_dn])
         self.decoratePlot()
         self.fitModel()
         self.ui.canvas.draw()
