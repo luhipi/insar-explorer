@@ -134,8 +134,10 @@ class MapClickHandler:
         if radius <= 0:
             radius = Qgis.DEFAULT_SEARCH_RADIUS_MM
         radius = canvas.extent().width() * radius / canvas.size().width()
+        radius *= 5
         rect = QgsRectangle(point.x() - radius, point.y() - radius, point.x() + radius, point.y() + radius)
         rect = canvas.mapSettings().mapToLayerCoordinates(layer, rect)
+        point_map = canvas.mapSettings().mapToLayerCoordinates(layer, point)
         ret = None
 
         if only_the_closest_one:
@@ -143,10 +145,9 @@ class MapClickHandler:
             request.setFilterRect(rect)
             min_dist = -1
             feature_id = None
-            rect = QgsGeometry.fromRect(rect)
             for f in layer.getFeatures(request):
                 geom = f.geometry()
-                distance = geom.distance(rect)
+                distance = geom.distance(QgsGeometry.fromPointXY(point_map))
                 if min_dist < 0 or distance < min_dist:
                     min_dist = distance
                     feature_id = f.id()
@@ -167,7 +168,6 @@ class MapClickHandler:
 
         QApplication.restoreOverrideCursor()
         return ret
-
 
 class TSClickHandler(MapClickHandler):
     def __init__(self, plugin):
