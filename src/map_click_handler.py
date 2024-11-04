@@ -133,7 +133,7 @@ class MapClickHandler:
         radius = settings.value("/Map/searchRadiusMM", Qgis.DEFAULT_SEARCH_RADIUS_MM, type=float)
         if radius <= 0:
             radius = Qgis.DEFAULT_SEARCH_RADIUS_MM
-        radius = canvas.extent().width() * radius / 100
+        radius = canvas.extent().width() * radius / canvas.size().width()
         rect = QgsRectangle(point.x() - radius, point.y() - radius, point.x() + radius, point.y() + radius)
         rect = canvas.mapSettings().mapToLayerCoordinates(layer, rect)
         ret = None

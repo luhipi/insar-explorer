@@ -29,8 +29,8 @@ class GuiController():
         self.ui.pb_choose_point.clicked.connect(self.activatePointSelection)
         self.ui.pb_set_reference.clicked.connect(self.activateReferencePointSelection)
         self.ui.pb_reset_reference.clicked.connect(self.resetReferencePoint)
-        self.ui.pb_add_layers.clicked.connect(self.addSelectedLayers)
-        self.ui.pb_remove_layers.clicked.connect(self.removeSelectedLayers)
+        # self.ui.pb_add_layers.clicked.connect(self.addSelectedLayers)
+        # self.ui.pb_remove_layers.clicked.connect(self.removeSelectedLayers)
         # TS fit handler
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
