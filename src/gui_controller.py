@@ -36,7 +36,7 @@ class GuiController():
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
         # Replica
         self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
-        self.ui.sb_ts_replica.textChanged.connect(self.timeseriesReplica)
+        self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
 
     def timeseriesPlotFit(self):
         selected_buttons = [button for button in self.ui.gb_ts_fit.buttons() if
