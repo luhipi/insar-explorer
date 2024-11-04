@@ -12,6 +12,9 @@ class GuiController():
         self.initializeClickTool()
         setup_frames.setupTsFrame(self.ui)
         self.connectUiSignals()
+        # make point selection active by default
+        self.ui.pb_choose_point.setChecked(True)
+        self.activatePointSelection(True)
 
     def initializeClickTool(self):
         if not self.click_tool:
