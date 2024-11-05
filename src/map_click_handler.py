@@ -38,22 +38,22 @@ class MapClickHandler:
             layer = self.iface.activeLayer()
 
         if not (layer and layer.isValid()):
-            self.ui.label_message.setText("Invalid Layer: Please select a valid layer.")
+            self.ui.te_info.setPlainText("Invalid Layer: Please select a valid layer.")
             return
         elif not (layer.type() == QgsMapLayer.VectorLayer):
-            self.ui.label_message.setText("Only vector layers supported: Please select a valid vector layer.")
+            self.ui.te_info.setPlainText("Only vector layers supported: Please select a valid vector layer.")
             return
         elif not (layer.geometryType() == 0):
-            self.ui.label_message.setText("Invalid Layer: Please select a valid point layer.")
+            self.ui.te_info.setPlainText("Invalid Layer: Please select a valid point layer.")
             return
 
         closest_feature_id = self.findFeatureAtPoint(layer, point, self.iface.mapCanvas(),
                                                      only_the_closest_one=True, only_ids=True)
 
         if closest_feature_id:
-            self.ui.label_message.setText(f"Identify Result: Closest feature ID is {closest_feature_id}")
+            self.ui.te_info.setPlainText(f"Identify Result: Closest feature ID is {closest_feature_id}")
         else:
-            self.ui.label_message.setText("Identify Result: No nearby point found.")
+            self.ui.te_info.setPlainText("Identify Result: No nearby point found.")
 
         return closest_feature_id
 
@@ -75,7 +75,7 @@ class MapClickHandler:
             attributes_text = "\n".join(
                 [f"{field.name()}: {value}" for field, value in zip(layer.fields(), closest_feature.attributes())]
             )
-            self.ui.label_message.setText(f"Identify Result: Closest feature attributes:\n{attributes_text}")
+            self.ui.te_info.setPlainText(f"Identify Result: Closest feature attributes:\n{attributes_text}")
             if not ref:
                 self.highlightSelectedFeatures(closest_feature.geometry())
             else:
@@ -182,7 +182,7 @@ class TSClickHandler(MapClickHandler):
         if feature:
             attributes = getFeatureAttributes(feature)
             date_values = extractDateValueAttributes(attributes)
-            self.ui.label_message.setText(f"Feature attributes: {date_values}")
+            self.ui.te_info.setPlainText(f"Feature attributes: {date_values}")
 
             if not ref:
                 self.ts_values = date_values[:, 1]

@@ -56,7 +56,7 @@ class GuiController():
             self.choose_point_click_handler.plot_ts.fit_models = [check_box_lookup[button] for button in
                                                                   selected_buttons]
 
-        self.ui.label_message.setText(f"Selected models: {self.choose_point_click_handler.plot_ts.fit_models}")
+        self.ui.te_info.setPlainText(f"Selected models: {self.choose_point_click_handler.plot_ts.fit_models}")
         self.choose_point_click_handler.plot_ts.fit_seasonal_flag = self.ui.pb_ts_fit_seasonal.isChecked()
 
         self.choose_point_click_handler.plot_ts.fitModel()

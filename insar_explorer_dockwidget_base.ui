@@ -748,14 +748,24 @@
                  <x>0</x>
                  <y>0</y>
                  <width>297</width>
-                 <height>88</height>
+                 <height>113</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_6">
                 <item>
-                 <widget class="QLabel" name="label_message">
-                  <property name="text">
-                   <string>info</string>
+                 <widget class="QPlainTextEdit" name="te_info">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="readOnly">
+                   <bool>true</bool>
+                  </property>
+                  <property name="plainText">
+                   <string>log
+**********</string>
+                  </property>
+                  <property name="overwriteMode">
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
