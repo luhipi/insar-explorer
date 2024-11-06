@@ -1,3 +1,5 @@
+![InSAR Explorer](icon.png)
+
 # InSAR Explorer
 
 ## Description
