@@ -182,8 +182,6 @@ class TSClickHandler(MapClickHandler):
         if feature:
             attributes = getFeatureAttributes(feature)
             date_values = extractDateValueAttributes(attributes)
-            self.ui.te_info.setPlainText(f"Feature attributes: {date_values}")
-
             if not ref:
                 self.ts_values = date_values[:, 1]
             else:
