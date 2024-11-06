@@ -4,6 +4,7 @@
   </qresource>
   <qresource prefix="icons">
     <file>icons/plot_fit_exp_amber.png</file>
+    <file>icons/symbology.png</file>
     <file>icons/select_point.png</file>
     <file>icons/reset_reference_point.png</file>
     <file>icons/reference_point.png</file>
