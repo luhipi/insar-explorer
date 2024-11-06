@@ -1,6 +1,7 @@
 from qgis.gui import QgsMapToolEmitPoint
 from . import map_click_handler as cph
 from . import setup_frames
+from .map_setting import InsarMap
 
 
 class GuiController():
@@ -11,6 +12,7 @@ class GuiController():
         self.click_tool = None #plugin.click_tool
         self.initializeClickTool()
         setup_frames.setupTsFrame(self.ui)
+        self.insar_map = InsarMap(self.iface)
         self.connectUiSignals()
         # make point selection active by default
         self.ui.pb_choose_point.setChecked(True)
@@ -40,6 +42,27 @@ class GuiController():
         # Replica
         self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
         self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
+        # map
+        self.connectMapSignals()
+
+    def connectMapSignals(self):
+        self.ui.pb_symbology.clicked.connect(self.applySymbology)
+        self.ui.sb_symbol_lower_range.valueChanged.connect(self.applyLiveSymbology)
+        self.ui.sb_symbol_upper_range.valueChanged.connect(self.applyLiveSymbology)
+        self.ui.sb_symbol_size.valueChanged.connect(self.applyLiveSymbology)
+        self.ui.sb_symbol_opacity.valueChanged.connect(self.applyLiveSymbology)
+        self.ui.cb_symbology_live.toggled.connect(self.applyLiveSymbology)
+
+    def applyLiveSymbology(self):
+        if self.ui.cb_symbology_live.isChecked():
+            self.applySymbology()
+
+    def applySymbology(self):
+        self.insar_map.min_value = float(self.ui.sb_symbol_lower_range.value())
+        self.insar_map.max_value = float(self.ui.sb_symbol_upper_range.value())
+        self.insar_map.alpha = float(self.ui.sb_symbol_opacity.value())/100
+        self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
+        self.insar_map.setSymbology()
 
     def timeseriesPlotFit(self):
         selected_buttons = [button for button in self.ui.gb_ts_fit.buttons() if
@@ -56,7 +79,6 @@ class GuiController():
             self.choose_point_click_handler.plot_ts.fit_models = [check_box_lookup[button] for button in
                                                                   selected_buttons]
 
-        self.ui.label_message.setText(f"Selected models: {self.choose_point_click_handler.plot_ts.fit_models}")
         self.choose_point_click_handler.plot_ts.fit_seasonal_flag = self.ui.pb_ts_fit_seasonal.isChecked()
 
         self.choose_point_click_handler.plot_ts.fitModel()

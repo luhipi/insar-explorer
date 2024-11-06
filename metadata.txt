@@ -12,8 +12,8 @@ email=mahmud@ipi.uni-hannover.de
 
 about=InSAR Explorer is a QGIS plugin designed for interactive visualization and analysis of InSAR time series results. With a user-friendly interface, it allows users to dynamically plot and explore ground displacement data over time.
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/luhipi/insar_explorer/issues
+repository=https://github.com/luhipi/insar_explorer
 # End of mandatory metadata
 
 # Recommended items:
@@ -23,9 +23,9 @@ hasProcessingProvider=no
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=python, InSAR,time series,plot,deformation,displacement,Sentinel,Sentinel-1,TerraSAR-X
+tags=python, InSAR,time series,plot,deformation,displacement,Sentinel,Sentinel-1,TerraSAR-X,SARvey
 
-homepage=http://homepage
+homepage=https://luhipi.github.io/insar_explorer/
 category=Plugins
 icon=icon.png
 # experimental flag
