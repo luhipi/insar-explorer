@@ -1,3 +1,5 @@
 include:
   - README.md
 permalink: /index.html
+
+theme: jekyll-theme-minimal
