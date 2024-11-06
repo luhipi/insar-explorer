@@ -47,10 +47,15 @@ class GuiController():
 
     def connectMapSignals(self):
         self.ui.pb_symbology.clicked.connect(self.applySymbology)
-        self.ui.sb_symbol_lower_range.valueChanged.connect(self.applySymbology)
-        self.ui.sb_symbol_upper_range.valueChanged.connect(self.applySymbology)
-        self.ui.sb_symbol_size.valueChanged.connect(self.applySymbology)
-        self.ui.sb_symbol_opacity.valueChanged.connect(self.applySymbology)
+        self.ui.sb_symbol_lower_range.valueChanged.connect(self.applyLiveSymbology)
+        self.ui.sb_symbol_upper_range.valueChanged.connect(self.applyLiveSymbology)
+        self.ui.sb_symbol_size.valueChanged.connect(self.applyLiveSymbology)
+        self.ui.sb_symbol_opacity.valueChanged.connect(self.applyLiveSymbology)
+        self.ui.cb_symbology_live.toggled.connect(self.applyLiveSymbology)
+
+    def applyLiveSymbology(self):
+        if self.ui.cb_symbology_live.isChecked():
+            self.applySymbology()
 
     def applySymbology(self):
         self.insar_map.min_value = float(self.ui.sb_symbol_lower_range.value())
