@@ -256,7 +256,7 @@
                                 <number>1</number>
                                </property>
                                <property name="singleStep">
-                                <double>0.500000000000000</double>
+                                <double>0.1</double>
                                </property>
                                <property name="value">
                                 <double>1.000000000000000</double>
