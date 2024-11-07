@@ -27,7 +27,8 @@ InSAR Explorer supports visualizing outputs of [SARvey Open-source research soft
 ## License
 This plugin is licensed under the GPL-2.0 license. See the `LICENSE` file for more details. 
 
-Author(s): [Mahmud Haghighi](https://www.ipi.uni-hannover.de/en/haghighi/)
+Author(s): [Mahmud Haghighi](https://www.ipi.uni-hannover.de/en/haghighi/),
+           [Andreas Piter](https://www.ipi.uni-hannover.de/en/piter/)
 
 ## Contact
 For any questions or issues, please create an [issue](https://github.com/luhipi/insar_explorer/issues) on the [GitHub repository](https://github.com/luhipi/insar_explorer).
