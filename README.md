@@ -7,6 +7,13 @@ InSAR Explorer is a QGIS plugin that allows for dynamic visualization and analys
 InSAR Explorer supports visualizing outputs of [SARvey Open-source research software for InSAR time series analysis](https://github.com/luhipi/sarvey).
 
 ## Installation
+### Method 1: Download from QGIS Plugin Repository
+1. Open QGIS.
+2. Go to `Plugins` > `Manage and Install Plugins…`.
+3. In the `All` tab of the Plugin Manager, type `Insar Explorer` in the search bar.
+4. Select the `InSAR Explorer` plugin from the list and click `Install Plugin`.
+
+### Method 2: Install the development version from ZIP file
 1. Download the plugin Repository as ZIP.
 2. Open QGIS.
 3. Go to `Plugins` > `Manage and Install Plugins`.
@@ -27,7 +34,8 @@ InSAR Explorer supports visualizing outputs of [SARvey Open-source research soft
 ## License
 This plugin is licensed under the GPL-2.0 license. See the `LICENSE` file for more details. 
 
-Author(s): [Mahmud Haghighi](https://www.ipi.uni-hannover.de/en/haghighi/)
+Authors: [Mahmud Haghighi](https://www.ipi.uni-hannover.de/en/haghighi/),
+           [Andreas Piter](https://www.ipi.uni-hannover.de/en/piter/)
 
 ## Contact
 For any questions or issues, please create an [issue](https://github.com/luhipi/insar_explorer/issues) on the [GitHub repository](https://github.com/luhipi/insar_explorer).
