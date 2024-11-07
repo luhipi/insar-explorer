@@ -2,8 +2,8 @@
 name=InSAR Explorer
 qgisMinimumVersion=3.0
 description=InSAR Explorer is a QGIS plugin that allows for dynamic visualization and analysis of InSAR time series data
-version=0.1.0
-author=Mahmud Haghighi
+version=0.2.0
+author=Mahmud Haghighi, Andreas Piter
 email=mahmud@ipi.uni-hannover.de
 
 about=InSAR Explorer is a QGIS plugin designed for interactive visualization and analysis of InSAR time series results. With a user-friendly interface, it allows users to dynamically plot and explore ground displacement data over time.
