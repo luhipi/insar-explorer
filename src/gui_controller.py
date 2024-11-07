@@ -58,13 +58,13 @@ class GuiController():
         if self.ui.cb_symbol_range_sync.isChecked():
             value = self.ui.sb_symbol_upper_range.value()
             self.ui.sb_symbol_lower_range.setValue(-value)
-        self.applySymbology()
+        self.applyLiveSymbology()
 
     def setSymbologyLowerRange(self):
         if self.ui.cb_symbol_range_sync.isChecked():
             value = self.ui.sb_symbol_lower_range.value()
             self.ui.sb_symbol_upper_range.setValue(-value)
-        self.applySymbology()
+        self.applyLiveSymbology()
 
     def applyLiveSymbology(self):
         if self.ui.cb_symbology_live.isChecked():
