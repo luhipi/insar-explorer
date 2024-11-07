@@ -12,8 +12,13 @@ class InsarMap:
         self.stroke_width = 0.01
         self.alpha = 0.9
         self.num_classes = 9
+        self.color_ramp_name = 'Roma'
+        self.color_ramp_reverse_flag = False
 
-    def setSymbology(self, layer=None, color_ramp_name='Roma'):
+    def setSymbology(self, layer=None, color_ramp_name=None):
+
+        if not color_ramp_name:
+            color_ramp_name = self.color_ramp_name
 
         if not layer:
             layer = self.iface.activeLayer()
@@ -26,6 +31,9 @@ class InsarMap:
             color_ramp = color_maps.Roma()
         if color_ramp_name == 'Vik':
             color_ramp = color_maps.Vik()
+
+        if self.color_ramp_reverse_flag:
+            color_ramp.reverse()
 
         ranges = []
 

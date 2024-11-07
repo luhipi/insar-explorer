@@ -20,6 +20,11 @@ class ColorMaps():
 
         return color_stops[-1][1]
 
+    def reverse(self):
+        n = len(self.ramp)
+        reversed_ramp = self.ramp[::-1]
+        self.ramp = [(i / (n - 1), color) for i, (_, color) in enumerate(reversed_ramp)]
+
 
 class Turbo(ColorMaps):
     def __init__(self):
