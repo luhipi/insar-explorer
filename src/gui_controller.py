@@ -54,6 +54,8 @@ class GuiController():
         self.ui.sb_symbol_size.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_opacity.valueChanged.connect(self.applyLiveSymbology)
         self.ui.cb_symbology_live.toggled.connect(self.applyLiveSymbology)
+        self.ui.cmb_colormap.currentIndexChanged.connect(self.applyLiveSymbology)
+        self.ui.cb_colormap_reverse.toggled.connect(self.applyLiveSymbology)
 
     def setSymbologyUpperRange(self):
         if self.ui.cb_symbol_range_sync.isChecked():
@@ -77,6 +79,8 @@ class GuiController():
         self.insar_map.num_classes = int(self.ui.sb_symbol_classes.value())
         self.insar_map.alpha = float(self.ui.sb_symbol_opacity.value())/100
         self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
+        self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
+        self.insar_map.color_ramp_reverse_flag = self.ui.cb_colormap_reverse.isChecked()
         self.insar_map.setSymbology()
 
     def timeseriesPlotFit(self):
