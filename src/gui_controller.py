@@ -49,10 +49,11 @@ class GuiController():
         self.ui.pb_symbology.clicked.connect(self.applySymbology)
         self.ui.sb_symbol_lower_range.valueChanged.connect(self.setSymbologyLowerRange)
         self.ui.sb_symbol_upper_range.valueChanged.connect(self.setSymbologyUpperRange)
+        self.ui.cb_symbol_range_sync.toggled.connect(self.setSymbologyLowerRange)
+        self.ui.sb_symbol_classes.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_size.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_opacity.valueChanged.connect(self.applyLiveSymbology)
         self.ui.cb_symbology_live.toggled.connect(self.applyLiveSymbology)
-        self.ui.cb_symbol_range_sync.toggled.connect(self.setSymbologyLowerRange)
 
     def setSymbologyUpperRange(self):
         if self.ui.cb_symbol_range_sync.isChecked():
@@ -73,6 +74,7 @@ class GuiController():
     def applySymbology(self):
         self.insar_map.min_value = float(self.ui.sb_symbol_lower_range.value())
         self.insar_map.max_value = float(self.ui.sb_symbol_upper_range.value())
+        self.insar_map.num_classes = int(self.ui.sb_symbol_classes.value())
         self.insar_map.alpha = float(self.ui.sb_symbol_opacity.value())/100
         self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
         self.insar_map.setSymbology()
