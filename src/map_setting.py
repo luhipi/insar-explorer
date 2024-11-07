@@ -13,7 +13,7 @@ class InsarMap:
         self.alpha = 0.9
         self.num_classes = 9
 
-    def setSymbology(self, layer=None, color_ramp_name='Turbo'):
+    def setSymbology(self, layer=None, color_ramp_name='Roma'):
 
         if not layer:
             layer = self.iface.activeLayer()
@@ -21,7 +21,11 @@ class InsarMap:
         interval = (self.max_value - self.min_value) / self.num_classes
 
         if color_ramp_name == 'Turbo':
-            color_ramp = color_maps.turbo()
+            color_ramp = color_maps.Turbo()
+        if color_ramp_name == 'Roma':
+            color_ramp = color_maps.Roma()
+        if color_ramp_name == 'Vik':
+            color_ramp = color_maps.Vik()
 
         ranges = []
 
