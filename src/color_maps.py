@@ -40,6 +40,7 @@ class Turbo(ColorMaps):
 
 
 class Roma(ColorMaps):
+    """Roma color map. Crameri, F. (2018). Scientific colour maps. Zenodo. https://doi.org/10.5281/zenodo.1243862"""
     def __init__(self):
         super().__init__()
         self.ramp = [
@@ -72,6 +73,7 @@ class Roma(ColorMaps):
 
 
 class Vik(ColorMaps):
+    """Vik color map. Crameri, F. (2018). Scientific colour maps. Zenodo. https://doi.org/10.5281/zenodo.1243862"""
     def __init__(self):
         super().__init__()
         self.ramp = [
