@@ -25,6 +25,9 @@ InSAR Explorer supports visualizing outputs of [SARvey Open-source research soft
 2. Click on the plugin icon in the toolbar or go to `Plugins` > `InSAR Explorer`.
 3. Click on any point in the map to display the time series data.
 
+## Sample data
+A sample shapefile containing time series data for testing the plugin is available on [Zenodo repository](https://zenodo.org/records/14052814).
+
 ## Contributing
 1. Fork the repository on GitHub.
 2. Create a new branch for your feature or bug fix.
