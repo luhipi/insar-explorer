@@ -90,13 +90,13 @@ class PlotTs():
             self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
             self.ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[1, 7]))
             self.ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
-        elif date_range >= 730:
+        elif date_range >= 366:
             self.ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 7)))
             self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y/%m'))
             self.ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))
             self.ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
         else:
-            self.ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
+            self.ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 4, 7, 10)))
             self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y/%m'))
             self.ax.xaxis.set_minor_locator(mdates.MonthLocator(interval=1))
             self.ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
