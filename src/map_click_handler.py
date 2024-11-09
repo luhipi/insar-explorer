@@ -38,22 +38,22 @@ class MapClickHandler:
             layer = self.iface.activeLayer()
 
         if not (layer and layer.isValid()):
-            self.ui.te_info.setPlainText("Invalid Layer: Please select a valid layer.")
+            self.ui.lb_msg_bar.setText("Invalid Layer: Please select a valid layer.")
             return
         elif not (layer.type() == QgsMapLayer.VectorLayer):
-            self.ui.te_info.setPlainText("Only vector layers supported: Please select a valid vector layer.")
+            self.ui.lb_msg_bar.setText("Only vector layers supported: Please select a valid vector layer.")
             return
         elif not (layer.geometryType() == 0):
-            self.ui.te_info.setPlainText("Invalid Layer: Please select a valid point layer.")
+            self.ui.lb_msg_bar.setText("Invalid Layer: Please select a valid point layer.")
             return
 
         closest_feature_id = self.findFeatureAtPoint(layer, point, self.iface.mapCanvas(),
                                                      only_the_closest_one=True, only_ids=True)
 
         if closest_feature_id:
-            self.ui.te_info.setPlainText(f"Identify Result: Closest feature ID is {closest_feature_id}")
+            self.ui.lb_msg_bar.setText(f"Identify Result: Closest feature ID is {closest_feature_id}")
         else:
-            self.ui.te_info.setPlainText("Identify Result: No nearby point found.")
+            self.ui.lb_msg_bar.setText("Identify Result: No nearby point found.")
 
         return closest_feature_id
 
