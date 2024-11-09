@@ -75,7 +75,11 @@ class MapClickHandler:
             attributes_text = "\n".join(
                 [f"{field.name()}: {value}" for field, value in zip(layer.fields(), closest_feature.attributes())]
             )
-            self.ui.te_info.setPlainText(f"Identify Result: Closest feature attributes:\n{attributes_text}")
+            point = closest_feature.geometry().asPoint()
+            if point:
+                x, y = point.x(), point.y()
+                coordinates_text = f"Coordinates: ({x:.5f}, {y:.5f})\n"
+            self.ui.te_info.setPlainText(f"Selected feature:\n{coordinates_text+attributes_text}")
             if not ref:
                 self.highlightSelectedFeatures(closest_feature.geometry())
             else:
