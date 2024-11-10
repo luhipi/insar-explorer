@@ -2,6 +2,11 @@
   <qresource prefix="/plugins/insar_explorer">
     <file>icon.png</file>
   </qresource>
+  <qresource prefix="colormaps">
+    <file>icons/colormaps/turbo.png</file>
+    <file>icons/colormaps/roma.png</file>
+    <file>icons/colormaps/vik.png</file>
+  </qresource>
   <qresource prefix="icons">
     <file>icons/plot_fit_exp_amber.png</file>
     <file>icons/symbology.png</file>

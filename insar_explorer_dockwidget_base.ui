@@ -65,7 +65,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>369</width>
+             <width>349</width>
              <height>374</height>
             </rect>
            </property>
@@ -79,7 +79,7 @@
                </sizepolicy>
               </property>
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
@@ -238,19 +238,40 @@
                      </item>
                      <item>
                       <widget class="QComboBox" name="cmb_colormap">
+                       <property name="autoFillBackground">
+                        <bool>false</bool>
+                       </property>
+                       <property name="iconSize">
+                        <size>
+                         <width>24</width>
+                         <height>16</height>
+                        </size>
+                       </property>
                        <item>
                         <property name="text">
                          <string>Roma</string>
+                        </property>
+                        <property name="icon">
+                         <iconset>
+                          <normaloff>:/colormaps/icons/colormaps/roma.png</normaloff>:/colormaps/icons/colormaps/roma.png</iconset>
                         </property>
                        </item>
                        <item>
                         <property name="text">
                          <string>Vik</string>
                         </property>
+                        <property name="icon">
+                         <iconset>
+                          <normaloff>:/colormaps/icons/colormaps/vik.png</normaloff>:/colormaps/icons/colormaps/vik.png</iconset>
+                        </property>
                        </item>
                        <item>
                         <property name="text">
                          <string>Turbo</string>
+                        </property>
+                        <property name="icon">
+                         <iconset>
+                          <normaloff>:/colormaps/icons/colormaps/turbo.png</normaloff>:/colormaps/icons/colormaps/turbo.png</iconset>
                         </property>
                        </item>
                       </widget>
