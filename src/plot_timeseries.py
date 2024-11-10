@@ -15,7 +15,7 @@ class PlotTs():
         self.ref_values = 0
         self.plot_values = None
         self.residuals_values = None
-        self.marker = 'o'
+        self.marker = '.'
         self.residual_markers = '.'
         self.fit_plot_list = []
         self.fit_models = []
@@ -47,7 +47,9 @@ class PlotTs():
         else:
             self.ax = self.ui.figure.add_subplot(111)
 
-    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker='o', marker_replicate='.k'):
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker=None, marker_replicate='.k'):
+        if marker is None:
+            marker = self.marker
         self.initializeAxes()
 
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
@@ -90,7 +92,7 @@ class PlotTs():
         self.plot_residuals_list = []
         if self.plot_residuals_flag:
             plot_residual = self.ax_residuals.plot(self.dates, self.residuals_values, self.residual_markers,
-                                                   color='gray')
+                                                   color='C2')
             self.plot_residuals_list.append(plot_residual[0])
             self.decoratePlot(ax=self.ax_residuals)
             self.ui.canvas.draw_idle()
