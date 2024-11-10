@@ -66,7 +66,7 @@
              <x>0</x>
              <y>0</y>
              <width>349</width>
-             <height>374</height>
+             <height>372</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout">
@@ -1088,11 +1088,31 @@
      </widget>
     </item>
     <item row="1" column="0">
-     <widget class="QLabel" name="lb_msg_bar">
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLabel" name="lb_msg_bar">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_8">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;https://luhipi.github.io/insar_explorer&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0068da;&quot;&gt;InSAR Explorer&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="openExternalLinks">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
