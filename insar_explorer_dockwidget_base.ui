@@ -79,7 +79,7 @@
                </sizepolicy>
               </property>
               <property name="currentIndex">
-               <number>0</number>
+               <number>1</number>
               </property>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
@@ -359,7 +359,7 @@
                     </layout>
                    </item>
                    <item row="0" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_6">
+                    <layout class="QVBoxLayout" name="verticalLayout_6">
                      <item>
                       <widget class="QPushButton" name="pb_symbology">
                        <property name="sizePolicy">
@@ -369,6 +369,12 @@
                         </sizepolicy>
                        </property>
                        <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
                         <size>
                          <width>40</width>
                          <height>40</height>
@@ -447,6 +453,12 @@
                        </property>
                        <property name="minimumSize">
                         <size>
+                         <width>0</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
                          <width>40</width>
                          <height>40</height>
                         </size>
@@ -472,6 +484,44 @@
                        </property>
                       </widget>
                      </item>
+                     <item row="0" column="2">
+                      <widget class="QPushButton" name="pb_reset_reference">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>40</width>
+                         <height>40</height>
+                        </size>
+                       </property>
+                       <property name="toolTip">
+                        <string>Reset Reference Point</string>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset>
+                         <normaloff>:/icons/icons/reset_reference_point.png</normaloff>:/icons/icons/reset_reference_point.png</iconset>
+                       </property>
+                       <property name="iconSize">
+                        <size>
+                         <width>20</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
                      <item row="0" column="0">
                       <widget class="QPushButton" name="pb_choose_point">
                        <property name="sizePolicy">
@@ -481,6 +531,12 @@
                         </sizepolicy>
                        </property>
                        <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
                         <size>
                          <width>40</width>
                          <height>40</height>
@@ -504,38 +560,6 @@
                        </property>
                        <property name="checkable">
                         <bool>true</bool>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="0" column="2">
-                      <widget class="QPushButton" name="pb_reset_reference">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="minimumSize">
-                        <size>
-                         <width>40</width>
-                         <height>40</height>
-                        </size>
-                       </property>
-                       <property name="toolTip">
-                        <string>Reset Reference Point</string>
-                       </property>
-                       <property name="text">
-                        <string/>
-                       </property>
-                       <property name="icon">
-                        <iconset>
-                         <normaloff>:/icons/icons/reset_reference_point.png</normaloff>:/icons/icons/reset_reference_point.png</iconset>
-                       </property>
-                       <property name="iconSize">
-                        <size>
-                         <width>20</width>
-                         <height>20</height>
-                        </size>
                        </property>
                       </widget>
                      </item>
@@ -569,276 +593,290 @@
                      <property name="spacing">
                       <number>0</number>
                      </property>
-                     <item row="0" column="3">
-                      <widget class="QPushButton" name="pb_ts_fit_poly1">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
+                     <item row="0" column="1">
+                      <layout class="QVBoxLayout" name="verticalLayout_5">
+                       <property name="spacing">
+                        <number>0</number>
                        </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>40</width>
-                         <height>40</height>
-                        </size>
-                       </property>
-                       <property name="acceptDrops">
-                        <bool>false</bool>
-                       </property>
-                       <property name="toolTip">
-                        <string>1st Order Polynomial</string>
-                       </property>
-                       <property name="toolTipDuration">
-                        <number>3000</number>
-                       </property>
-                       <property name="text">
-                        <string/>
-                       </property>
-                       <property name="icon">
-                        <iconset>
-                         <normaloff>:/icons/icons/plot_fit_poly1_gray.png</normaloff>
-                         <normalon>:/icons/icons/plot_fit_poly1_blue.png</normalon>:/icons/icons/plot_fit_poly1_gray.png</iconset>
-                       </property>
-                       <property name="iconSize">
-                        <size>
-                         <width>20</width>
-                         <height>20</height>
-                        </size>
-                       </property>
-                       <property name="checkable">
-                        <bool>true</bool>
-                       </property>
-                       <property name="checked">
-                        <bool>false</bool>
-                       </property>
-                       <attribute name="buttonGroup">
-                        <string notr="true">gb_ts_fit</string>
-                       </attribute>
-                      </widget>
-                     </item>
-                     <item row="2" column="2">
-                      <widget class="QPushButton" name="pb_ts_fit_poly3">
-                       <property name="enabled">
-                        <bool>true</bool>
-                       </property>
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>40</width>
-                         <height>40</height>
-                        </size>
-                       </property>
-                       <property name="toolTip">
-                        <string>3rd Order Polynomial</string>
-                       </property>
-                       <property name="toolTipDuration">
-                        <number>3000</number>
-                       </property>
-                       <property name="text">
-                        <string/>
-                       </property>
-                       <property name="icon">
-                        <iconset>
-                         <normaloff>:/icons/icons/plot_fit_poly3_gray.png</normaloff>
-                         <normalon>:/icons/icons/plot_fit_poly3_blue.png</normalon>:/icons/icons/plot_fit_poly3_gray.png</iconset>
-                       </property>
-                       <property name="iconSize">
-                        <size>
-                         <width>20</width>
-                         <height>20</height>
-                        </size>
-                       </property>
-                       <property name="checkable">
-                        <bool>true</bool>
-                       </property>
-                       <property name="checked">
-                        <bool>false</bool>
-                       </property>
-                       <attribute name="buttonGroup">
-                        <string notr="true">gb_ts_fit</string>
-                       </attribute>
-                      </widget>
-                     </item>
-                     <item row="2" column="4">
-                      <widget class="QPushButton" name="pb_ts_fit_seasonal">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>40</width>
-                         <height>40</height>
-                        </size>
-                       </property>
-                       <property name="toolTip">
-                        <string>Seasonal</string>
-                       </property>
-                       <property name="toolTipDuration">
-                        <number>3000</number>
-                       </property>
-                       <property name="text">
-                        <string/>
-                       </property>
-                       <property name="icon">
-                        <iconset>
-                         <normaloff>:/icons/icons/plot_fit_seasonal_gray.png</normaloff>
-                         <normalon>:/icons/icons/plot_fit_seasonal_blue.png</normalon>:/icons/icons/plot_fit_seasonal_gray.png</iconset>
-                       </property>
-                       <property name="iconSize">
-                        <size>
-                         <width>20</width>
-                         <height>20</height>
-                        </size>
-                       </property>
-                       <property name="checkable">
-                        <bool>true</bool>
-                       </property>
-                       <property name="autoExclusive">
-                        <bool>false</bool>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="2" column="3">
-                      <widget class="QPushButton" name="pb_ts_fit_exp">
-                       <property name="enabled">
-                        <bool>true</bool>
-                       </property>
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>40</width>
-                         <height>40</height>
-                        </size>
-                       </property>
-                       <property name="toolTip">
-                        <string>Exponential</string>
-                       </property>
-                       <property name="toolTipDuration">
-                        <number>3000</number>
-                       </property>
-                       <property name="text">
-                        <string/>
-                       </property>
-                       <property name="icon">
-                        <iconset>
-                         <normaloff>:/icons/icons/plot_fit_exp_gray.png</normaloff>
-                         <disabledon>:/icons/icons/plot_fit_exp_blue.png</disabledon>:/icons/icons/plot_fit_exp_gray.png</iconset>
-                       </property>
-                       <property name="iconSize">
-                        <size>
-                         <width>20</width>
-                         <height>20</height>
-                        </size>
-                       </property>
-                       <property name="checkable">
-                        <bool>true</bool>
-                       </property>
-                       <attribute name="buttonGroup">
-                        <string notr="true">gb_ts_fit</string>
-                       </attribute>
-                      </widget>
-                     </item>
-                     <item row="0" column="2">
-                      <widget class="QPushButton" name="pb_ts_nofit">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>40</width>
-                         <height>40</height>
-                        </size>
-                       </property>
-                       <property name="acceptDrops">
-                        <bool>false</bool>
-                       </property>
-                       <property name="toolTip">
-                        <string>No Fit</string>
-                       </property>
-                       <property name="toolTipDuration">
-                        <number>3000</number>
-                       </property>
-                       <property name="text">
-                        <string>X</string>
-                       </property>
-                       <property name="iconSize">
-                        <size>
-                         <width>20</width>
-                         <height>20</height>
-                        </size>
-                       </property>
-                       <property name="checkable">
-                        <bool>true</bool>
-                       </property>
-                       <property name="checked">
-                        <bool>true</bool>
-                       </property>
-                       <attribute name="buttonGroup">
-                        <string notr="true">gb_ts_fit</string>
-                       </attribute>
-                      </widget>
-                     </item>
-                     <item row="0" column="4">
-                      <widget class="QPushButton" name="pb_ts_fit_poly2">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>40</width>
-                         <height>40</height>
-                        </size>
-                       </property>
-                       <property name="toolTip">
-                        <string>2nd Order Polynomial</string>
-                       </property>
-                       <property name="toolTipDuration">
-                        <number>3000</number>
-                       </property>
-                       <property name="text">
-                        <string/>
-                       </property>
-                       <property name="icon">
-                        <iconset>
-                         <normaloff>:/icons/icons/plot_fit_poly2_gray.png</normaloff>
-                         <normalon>:/icons/icons/plot_fit_poly2_blue.png</normalon>:/icons/icons/plot_fit_poly2_gray.png</iconset>
-                       </property>
-                       <property name="iconSize">
-                        <size>
-                         <width>20</width>
-                         <height>20</height>
-                        </size>
-                       </property>
-                       <property name="checkable">
-                        <bool>true</bool>
-                       </property>
-                       <property name="checked">
-                        <bool>false</bool>
-                       </property>
-                       <attribute name="buttonGroup">
-                        <string notr="true">gb_ts_fit</string>
-                       </attribute>
-                      </widget>
+                       <item>
+                        <layout class="QGridLayout" name="gridLayout_5">
+                         <property name="horizontalSpacing">
+                          <number>0</number>
+                         </property>
+                         <item row="0" column="0">
+                          <widget class="QPushButton" name="pb_ts_nofit">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>40</width>
+                             <height>40</height>
+                            </size>
+                           </property>
+                           <property name="acceptDrops">
+                            <bool>false</bool>
+                           </property>
+                           <property name="toolTip">
+                            <string>No Fit</string>
+                           </property>
+                           <property name="toolTipDuration">
+                            <number>3000</number>
+                           </property>
+                           <property name="text">
+                            <string>X</string>
+                           </property>
+                           <property name="iconSize">
+                            <size>
+                             <width>20</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="checkable">
+                            <bool>true</bool>
+                           </property>
+                           <property name="checked">
+                            <bool>true</bool>
+                           </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">gb_ts_fit</string>
+                           </attribute>
+                          </widget>
+                         </item>
+                         <item row="0" column="1">
+                          <widget class="QPushButton" name="pb_ts_fit_poly1">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>40</width>
+                             <height>40</height>
+                            </size>
+                           </property>
+                           <property name="acceptDrops">
+                            <bool>false</bool>
+                           </property>
+                           <property name="toolTip">
+                            <string>1st Order Polynomial</string>
+                           </property>
+                           <property name="toolTipDuration">
+                            <number>3000</number>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                           <property name="icon">
+                            <iconset>
+                             <normaloff>:/icons/icons/plot_fit_poly1_gray.png</normaloff>
+                             <normalon>:/icons/icons/plot_fit_poly1_blue.png</normalon>:/icons/icons/plot_fit_poly1_gray.png</iconset>
+                           </property>
+                           <property name="iconSize">
+                            <size>
+                             <width>20</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="checkable">
+                            <bool>true</bool>
+                           </property>
+                           <property name="checked">
+                            <bool>false</bool>
+                           </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">gb_ts_fit</string>
+                           </attribute>
+                          </widget>
+                         </item>
+                         <item row="0" column="2">
+                          <widget class="QPushButton" name="pb_ts_fit_poly2">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>40</width>
+                             <height>40</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>2nd Order Polynomial</string>
+                           </property>
+                           <property name="toolTipDuration">
+                            <number>3000</number>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                           <property name="icon">
+                            <iconset>
+                             <normaloff>:/icons/icons/plot_fit_poly2_gray.png</normaloff>
+                             <normalon>:/icons/icons/plot_fit_poly2_blue.png</normalon>:/icons/icons/plot_fit_poly2_gray.png</iconset>
+                           </property>
+                           <property name="iconSize">
+                            <size>
+                             <width>20</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="checkable">
+                            <bool>true</bool>
+                           </property>
+                           <property name="checked">
+                            <bool>false</bool>
+                           </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">gb_ts_fit</string>
+                           </attribute>
+                          </widget>
+                         </item>
+                         <item row="1" column="0">
+                          <widget class="QPushButton" name="pb_ts_fit_poly3">
+                           <property name="enabled">
+                            <bool>true</bool>
+                           </property>
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>40</width>
+                             <height>40</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>3rd Order Polynomial</string>
+                           </property>
+                           <property name="toolTipDuration">
+                            <number>3000</number>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                           <property name="icon">
+                            <iconset>
+                             <normaloff>:/icons/icons/plot_fit_poly3_gray.png</normaloff>
+                             <normalon>:/icons/icons/plot_fit_poly3_blue.png</normalon>:/icons/icons/plot_fit_poly3_gray.png</iconset>
+                           </property>
+                           <property name="iconSize">
+                            <size>
+                             <width>20</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="checkable">
+                            <bool>true</bool>
+                           </property>
+                           <property name="checked">
+                            <bool>false</bool>
+                           </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">gb_ts_fit</string>
+                           </attribute>
+                          </widget>
+                         </item>
+                         <item row="1" column="1">
+                          <widget class="QPushButton" name="pb_ts_fit_exp">
+                           <property name="enabled">
+                            <bool>true</bool>
+                           </property>
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>40</width>
+                             <height>40</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>Exponential</string>
+                           </property>
+                           <property name="toolTipDuration">
+                            <number>3000</number>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                           <property name="icon">
+                            <iconset>
+                             <normaloff>:/icons/icons/plot_fit_exp_gray.png</normaloff>
+                             <disabledon>:/icons/icons/plot_fit_exp_blue.png</disabledon>:/icons/icons/plot_fit_exp_gray.png</iconset>
+                           </property>
+                           <property name="iconSize">
+                            <size>
+                             <width>20</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="checkable">
+                            <bool>true</bool>
+                           </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">gb_ts_fit</string>
+                           </attribute>
+                          </widget>
+                         </item>
+                         <item row="1" column="2">
+                          <widget class="QPushButton" name="pb_ts_fit_seasonal">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>40</width>
+                             <height>40</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>Seasonal</string>
+                           </property>
+                           <property name="toolTipDuration">
+                            <number>3000</number>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                           <property name="icon">
+                            <iconset>
+                             <normaloff>:/icons/icons/plot_fit_seasonal_gray.png</normaloff>
+                             <normalon>:/icons/icons/plot_fit_seasonal_blue.png</normalon>:/icons/icons/plot_fit_seasonal_gray.png</iconset>
+                           </property>
+                           <property name="iconSize">
+                            <size>
+                             <width>20</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="checkable">
+                            <bool>true</bool>
+                           </property>
+                           <property name="autoExclusive">
+                            <bool>false</bool>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </item>
+                      </layout>
                      </item>
                     </layout>
                    </widget>
