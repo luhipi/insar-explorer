@@ -876,6 +876,13 @@
                          </item>
                         </layout>
                        </item>
+                       <item>
+                        <widget class="QCheckBox" name="cb_plot_residuals">
+                         <property name="text">
+                          <string>Plot Residuals</string>
+                         </property>
+                        </widget>
+                       </item>
                       </layout>
                      </item>
                     </layout>
