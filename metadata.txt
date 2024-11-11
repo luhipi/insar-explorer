@@ -20,7 +20,7 @@ hasProcessingProvider=no
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=tags=InSAR,python,Time Series,displacement,Sentinel,Sentinel-1,deformation,TerraSAR-X,SARvey,Plot,Persistent Scatterer, PSI, Small baseline, SBAS
+tags=InSAR,python,Time Series,displacement,Sentinel,Sentinel-1,deformation,TerraSAR-X,SARvey,Plot,Persistent Scatterer, PSI, Small baseline, SBAS
 
 homepage=https://luhipi.github.io/insar_explorer/
 category=Plugins
