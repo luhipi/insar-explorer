@@ -25,12 +25,15 @@ def modelExponential(x, a, b, c):
 
 
 def fitExponential(x, y):
+    """Try fitting exponential model, if it fails, fit polynomial model. Return the best fit model."""
     try:
         initial_params = [1, 1, 0.01]
         popt, pcov = curve_fit(modelExponential, x, y, p0=initial_params, maxfev=2000)
+        model = modelExponential
     except RuntimeError:
         popt, pcov = curve_fit(modelPoly1, x, y)
-    return popt
+        model = modelPoly1
+    return popt, pcov, model
 
 
 def normalize(x):
@@ -60,7 +63,7 @@ class FittingModels:
                            "poly-3": modelPoly3, "exp": modelExponential}
         fit_model = fit_models_dict[model]
         if fit_model == modelExponential:
-            popt = fitExponential(x, y)
+            popt, pcov, fit_model = fitExponential(x, y)
         else:
             popt, pcov = curve_fit(fit_model, x, y)
 

@@ -14,13 +14,18 @@ class PlotTs():
         self.ts_values = 0
         self.ref_values = 0
         self.plot_values = None
-        self.marker = 'o'
+        self.residuals_values = None
+        self.marker = '.'
+        self.residual_markers = '.'
         self.fit_plot_list = []
         self.fit_models = []
         self.fit_seasonal_flag = False
         self.replicate_flag = False
         self.plot_replicates = []
         self.replicate_value = 5.6/2
+        self.ax_residuals = None
+        self.plot_residuals_flag = False
+        self.plot_residuals_list = []
 
     def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
         if dates is not None:
@@ -34,9 +39,18 @@ class PlotTs():
 
         self.plot_values = self.ts_values - self.ref_values
 
-    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker='o', marker_replicate='.k'):
+    def initializeAxes(self):
         self.ui.figure.clear()
-        self.ax = self.ui.figure.add_subplot(111)
+        if self.plot_residuals_flag:
+            self.ax = self.ui.figure.add_subplot(211)
+            self.ax_residuals = self.ui.figure.add_subplot(212)
+        else:
+            self.ax = self.ui.figure.add_subplot(111)
+
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker=None, marker_replicate='.k'):
+        if marker is None:
+            marker = self.marker
+        self.initializeAxes()
 
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
 
@@ -64,50 +78,71 @@ class PlotTs():
         fit_line_color = 'black'
         fit_seasonal = self.fit_seasonal_flag
         for fit_model in self.fit_models:
-            _, model_x, model_y = (
+            model_values, model_x, model_y = (
                 FittingModels(self.dates, self.plot_values, model=fit_model).fit(seasonal=fit_seasonal))
             plot = self.ax.plot(model_x, model_y, fit_line_type, color=fit_line_color)
             self.fit_plot_list.append(plot[0])
             self.ui.canvas.draw_idle()
 
-    def decoratePlot(self):
-        self.setXticks()
-        self.setYticks()
-        self.setGrid(True)
-        self.setXlims()
-        self.setYlims()
+            self.residuals_values = self.plot_values - model_values
+            self.plotResiduals()
 
-    def setGrid(self, status):
-        self.ax.grid(status)
+    def plotResiduals(self):
+        [plot.remove() for plot in self.plot_residuals_list]
+        self.plot_residuals_list = []
+        if self.plot_residuals_flag:
+            plot_residual = self.ax_residuals.plot(self.dates, self.residuals_values, self.residual_markers,
+                                                   color='C2')
+            self.plot_residuals_list.append(plot_residual[0])
+            self.decoratePlot(ax=self.ax_residuals)
+            self.ui.canvas.draw_idle()
 
-    def setXticks(self):
+    def decoratePlot(self, ax=None):
+        if not ax:
+            ax = self.ax
+        self.setXticks(ax=ax)
+        self.setYticks(ax=ax)
+        self.setGrid(status=True, ax=ax)
+        self.setXlims(ax=ax)
+        self.setYlims(ax=ax)
+
+    def setGrid(self, status, ax=None):
+        if not ax:
+            ax = self.ax
+        ax.grid(status)
+
+    def setXticks(self, ax=None):
+        if not ax:
+            ax = self.ax
         min_date = np.min(self.dates)
         max_date = np.max(self.dates)
         date_range = (max_date - min_date).days
 
         if date_range >= 1461:
-            self.ax.xaxis.set_major_locator(mdates.YearLocator())
-            self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
-            self.ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[1, 7]))
-            self.ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
-        elif date_range >= 730:
-            self.ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 7)))
-            self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y/%m'))
-            self.ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))
-            self.ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
+            ax.xaxis.set_major_locator(mdates.YearLocator())
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+            ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[1, 7]))
+            ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
+        elif date_range >= 366:
+            ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 7)))
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y/%m'))
+            ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))
+            ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
         else:
-            self.ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
-            self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y/%m'))
-            self.ax.xaxis.set_minor_locator(mdates.MonthLocator(interval=1))
-            self.ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
+            ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 4, 7, 10)))
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y/%m'))
+            ax.xaxis.set_minor_locator(mdates.MonthLocator(interval=1))
+            ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
 
-    def setYticks(self):
-        self.ax.yaxis.set_major_locator(ticker.MultipleLocator(10))
-        self.ax.yaxis.set_minor_locator(ticker.MultipleLocator(1))
-        self.ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.0f}'))
-        self.ax.set_ylabel('[mm]')
+    def setYticks(self, ax=None):
+        if not ax:
+            ax = self.ax
+        ax.yaxis.set_major_locator(ticker.MultipleLocator(10))
+        ax.yaxis.set_minor_locator(ticker.MultipleLocator(1))
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.0f}'))
+        ax.set_ylabel('[mm]')
 
-    def setXlims(self, *, use_data_xlim=True, padding=30):
+    def setXlims(self, *, ax=None, use_data_xlim=True, padding=30):
         """
         Set the x-axis limits.
 
@@ -117,23 +152,33 @@ class PlotTs():
         :param padding: int
             Number of days to pad the x-axis limits.
         """
+        if not ax:
+            ax = self.ax
         min_date = np.min(self.dates)
         max_date = np.max(self.dates)
 
         if use_data_xlim:
-            self.ax.set_xlim(min_date-timedelta(days=padding),
+            ax.set_xlim(min_date-timedelta(days=padding),
                              max_date+timedelta(days=padding))
         else:
             start_of_year = mdates.num2date(mdates.datestr2num(f'{min_date.year}-01-01'))
             end_of_year = mdates.num2date(mdates.datestr2num(f'{max_date.year+1}-01-01'))
-            self.ax.set_xlim(start_of_year, end_of_year)
+            ax.set_xlim(start_of_year, end_of_year)
 
-    def setYlims(self):
-        y_min = np.min(self.plot_values)
-        y_max = np.max(self.plot_values)
+    def setYlims(self, ax=None):
+        if not ax:
+            ax = self.ax
+
+        if ax == self.ax:
+            y_min = np.min(self.plot_values)
+            y_max = np.max(self.plot_values)
+        elif ax == self.ax_residuals:
+            y_max = np.max(np.abs(self.residuals_values))
+            y_min = -y_max
+
         y_min_rounded = np.floor(y_min / 10) * 10
         y_max_rounded = np.ceil(y_max / 10) * 10
-        self.ax.set_ylim(y_min_rounded, y_max_rounded)
+        ax.set_ylim(y_min_rounded, y_max_rounded)
 
 
 # import plotly.graph_objs as go

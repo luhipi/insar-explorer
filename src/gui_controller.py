@@ -39,6 +39,7 @@ class GuiController():
         # TS fit handler
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
+        self.ui.cb_plot_residuals.toggled.connect(self.timeseriesPlotResiduals)
         # Replica
         self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
         self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
@@ -99,8 +100,14 @@ class GuiController():
                                                                   selected_buttons]
 
         self.choose_point_click_handler.plot_ts.fit_seasonal_flag = self.ui.pb_ts_fit_seasonal.isChecked()
+        self.timeseriesPlotResiduals()
 
         self.choose_point_click_handler.plot_ts.fitModel()
+
+    def timeseriesPlotResiduals(self):
+        self.choose_point_click_handler.plot_ts.plot_residuals_flag = (
+                self.ui.cb_plot_residuals.isChecked() and not self.ui.pb_ts_nofit.isChecked())
+        self.choose_point_click_handler.plot_ts.plotTs()
 
     def timeseriesReplica(self):
         if self.ui.pb_ts_replica.isChecked():

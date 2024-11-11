@@ -38,22 +38,22 @@ class MapClickHandler:
             layer = self.iface.activeLayer()
 
         if not (layer and layer.isValid()):
-            self.ui.te_info.setPlainText("Invalid Layer: Please select a valid layer.")
+            self.ui.lb_msg_bar.setText('<span style="color:red;">Invalid Layer: Please select a valid layer.</span>')
             return
         elif not (layer.type() == QgsMapLayer.VectorLayer):
-            self.ui.te_info.setPlainText("Only vector layers supported: Please select a valid vector layer.")
+            self.ui.lb_msg_bar.setText('<span style="color:red;">Only vector layers supported: Please select a valid vector layer.</span>')
             return
         elif not (layer.geometryType() == 0):
-            self.ui.te_info.setPlainText("Invalid Layer: Please select a valid point layer.")
+            self.ui.lb_msg_bar.setText('<span style="color:red;">Invalid Layer: Please select a valid point layer.</span>')
             return
 
         closest_feature_id = self.findFeatureAtPoint(layer, point, self.iface.mapCanvas(),
                                                      only_the_closest_one=True, only_ids=True)
 
         if closest_feature_id:
-            self.ui.te_info.setPlainText(f"Identify Result: Closest feature ID is {closest_feature_id}")
+            self.ui.lb_msg_bar.setText(f"Identify Result: Closest feature ID is {closest_feature_id}")
         else:
-            self.ui.te_info.setPlainText("Identify Result: No nearby point found.")
+            self.ui.lb_msg_bar.setText("Identify Result: No nearby point found. Select another point.")
 
         return closest_feature_id
 
@@ -75,7 +75,11 @@ class MapClickHandler:
             attributes_text = "\n".join(
                 [f"{field.name()}: {value}" for field, value in zip(layer.fields(), closest_feature.attributes())]
             )
-            self.ui.te_info.setPlainText(f"Identify Result: Closest feature attributes:\n{attributes_text}")
+            point = closest_feature.geometry().asPoint()
+            if point:
+                x, y = point.x(), point.y()
+                coordinates_text = f"Coordinates: ({x:.5f}, {y:.5f})\n"
+            self.ui.te_info.setPlainText(f"Selected feature:\n{coordinates_text+attributes_text}")
             if not ref:
                 self.highlightSelectedFeatures(closest_feature.geometry())
             else:
