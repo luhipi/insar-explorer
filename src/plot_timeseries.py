@@ -177,8 +177,8 @@ class PlotTs():
             y_max = np.max(np.abs(self.residuals_values))
             y_min = -y_max
 
-        y_min_rounded = np.floor(y_min / 10) * 10
-        y_max_rounded = np.ceil(y_max / 10) * 10
+        y_min_rounded = np.floor(y_min / 5) * 5
+        y_max_rounded = np.ceil(y_max / 5) * 5
         ax.set_ylim(y_min_rounded, y_max_rounded)
 
 
