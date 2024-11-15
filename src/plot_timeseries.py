@@ -100,11 +100,12 @@ class PlotTs():
     def decoratePlot(self, ax=None):
         if not ax:
             ax = self.ax
+        # First set lims then ticks
+        self.setXlims(ax=ax)
         self.setXticks(ax=ax)
+        self.setYlims(ax=ax)
         self.setYticks(ax=ax)
         self.setGrid(status=True, ax=ax)
-        self.setXlims(ax=ax)
-        self.setYlims(ax=ax)
 
     def setGrid(self, status, ax=None):
         if not ax:
