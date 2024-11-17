@@ -1,4 +1,6 @@
 from qgis.gui import QgsMapToolEmitPoint
+from PyQt5.QtWidgets import QFileDialog
+
 from . import map_click_handler as cph
 from . import setup_frames
 from .map_setting import InsarMap
@@ -13,6 +15,7 @@ class GuiController():
         self.initializeClickTool()
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
+        self.last_saved_ts_path = "ts_plot.png"
         self.connectUiSignals()
         # make point selection active by default
         self.ui.pb_choose_point.setChecked(True)

@@ -214,6 +214,12 @@ class PlotTs():
 
         ax.set_ylim(y_min_rounded, y_max_rounded)
 
+    def savePlotAsImage(self, filename=None):
+        if filename:
+            self.ui.figure.savefig(filename, dpi=300,
+                                   bbox_inches='tight',
+                                   transparent=True,
+                                   pad_inches=0)
 
 # import plotly.graph_objs as go
 # import plotly.io as pio
