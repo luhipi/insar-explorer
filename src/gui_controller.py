@@ -44,7 +44,7 @@ class GuiController():
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
         self.ui.cb_plot_residuals.toggled.connect(self.timeseriesPlotResiduals)
         # TS save
-        self.ui.pb_ts_save.clicked.connect(self.saveTsPlotAsImage)
+        self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
         # Replica
         self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
         self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
@@ -174,7 +174,7 @@ class GuiController():
         for layer in selected_layers:
             self.ui.lw_layers.takeItem(self.ui.lw_layers.row(layer))
 
-    def saveTsPlotAsImage(self):
+    def saveTsPlot(self):
         file_path, _ = QFileDialog.getSaveFileName(
             self.ui,
             "Save plot as image",
