@@ -138,8 +138,33 @@ class PlotTs():
     def setYticks(self, ax=None):
         if not ax:
             ax = self.ax
-        ax.yaxis.set_major_locator(ticker.MultipleLocator(10))
-        ax.yaxis.set_minor_locator(ticker.MultipleLocator(1))
+
+        y_min, y_max = ax.get_ylim()
+        y_range = y_max - y_min
+
+        ideal_intervals = (list(range(1,10, 1)) +
+                           list(range(10, 100, 10)) +
+                           list(range(100, 1000, 100)) +
+                           list(range(1000, 10000, 1000)) +
+                           list(range(10000, 100000, 10000)))
+
+        ideal_i = np.argmin(np.abs(np.array(ideal_intervals) - y_range / 3))
+        major_tick_interval = ideal_intervals[ideal_i]
+
+        if major_tick_interval <= 10:
+            minor_tick_interval = None
+        elif major_tick_interval <= 100:
+            minor_tick_interval = 10
+        elif major_tick_interval <= 1000:
+            minor_tick_interval = 100
+        elif major_tick_interval <= 10000:
+            minor_tick_interval = 1000
+        else:
+            minor_tick_interval = major_tick_interval / 5
+
+        ax.yaxis.set_major_locator(ticker.MultipleLocator(major_tick_interval))
+        if minor_tick_interval:
+            ax.yaxis.set_minor_locator(ticker.MultipleLocator(minor_tick_interval))
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.0f}'))
         ax.set_ylabel('[mm]')
 
