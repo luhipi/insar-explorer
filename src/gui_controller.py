@@ -1,4 +1,6 @@
 from qgis.gui import QgsMapToolEmitPoint
+from PyQt5.QtWidgets import QFileDialog
+
 from . import map_click_handler as cph
 from . import setup_frames
 from .map_setting import InsarMap
@@ -13,6 +15,7 @@ class GuiController():
         self.initializeClickTool()
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
+        self.last_saved_ts_path = "ts_plot.png"
         self.connectUiSignals()
         # make point selection active by default
         self.ui.pb_choose_point.setChecked(True)
@@ -40,6 +43,8 @@ class GuiController():
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
         self.ui.cb_plot_residuals.toggled.connect(self.timeseriesPlotResiduals)
+        # TS save
+        self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
         # Replica
         self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
         self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
@@ -168,3 +173,15 @@ class GuiController():
         selected_layers = self.ui.lw_layers.selectedItems()
         for layer in selected_layers:
             self.ui.lw_layers.takeItem(self.ui.lw_layers.row(layer))
+
+    def saveTsPlot(self):
+        file_path, _ = QFileDialog.getSaveFileName(
+            self.ui,
+            "Save plot as image",
+            self.last_saved_ts_path,
+            "Images (*.png *.jpg *.svg *.pdf)"
+        )
+
+        if file_path:
+            self.last_saved_ts_path = file_path
+            self.choose_point_click_handler.plot_ts.savePlotAsImage(file_path)
