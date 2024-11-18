@@ -31,6 +31,16 @@ software.
 2. Click on the plugin icon in the toolbar or go to `Plugins` > `InSAR Explorer`.
 3. Click on any point in the map to display the time series data.
 
+## Data Structure
+
+The plugin requires a vector file (e.g., a shapefile or geopackage) containing time series data. The file should have the following attributes:
+
+| Field Name | Description |
+|------------|-------------|
+| `velocity` or `VEL` | A field containing the InSAR velocity data. |
+| `DYYYYMMDD` | Multiple fields for time series data, where `YYYYMMDD` is the date of the data, e.g., `D20190101`, `D20190201`, etc. |
+
+
 ## Sample data
 A sample shapefile containing time series data for testing the plugin is available on [Zenodo repository](https://zenodo.org/records/14052814).
 
