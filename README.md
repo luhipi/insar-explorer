@@ -38,7 +38,8 @@ A sample shapefile containing time series data for testing the plugin is availab
 This plugin is licensed under the GPL-2.0 license. See the `LICENSE` file for more details. 
 
 Authors: [Mahmud Haghighi](https://www.ipi.uni-hannover.de/en/haghighi/),
-           [Andreas Piter](https://www.ipi.uni-hannover.de/en/piter/)
+           [Andreas Piter](https://www.ipi.uni-hannover.de/en/piter/),
+           [Erik Rivas](https://www.ipi.uni-hannover.de/en/institute/team/erik-rivas)
 
 ## Contact
 For any questions or issues, please create an [issue](https://github.com/luhipi/insar_explorer/issues) on the [GitHub repository](https://github.com/luhipi/insar_explorer).

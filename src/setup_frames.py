@@ -1,11 +1,13 @@
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 
 from qgis.PyQt.QtWidgets import QVBoxLayout
 
 
 def setupTsFrame(ui):
     print(ui)
+    plt.style.use('bmh')
     ui.figure = Figure()
     ui.canvas = FigureCanvas(ui.figure)
     ui.frame_plot_layout = QVBoxLayout(ui.frame_plot_ts)
