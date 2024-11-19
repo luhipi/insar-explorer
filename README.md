@@ -33,7 +33,7 @@ We welcome contributions to the project. Please follow the guidelines below.
 This plugin is licensed under the GPL-2.0 license. See the LICENSE file for more details.
 
 ## Authors
-Authors: [Mahmud Haghighi](https://www.ipi.uni-hannover.de/en/haghighi/),
+[Mahmud Haghighi](https://www.ipi.uni-hannover.de/en/haghighi/),
            [Andreas Piter](https://www.ipi.uni-hannover.de/en/piter/),
            [Erik Rivas](https://www.ipi.uni-hannover.de/en/institute/team/erik-rivas)
 
