@@ -7,7 +7,7 @@ from qgis.PyQt.QtWidgets import QVBoxLayout
 
 def setupTsFrame(ui):
     print(ui)
-    plt.style.use('Solarize_Light2')
+    plt.style.use('bmh')
     ui.figure = Figure()
     ui.canvas = FigureCanvas(ui.figure)
     ui.frame_plot_layout = QVBoxLayout(ui.frame_plot_ts)
