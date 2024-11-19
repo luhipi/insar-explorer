@@ -6,6 +6,8 @@
 Welcome to InsarExplorer's documentation!
 ============================================
 
+.. include:: readme.rst
+
 Contents:
 
 .. toctree::
