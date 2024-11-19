@@ -4,42 +4,40 @@
 
 ## Description
 InSAR Explorer is a QGIS plugin that allows for dynamic visualization and analysis of InSAR time series data. 
-InSAR Explorer supports visualizing outputs of [SARvey Open-source research software for InSAR time series analysis](https://github.com/luhipi/sarvey).
+InSAR Explorer supports visualizing outputs of [SARvey](https://github.com/luhipi/sarvey). 
+Check the [documentation](https://luhipi.github.io/insar_explorer/) for a list of all supported software. 
 
-## Installation
-### Method 1: Download from QGIS Plugin Repository
-1. Open QGIS.
-2. Go to `Plugins` > `Manage and Install Plugins…`.
-3. In the `All` tab of the Plugin Manager, type `Insar Explorer` in the search bar.
-4. Select the `InSAR Explorer` plugin from the list and click `Install Plugin`.
+## How to use:
+### Install the plugin
+Install InSAR Explorer. You can install the plugin from the QGIS Plugin Repository. Search for `InSAR Explorer` in the QGIS Plugin Manager and click `Install`.
+More information about different installation methods can be found [here](https://luhipi.github.io/insar_explorer/#installation).
 
-### Method 2: Install the development version from ZIP file
-1. Download the plugin Repository as ZIP.
-2. Open QGIS.
-3. Go to `Plugins` > `Manage and Install Plugins`.
-4. Click on the `Install from ZIP` tab.
-5. Select the downloaded ZIP file and click `Install Plugin`.
- 
-## Usage
-1. Open a vector layer with InSAR time series data.
-2. Click on the plugin icon in the toolbar or go to `Plugins` > `InSAR Explorer`.
-3. Click on any point in the map to display the time series data.
+### Prepare time series data
+Prepare the time series data as a vector file in the [required format](https://luhipi.github.io/insar_explorer/#data-structure).
+You can prepare the data using [different software](https://luhipi.github.io/insar_explorer/#data-preparation).
+You can use the sample data provided [here](https://luhipi.github.io/insar_explorer/#sample-data) for testing the plugin.
 
-## Sample data
-A sample shapefile containing time series data for testing the plugin is available on [Zenodo repository](https://zenodo.org/records/14052814).
+### Use the plugin to plot time series
+Open a vector layer with InSAR time series data in QGIS. Open the plugin and click on any point in the map to display the time series data.
+More information ... [here](https://luhipi.github.io/insar_explorer/#usage)
 
 ## Contributing
+We welcome contributions to the project. Please follow the guidelines below.
+
 1. Fork the repository on GitHub.
-2. Create a new branch for your feature or bug fix.
+2. Create a new branch for your feature or bug fix. 
 3. Commit your changes and push to your branch.
 4. Create a pull request to the main repository.
 
 ## License
-This plugin is licensed under the GPL-2.0 license. See the `LICENSE` file for more details. 
+This plugin is licensed under the GPL-2.0 license. See the LICENSE file for more details.
 
+## Authors
 Authors: [Mahmud Haghighi](https://www.ipi.uni-hannover.de/en/haghighi/),
            [Andreas Piter](https://www.ipi.uni-hannover.de/en/piter/),
            [Erik Rivas](https://www.ipi.uni-hannover.de/en/institute/team/erik-rivas)
 
 ## Contact
-For any questions or issues, please create an [issue](https://github.com/luhipi/insar_explorer/issues) on the [GitHub repository](https://github.com/luhipi/insar_explorer).
+For any questions or issues, please create an issue on the GitHub repository.
+
+
