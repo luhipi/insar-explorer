@@ -9,6 +9,7 @@ import re
 from datetime import datetime
 
 from . import plot_timeseries as pts
+from . import layer_utils
 
 
 class MapClickHandler:
@@ -37,14 +38,9 @@ class MapClickHandler:
         if not layer:
             layer = self.iface.activeLayer()
 
-        if not (layer and layer.isValid()):
-            self.ui.lb_msg_bar.setText('<span style="color:red;">Invalid Layer: Please select a valid layer.</span>')
-            return
-        elif not (layer.type() == QgsMapLayer.VectorLayer):
-            self.ui.lb_msg_bar.setText('<span style="color:red;">Only vector layers supported: Please select a valid vector layer.</span>')
-            return
-        elif not (layer.geometryType() == 0):
-            self.ui.lb_msg_bar.setText('<span style="color:red;">Invalid Layer: Please select a valid point layer.</span>')
+        status, message = layer_utils.checkVectorLayer(layer)
+        if status is False:
+            self.ui.lb_msg_bar.setText(message)
             return
 
         closest_feature_id = self.findFeatureAtPoint(layer, point, self.iface.mapCanvas(),
