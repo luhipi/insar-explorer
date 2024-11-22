@@ -87,7 +87,8 @@ class GuiController():
         self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
         self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
         self.insar_map.color_ramp_reverse_flag = self.ui.cb_colormap_reverse.isChecked()
-        self.insar_map.setSymbology()
+        message = self.insar_map.setSymbology()
+        self.ui.lb_msg_bar.setText(message)
 
     def timeseriesPlotFit(self):
         selected_buttons = [button for button in self.ui.gb_ts_fit.buttons() if

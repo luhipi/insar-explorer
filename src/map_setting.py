@@ -1,7 +1,7 @@
 from qgis.PyQt.QtGui import QColor
 from qgis.core import QgsGraduatedSymbolRenderer, QgsRendererRange, QgsSymbol
 from . import color_maps
-
+from . import layer_utils
 
 class InsarMap:
     def __init__(self, iface):
@@ -22,6 +22,10 @@ class InsarMap:
 
         if not layer:
             layer = self.iface.activeLayer()
+
+        status, message = layer_utils.checkVectorLayer(layer)
+        if status is False:
+            return message
 
         interval = (self.max_value - self.min_value) / self.num_classes
 
@@ -96,3 +100,5 @@ class InsarMap:
         layer.setRenderer(renderer)
         layer.triggerRepaint()
         self.iface.mapCanvas().refresh()
+
+        return ""
