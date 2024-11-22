@@ -65,6 +65,9 @@ class MapClickHandler:
             layer = self.iface.activeLayer()
         closest_feature_id = self.identifyClickedFeatureID(point, layer)
 
+        self.clearFeatureHighlight()
+        self.clearReferenceFeatureHighlight()
+
         closest_feature = None
         if closest_feature_id:
             closest_feature = layer.getFeature(closest_feature_id)
@@ -176,8 +179,16 @@ class TSClickHandler(MapClickHandler):
         self.ts_values = 0
         self.ref_values = 0
 
-    def choosePointClicked(self, point: QgsPointXY, ref=False):
-        feature = self.identifyClickedFeature(point, ref=ref)
+    def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
+        if not layer:
+            layer = self.iface.activeLayer()
+
+        feature = self.identifyClickedFeature(point, layer=layer, ref=ref)
+
+        status, message = layer_utils.checkVectorLayerTimeseries(layer)
+        if status is False:
+            self.ui.lb_msg_bar.setText(message)
+            return
 
         if feature:
             attributes = getFeatureAttributes(feature)
