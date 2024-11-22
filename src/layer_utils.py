@@ -4,7 +4,10 @@ from qgis.core import QgsMapLayer
 def checkVectorLayer(layer):
     """ check layer is a valid vector layer """
 
-    if not (layer and layer.isValid()):
+    if layer is None:
+        message = '<span style="color:red;">Invalid Layer: Please select a valid layer.</span>'
+        return False, message
+    elif not layer.isValid():
         message = '<span style="color:red;">Invalid Layer: Please select a valid layer.</span>'
         return False, message
     elif not (layer.type() == QgsMapLayer.VectorLayer):
