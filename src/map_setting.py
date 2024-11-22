@@ -87,13 +87,10 @@ class InsarMap:
         # ranges.append(upper_range)
 
         # TODO: add support for different processors
-        velocity_field_name_options = ['velocity', 'VEL']
-        field_name = None
-        for velocity_field in velocity_field_name_options:
-            if layer.fields().lookupField(velocity_field) != -1:
-                field_name = velocity_field
-                break
-        if field_name:
+        field_name, message = layer_utils.checkVectorLayerVelocity(layer)
+        if field_name is None:
+            return message
+        else:
             renderer = QgsGraduatedSymbolRenderer(field_name, ranges)
             # renderer.setMode(QgsGraduatedSymbolRenderer.Custom)
 

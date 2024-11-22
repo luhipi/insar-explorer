@@ -16,3 +16,21 @@ def checkVectorLayer(layer):
     else:
         return True, ""
 
+
+def checkVectorLayerVelocity(layer):
+    """ check layer is a valid vector with velocity """
+
+    velocity_field_name_options = ['velocity', 'VEL']
+    field_name = None
+    message = ""
+    for velocity_field in velocity_field_name_options:
+        if layer.fields().lookupField(velocity_field) != -1:
+            field_name = velocity_field
+            break
+
+    if field_name is None:
+        joined_names = ',&nbsp;'.join(velocity_field_name_options)
+        message = (f'<span style="color:red;">Invalid Layer: Please select a vector layer with valid velocity field.'
+                   f'.&nbsp;Supported field names: [{joined_names}].</span>')
+
+    return field_name, message
