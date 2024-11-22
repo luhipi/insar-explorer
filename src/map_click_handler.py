@@ -65,8 +65,10 @@ class MapClickHandler:
             layer = self.iface.activeLayer()
         closest_feature_id = self.identifyClickedFeatureID(point, layer)
 
-        self.clearFeatureHighlight()
-        self.clearReferenceFeatureHighlight()
+        if not ref:
+            self.clearFeatureHighlight()
+        else:
+            self.clearReferenceFeatureHighlight()
 
         closest_feature = None
         if closest_feature_id:
