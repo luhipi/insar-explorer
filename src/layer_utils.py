@@ -34,3 +34,24 @@ def checkVectorLayerVelocity(layer):
                    f'.&nbsp;Supported field names: [{joined_names}].</span>')
 
     return field_name, message
+
+
+def checkVectorLayerTimeseries(layer):
+    """ check layer is a valid vector with velocity """
+    import re
+    date_field_pattern = re.compile(r'^D\d{8}$')
+    count = 0
+    message = ""
+
+    for field in layer.fields():
+        if date_field_pattern.match(field.name()):
+            count += 1
+
+    if count >0:
+        status = True
+    else:
+        message = (f'<span style="color:red;">Invalid Layer: Please select a vector layer with valid timeseries fields,'
+                   f'&nbsp;e.g., D20141201, D20220123, etc.')
+        status = False
+
+    return status, message
