@@ -55,7 +55,7 @@ class GuiController():
         self.ui.pb_symbology.clicked.connect(self.applySymbology)
         self.ui.sb_symbol_lower_range.valueChanged.connect(self.setSymbologyLowerRange)
         self.ui.sb_symbol_upper_range.valueChanged.connect(self.setSymbologyUpperRange)
-        self.ui.cb_symbol_range_sync.toggled.connect(self.setSymbologyLowerRange)
+        self.ui.cb_symbol_range_sync.clicked.connect(self.setSymbologyLowerRange)
         self.ui.sb_symbol_classes.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_size.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_opacity.valueChanged.connect(self.applyLiveSymbology)
