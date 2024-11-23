@@ -1,7 +1,7 @@
 from qgis.PyQt.QtGui import QColor
 from qgis.core import QgsGraduatedSymbolRenderer, QgsRendererRange, QgsSymbol
 from . import color_maps
-
+from . import layer_utils
 
 class InsarMap:
     def __init__(self, iface):
@@ -22,6 +22,10 @@ class InsarMap:
 
         if not layer:
             layer = self.iface.activeLayer()
+
+        status, message = layer_utils.checkVectorLayer(layer)
+        if status is False:
+            return message
 
         interval = (self.max_value - self.min_value) / self.num_classes
 
@@ -83,16 +87,15 @@ class InsarMap:
         # ranges.append(upper_range)
 
         # TODO: add support for different processors
-        velocity_field_name_options = ['velocity', 'VEL']
-        field_name = None
-        for velocity_field in velocity_field_name_options:
-            if layer.fields().lookupField(velocity_field) != -1:
-                field_name = velocity_field
-                break
-        if field_name:
+        field_name, message = layer_utils.checkVectorLayerVelocity(layer)
+        if field_name is None:
+            return message
+        else:
             renderer = QgsGraduatedSymbolRenderer(field_name, ranges)
             # renderer.setMode(QgsGraduatedSymbolRenderer.Custom)
 
         layer.setRenderer(renderer)
         layer.triggerRepaint()
         self.iface.mapCanvas().refresh()
+
+        return ""

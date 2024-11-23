@@ -52,6 +52,8 @@ class PlotTs():
             marker = self.marker
         self.initializeAxes()
 
+        if dates is None:
+            return
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
 
         self.ax.plot(self.dates, self.plot_values, marker)
