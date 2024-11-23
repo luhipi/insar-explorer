@@ -8,6 +8,7 @@
     <file>icons/colormaps/vik.png</file>
   </qresource>
   <qresource prefix="icons">
+    <file>icons/synchronise_gray.png</file>
     <file>icons/screenshot.png</file>
     <file>icons/plot_fit_exp_amber.png</file>
     <file>icons/symbology.png</file>
