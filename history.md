@@ -1,6 +1,8 @@
 ### History
 
+v0.5.0
 - Resurface the gui with a new design.
+- Check layer validity before plotting.
 
 v0.4.0
 - Add save button for time series plot supporting png, jpg, pdf, svg.

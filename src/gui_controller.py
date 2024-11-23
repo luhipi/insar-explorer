@@ -26,7 +26,7 @@ class GuiController():
             self.click_tool = QgsMapToolEmitPoint(self.iface.mapCanvas())
             # self.click_tool.canvasClicked.connect(lambda point: self.choose_point_click_handler.choosePointClicked(point))
             self.click_tool.canvasClicked.connect(lambda point: self.choose_point_click_handler.choosePointClicked(
-                                                  point, self.ui.pb_set_reference.isChecked()))
+                                                  point=point, layer=None, ref=self.ui.pb_set_reference.isChecked()))
 
     def removeClickTool(self):
         self.iface.mapCanvas().unsetMapTool(self.click_tool)
@@ -87,7 +87,8 @@ class GuiController():
         self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
         self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
         self.insar_map.color_ramp_reverse_flag = self.ui.cb_colormap_reverse.isChecked()
-        self.insar_map.setSymbology()
+        message = self.insar_map.setSymbology()
+        self.ui.lb_msg_bar.setText(message)
 
     def timeseriesPlotFit(self):
         selected_buttons = [button for button in self.ui.gb_ts_fit.buttons() if
