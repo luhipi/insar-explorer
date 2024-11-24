@@ -52,9 +52,9 @@ class PlotTs():
             marker = self.marker
         self.initializeAxes()
 
-        if dates is None:
-            return
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
+        if self.dates is None:
+            return
 
         self.ax.plot(self.dates, self.plot_values, marker)
         if self.replicate_flag:
