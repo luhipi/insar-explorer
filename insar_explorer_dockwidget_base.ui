@@ -98,7 +98,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>327</width>
+             <width>244</width>
              <height>470</height>
             </rect>
            </property>
@@ -118,7 +118,7 @@
                </size>
               </property>
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
@@ -177,30 +177,11 @@
                       <number>0</number>
                      </property>
                      <item>
-                      <layout class="QGridLayout" name="gridLayout_6">
-                       <item row="0" column="2">
-                        <widget class="QDoubleSpinBox" name="sb_symbol_upper_range">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="decimals">
-                          <number>1</number>
-                         </property>
-                         <property name="minimum">
-                          <double>-1000.000000000000000</double>
-                         </property>
-                         <property name="maximum">
-                          <double>1000.000000000000000</double>
-                         </property>
-                         <property name="value">
-                          <double>10.000000000000000</double>
-                         </property>
-                        </widget>
-                       </item>
-                       <item row="0" column="0">
+                      <layout class="QHBoxLayout" name="horizontalLayout_9">
+                       <property name="spacing">
+                        <number>0</number>
+                       </property>
+                       <item>
                         <widget class="QDoubleSpinBox" name="sb_symbol_lower_range">
                          <property name="sizePolicy">
                           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -222,7 +203,7 @@
                          </property>
                         </widget>
                        </item>
-                       <item row="0" column="1">
+                       <item>
                         <widget class="QPushButton" name="cb_symbol_range_sync">
                          <property name="sizePolicy">
                           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -243,7 +224,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Choose Point</string>
+                          <string>Sync range</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -266,6 +247,165 @@
                          </property>
                         </widget>
                        </item>
+                       <item>
+                        <widget class="QDoubleSpinBox" name="sb_symbol_upper_range">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="decimals">
+                          <number>1</number>
+                         </property>
+                         <property name="minimum">
+                          <double>-1000.000000000000000</double>
+                         </property>
+                         <property name="maximum">
+                          <double>1000.000000000000000</double>
+                         </property>
+                         <property name="value">
+                          <double>10.000000000000000</double>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </item>
+                     <item>
+                      <layout class="QHBoxLayout" name="horizontalLayout_8">
+                       <item>
+                        <widget class="QPushButton" name="pb_range_from_data">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>40</width>
+                           <height>40</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Min/Max from data</string>
+                         </property>
+                         <property name="text">
+                          <string>data</string>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>false</bool>
+                         </property>
+                         <property name="checked">
+                          <bool>false</bool>
+                         </property>
+                         <property name="autoExclusive">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pb_range_from_data_1std">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>40</width>
+                           <height>40</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>1xStd</string>
+                         </property>
+                         <property name="text">
+                          <string>1xStd</string>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>false</bool>
+                         </property>
+                         <property name="checked">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pb_range_from_data_3std">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>40</width>
+                           <height>40</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>2xStd</string>
+                         </property>
+                         <property name="text">
+                          <string>3xStd</string>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>false</bool>
+                         </property>
+                         <property name="checked">
+                          <bool>false</bool>
+                         </property>
+                         <property name="autoExclusive">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </item>
+                     <item>
+                      <layout class="QVBoxLayout" name="verticalLayout_2">
+                       <property name="spacing">
+                        <number>0</number>
+                       </property>
                       </layout>
                      </item>
                     </layout>
@@ -1627,6 +1767,156 @@
           <property name="frameShadow">
            <enum>QFrame::Raised</enum>
           </property>
+          <widget class="QWidget" name="layoutWidget">
+           <property name="geometry">
+            <rect>
+             <x>80</x>
+             <y>90</y>
+             <width>186</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_9">
+            <item row="0" column="2">
+             <widget class="QDoubleSpinBox" name="sb_symbol_upper_range_2">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>-1000.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>1000.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>10.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QDoubleSpinBox" name="sb_symbol_lower_range_2">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>-1000.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>1000.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>-10.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QPushButton" name="cb_symbol_range_sync_2">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>40</width>
+                <height>40</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Choose Point</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>:/icons/icons/synchronise_gray.png</normaloff>:/icons/icons/synchronise_gray.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="layoutWidget">
+           <property name="geometry">
+            <rect>
+             <x>70</x>
+             <y>220</y>
+             <width>144</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_6"/>
+          </widget>
+          <widget class="QComboBox" name="comboBox">
+           <property name="geometry">
+            <rect>
+             <x>140</x>
+             <y>160</y>
+             <width>103</width>
+             <height>32</height>
+            </rect>
+           </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <item>
+            <property name="text">
+             <string>data Min/Max</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>1xstd</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>2xstd</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>3xstd</string>
+            </property>
+           </item>
+          </widget>
          </widget>
         </item>
        </layout>
