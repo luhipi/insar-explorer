@@ -5,6 +5,13 @@ import numpy as np
 from . import color_maps
 from . import layer_utils
 
+class velocity():
+    def __init__(self):
+        self.min_value = None
+        self.max_value = None
+        self.mean_value = None
+        self.std_value = None
+
 class InsarMap:
     def __init__(self, iface):
         self.iface = iface

@@ -1,6 +1,7 @@
 ### History
 
 v0.5.0
+- Add push buttons for getting map symbology range from data
 - Resurface the gui with a new design.
 - Check layer validity before plotting.
 
