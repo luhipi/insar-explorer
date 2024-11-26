@@ -4,14 +4,18 @@ import matplotlib.pyplot as plt
 
 from qgis.PyQt.QtWidgets import QVBoxLayout
 
+from .mpl_toolbar import CustomToolbar
 
 def setupTsFrame(ui):
     print(ui)
     plt.style.use('bmh')
     ui.figure = Figure()
     ui.canvas = FigureCanvas(ui.figure)
+    ui.toolbar = CustomToolbar(ui.canvas, ui.frame_plot_ts)
+
     ui.frame_plot_layout = QVBoxLayout(ui.frame_plot_ts)
     ui.frame_plot_layout.addWidget(ui.canvas)
+    ui.frame_plot_layout.addWidget(ui.toolbar)
 
 
 # from PyQt5.QtWebKitWidgets import QWebView
