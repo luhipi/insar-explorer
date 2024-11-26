@@ -64,15 +64,19 @@ class GuiController():
         self.ui.cb_colormap_reverse.toggled.connect(self.applyLiveSymbology)
 
     def setSymbologyUpperRange(self):
+        self.ui.sb_symbol_lower_range.blockSignals(True)
         if self.ui.cb_symbol_range_sync.isChecked():
             value = self.ui.sb_symbol_upper_range.value()
             self.ui.sb_symbol_lower_range.setValue(-value)
+        self.ui.sb_symbol_lower_range.blockSignals(False)
         self.applyLiveSymbology()
 
     def setSymbologyLowerRange(self):
+        self.ui.sb_symbol_upper_range.blockSignals(True)
         if self.ui.cb_symbol_range_sync.isChecked():
             value = self.ui.sb_symbol_lower_range.value()
             self.ui.sb_symbol_upper_range.setValue(-value)
+        self.ui.sb_symbol_upper_range.blockSignals(False)
         self.applyLiveSymbology()
 
     def applyLiveSymbology(self):
