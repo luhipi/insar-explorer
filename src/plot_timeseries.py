@@ -108,6 +108,7 @@ class PlotTs():
         self.setYlims(ax=ax)
         self.setYticks(ax=ax)
         self.setGrid(status=True, ax=ax)
+        self.ui.figure.tight_layout()
 
     def setGrid(self, status, ax=None):
         if not ax:
