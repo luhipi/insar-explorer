@@ -1,3 +1,4 @@
+import re
 from qgis.core import QgsMapLayer
 
 
@@ -41,10 +42,13 @@ def checkVectorLayerVelocity(layer):
 
 def checkVectorLayerTimeseries(layer):
     """ check layer is a valid vector with velocity """
-    import re
     date_field_pattern = re.compile(r'^D\d{8}$')
     count = 0
     message = ""
+
+    status, message = checkVectorLayer(layer)
+    if status is False:
+        return status, message
 
     for field in layer.fields():
         if date_field_pattern.match(field.name()):

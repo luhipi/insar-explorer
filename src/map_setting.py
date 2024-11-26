@@ -1,7 +1,16 @@
 from qgis.PyQt.QtGui import QColor
 from qgis.core import QgsGraduatedSymbolRenderer, QgsRendererRange, QgsSymbol
+import numpy as np
+
 from . import color_maps
 from . import layer_utils
+
+class velocity():
+    def __init__(self):
+        self.min_value = None
+        self.max_value = None
+        self.mean_value = None
+        self.std_value = None
 
 class InsarMap:
     def __init__(self, iface):
@@ -9,11 +18,43 @@ class InsarMap:
         self.symbol_size = 1
         self.min_value = -5
         self.max_value = 5
+        self.data_min = None
+        self.data_max = None
+        self.data_mean = None
+        self.data_stdv = None
         self.stroke_width = 0.01
         self.alpha = 0.9
         self.num_classes = 9
         self.color_ramp_name = 'Roma'
         self.color_ramp_reverse_flag = False
+
+    def setSymbologyRangeFromData(self, layer=None, n_std=None):
+        if not layer:
+            layer = self.iface.activeLayer()
+
+        status, message = layer_utils.checkVectorLayer(layer)
+        if status is False:
+            return message
+
+        field_name, message = layer_utils.checkVectorLayerVelocity(layer)
+        if field_name is None:
+            return message
+
+        if n_std is None:
+            if self.data_min is None or self.data_max is None:
+                min_max = layer.minimumAndMaximumValue(layer.fields().indexFromName(field_name))
+                self.data_min, self.data_max = min_max
+            self.min_value = self.data_min
+            self.max_value = self.data_max
+        else:
+            if self.data_mean is None or self.data_stdv is None:
+                values = [feature[field_name] for feature in layer.getFeatures() if feature[field_name] is not None]
+                self.data_mean = np.mean(values)
+                self.data_stdv = np.std(values)
+            self.min_value = self.data_mean - n_std * self.data_stdv
+            self.max_value = self.data_mean + n_std * self.data_stdv
+
+        return ""
 
     def setSymbology(self, layer=None, color_ramp_name=None):
 

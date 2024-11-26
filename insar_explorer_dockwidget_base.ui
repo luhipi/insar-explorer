@@ -98,7 +98,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>327</width>
+             <width>244</width>
              <height>470</height>
             </rect>
            </property>
@@ -118,7 +118,7 @@
                </size>
               </property>
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
@@ -162,7 +162,7 @@
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_10">
                      <property name="spacing">
-                      <number>0</number>
+                      <number>-1</number>
                      </property>
                      <property name="leftMargin">
                       <number>0</number>
@@ -177,36 +177,20 @@
                       <number>0</number>
                      </property>
                      <item>
-                      <layout class="QGridLayout" name="gridLayout_6">
-                       <item row="0" column="2">
-                        <widget class="QDoubleSpinBox" name="sb_symbol_upper_range">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="decimals">
-                          <number>1</number>
-                         </property>
-                         <property name="minimum">
-                          <double>-1000.000000000000000</double>
-                         </property>
-                         <property name="maximum">
-                          <double>1000.000000000000000</double>
-                         </property>
-                         <property name="value">
-                          <double>10.000000000000000</double>
-                         </property>
-                        </widget>
-                       </item>
-                       <item row="0" column="0">
+                      <layout class="QHBoxLayout" name="horizontalLayout_9">
+                       <property name="spacing">
+                        <number>0</number>
+                       </property>
+                       <item>
                         <widget class="QDoubleSpinBox" name="sb_symbol_lower_range">
                          <property name="sizePolicy">
                           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                            <horstretch>0</horstretch>
                            <verstretch>0</verstretch>
                           </sizepolicy>
+                         </property>
+                         <property name="toolTip">
+                          <string>Min symbology value</string>
                          </property>
                          <property name="decimals">
                           <number>1</number>
@@ -222,7 +206,7 @@
                          </property>
                         </widget>
                        </item>
-                       <item row="0" column="1">
+                       <item>
                         <widget class="QPushButton" name="cb_symbol_range_sync">
                          <property name="sizePolicy">
                           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -243,7 +227,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Choose Point</string>
+                          <string>Synchronize range</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -263,6 +247,161 @@
                          </property>
                          <property name="checked">
                           <bool>true</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QDoubleSpinBox" name="sb_symbol_upper_range">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="toolTip">
+                          <string>Max symbology value</string>
+                         </property>
+                         <property name="decimals">
+                          <number>1</number>
+                         </property>
+                         <property name="minimum">
+                          <double>-1000.000000000000000</double>
+                         </property>
+                         <property name="maximum">
+                          <double>1000.000000000000000</double>
+                         </property>
+                         <property name="value">
+                          <double>10.000000000000000</double>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </item>
+                     <item>
+                      <layout class="QHBoxLayout" name="horizontalLayout_8">
+                       <item>
+                        <widget class="QPushButton" name="pb_range_from_data">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>40</width>
+                           <height>40</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Min/Max from data</string>
+                         </property>
+                         <property name="text">
+                          <string>data</string>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>false</bool>
+                         </property>
+                         <property name="checked">
+                          <bool>false</bool>
+                         </property>
+                         <property name="autoExclusive">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pb_range_from_data_1std">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>40</width>
+                           <height>40</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>mean±1xStd</string>
+                         </property>
+                         <property name="text">
+                          <string>1xStd</string>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>false</bool>
+                         </property>
+                         <property name="checked">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pb_range_from_data_3std">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>40</width>
+                           <height>40</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>mean±3xStd</string>
+                         </property>
+                         <property name="text">
+                          <string>3xStd</string>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>false</bool>
+                         </property>
+                         <property name="checked">
+                          <bool>false</bool>
+                         </property>
+                         <property name="autoExclusive">
+                          <bool>false</bool>
                          </property>
                         </widget>
                        </item>
@@ -319,6 +458,9 @@
                          </property>
                          <item>
                           <widget class="QComboBox" name="cmb_colormap">
+                           <property name="toolTip">
+                            <string>Select colormap</string>
+                           </property>
                            <property name="autoFillBackground">
                             <bool>false</bool>
                            </property>
@@ -359,6 +501,9 @@
                          </item>
                          <item>
                           <widget class="QCheckBox" name="cb_colormap_reverse">
+                           <property name="toolTip">
+                            <string>Reverse colormap</string>
+                           </property>
                            <property name="text">
                             <string>Reverse</string>
                            </property>
@@ -382,6 +527,9 @@
                              <horstretch>0</horstretch>
                              <verstretch>0</verstretch>
                             </sizepolicy>
+                           </property>
+                           <property name="toolTip">
+                            <string>Number of classes</string>
                            </property>
                            <property name="minimum">
                             <number>2</number>
@@ -456,6 +604,9 @@
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="toolTip">
+                            <string>Symbol size</string>
+                           </property>
                            <property name="decimals">
                             <number>1</number>
                            </property>
@@ -485,6 +636,9 @@
                              <horstretch>0</horstretch>
                              <verstretch>0</verstretch>
                             </sizepolicy>
+                           </property>
+                           <property name="toolTip">
+                            <string>Symbol opacity</string>
                            </property>
                            <property name="maximum">
                             <number>100</number>
@@ -544,6 +698,9 @@
                       <layout class="QHBoxLayout" name="horizontalLayout_7">
                        <item>
                         <widget class="QCheckBox" name="cb_symbology_live">
+                         <property name="toolTip">
+                          <string>Apply on the fly</string>
+                         </property>
                          <property name="text">
                           <string>Live</string>
                          </property>
@@ -717,7 +874,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Choose Point</string>
+                          <string>Choose time series point</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -761,7 +918,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Set Reference Point</string>
+                          <string>Set reference point</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -864,7 +1021,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Reset Reference Point</string>
+                          <string>Reset reference point</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -961,10 +1118,10 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Exponential</string>
+                          <string>Plot replicas</string>
                          </property>
                          <property name="toolTipDuration">
-                          <number>3000</number>
+                          <number>-1</number>
                          </property>
                          <property name="text">
                           <string/>
@@ -997,6 +1154,9 @@
                            <width>0</width>
                            <height>0</height>
                           </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Replica shift</string>
                          </property>
                          <property name="minimum">
                           <number>1</number>
@@ -1095,10 +1255,10 @@
                             <bool>false</bool>
                            </property>
                            <property name="toolTip">
-                            <string>No Fit</string>
+                            <string>No fit</string>
                            </property>
                            <property name="toolTipDuration">
-                            <number>3000</number>
+                            <number>-1</number>
                            </property>
                            <property name="text">
                             <string>X</string>
@@ -1138,10 +1298,10 @@
                             <bool>false</bool>
                            </property>
                            <property name="toolTip">
-                            <string>1st Order Polynomial</string>
+                            <string>Fit 1st order polynomial</string>
                            </property>
                            <property name="toolTipDuration">
-                            <number>3000</number>
+                            <number>-1</number>
                            </property>
                            <property name="text">
                             <string/>
@@ -1183,10 +1343,10 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>2nd Order Polynomial</string>
+                            <string>Fit 2nd order polynomial</string>
                            </property>
                            <property name="toolTipDuration">
-                            <number>3000</number>
+                            <number>-1</number>
                            </property>
                            <property name="text">
                             <string/>
@@ -1251,10 +1411,10 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>3rd Order Polynomial</string>
+                            <string>Fit 3rd order polynomial</string>
                            </property>
                            <property name="toolTipDuration">
-                            <number>3000</number>
+                            <number>-1</number>
                            </property>
                            <property name="text">
                             <string/>
@@ -1299,10 +1459,10 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>Exponential</string>
+                            <string>Fit exponential</string>
                            </property>
                            <property name="toolTipDuration">
-                            <number>3000</number>
+                            <number>-1</number>
                            </property>
                            <property name="text">
                             <string/>
@@ -1344,10 +1504,10 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>Exponential</string>
+                            <string>Fit seasonal</string>
                            </property>
                            <property name="toolTipDuration">
-                            <number>3000</number>
+                            <number>-1</number>
                            </property>
                            <property name="text">
                             <string/>
@@ -1430,6 +1590,9 @@
                          <pointsize>13</pointsize>
                         </font>
                        </property>
+                       <property name="toolTip">
+                        <string>Plos fit residual</string>
+                       </property>
                        <property name="text">
                         <string>Plot Residuals</string>
                        </property>
@@ -1489,10 +1652,10 @@
                         </size>
                        </property>
                        <property name="toolTip">
-                        <string>Replicate Time Series</string>
+                        <string>Export as image</string>
                        </property>
                        <property name="toolTipDuration">
-                        <number>3000</number>
+                        <number>-1</number>
                        </property>
                        <property name="text">
                         <string/>

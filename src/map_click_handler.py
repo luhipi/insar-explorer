@@ -47,7 +47,7 @@ class MapClickHandler:
                                                      only_the_closest_one=True, only_ids=True)
 
         if closest_feature_id:
-            self.ui.lb_msg_bar.setText(f"Identify Result: Closest feature ID is {closest_feature_id}")
+            self.ui.lb_msg_bar.setText(f"")
         else:
             self.ui.lb_msg_bar.setText("Identify Result: No nearby point found. Select another point.")
 

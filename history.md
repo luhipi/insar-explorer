@@ -1,6 +1,8 @@
 ### History
 
 v0.5.0
+- Add toolbar to time series plot for zooming, panning, etc.
+- Add push buttons for getting map symbology range from data
 - Resurface the gui with a new design.
 - Check layer validity before plotting.
 
