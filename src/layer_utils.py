@@ -46,6 +46,10 @@ def checkVectorLayerTimeseries(layer):
     count = 0
     message = ""
 
+    status, message = checkVectorLayer(layer)
+    if status is False:
+        return status, message
+
     for field in layer.fields():
         if date_field_pattern.match(field.name()):
             count += 1
