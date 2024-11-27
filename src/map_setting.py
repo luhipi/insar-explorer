@@ -44,13 +44,18 @@ class InsarMap:
             if self.data_min is None or self.data_max is None:
                 min_max = layer.minimumAndMaximumValue(layer.fields().indexFromName(field_name))
                 self.data_min, self.data_max = min_max
+                if self.data_min is None or self.data_max is None:
+                    values = [feature[field_name] for feature in layer.getFeatures() if feature[field_name] is not None]
+                    self.data_min = np.nanmin(values)
+                    self.data_max = np.nanmax(values)
+
             self.min_value = self.data_min
             self.max_value = self.data_max
         else:
             if self.data_mean is None or self.data_stdv is None:
                 values = [feature[field_name] for feature in layer.getFeatures() if feature[field_name] is not None]
-                self.data_mean = np.mean(values)
-                self.data_stdv = np.std(values)
+                self.data_mean = np.nanmean(values)
+                self.data_stdv = np.nanstd(values)
             self.min_value = self.data_mean - n_std * self.data_stdv
             self.max_value = self.data_mean + n_std * self.data_stdv
 
