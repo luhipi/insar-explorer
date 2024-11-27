@@ -7,13 +7,13 @@ def checkVectorLayer(layer):
     """ check layer is a valid vector layer """
 
     if layer is None:
-        message = '<span style="color:red;">Invalid Layer: Please select a valid layer.</span>'
+        message = '<span style="color:red;">Invalid Layer: Please select a valid vector layer.</span>'
         return False, message
     elif not layer.isValid():
-        message = '<span style="color:red;">Invalid Layer: Please select a valid layer.</span>'
+        message = '<span style="color:red;">Invalid Layer: Please select a valid vector layer.</span>'
         return False, message
     elif not (layer.type() == QgsMapLayer.VectorLayer):
-        message = '<span style="color:red;">Only vector layers supported: Please select a valid vector layer.</span>'
+        message = '<span style="color:red;">This is not a vector layer: Please select a valid vector layer.</span>'
         return False, message
     elif not (layer.geometryType() == 0):
         message = '<span style="color:red;">Invalid Layer: Please select a valid point layer.</span>'
