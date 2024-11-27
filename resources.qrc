@@ -1,5 +1,5 @@
 <RCC>
-  <qresource prefix="/plugins/insar_explorer">
+  <qresource prefix="/plugins/insar-explorer">
     <file>icon.png</file>
   </qresource>
   <qresource prefix="colormaps">
