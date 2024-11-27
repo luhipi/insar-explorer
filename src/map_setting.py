@@ -99,7 +99,7 @@ class InsarMap:
 
         status_vector, message = layer_utils.checkVectorLayer(layer)
         status_raster, message = layer_utils.checkGmtsarLayer(layer)
-        if (status_vector and status_raster) is False:
+        if status_vector is False and status_raster is False:
             message = '<span style="color:red;">Could not set the symbology. Check layer validity.</span>'
             return message
 
