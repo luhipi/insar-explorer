@@ -206,6 +206,8 @@ class PlotTs():
             y_min = -y_max
 
         y_range = y_max - y_min
+        y_min_rounded = -5
+        y_max_rounded = 5
         for i in [10000, 1000, 100, 10]:
             if y_range >= i:
                 y_min_rounded = np.floor(y_min / i) * i
