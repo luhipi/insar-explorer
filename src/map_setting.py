@@ -6,6 +6,9 @@ from qgis.core import QgsRasterShader, QgsColorRampShader, QgsSingleBandPseudoCo
 
 from . import color_maps
 from . import layer_utils
+from .layer_utils import vector_layer as vector_layer_utils
+from .layer_utils import gmtsar_layer as gmtsar_layer_utils
+
 
 class velocity():
     def __init__(self):
@@ -35,8 +38,8 @@ class InsarMap:
         if not layer:
             layer = self.iface.activeLayer()
 
-        status_vector, message = layer_utils.checkVectorLayer(layer)
-        status_raster, message = layer_utils.checkGmtsarLayer(layer)
+        status_vector, message = vector_layer_utils.checkVectorLayer(layer)
+        status_raster, message = gmtsar_layer_utils.checkGmtsarLayer(layer)
         if status_vector:
             self.data_type = "vector"
             self.getDataRangeFromVectorLayer(layer, n_std)
@@ -48,7 +51,7 @@ class InsarMap:
             return message
 
     def getDataRangeFromVectorLayer(self, layer, n_std=None):
-        field_name, message = layer_utils.checkVectorLayerVelocity(layer)
+        field_name, message = vector_layer_utils.checkVectorLayerVelocity(layer)
         if field_name is None:
             return message
 
@@ -97,8 +100,8 @@ class InsarMap:
         if not layer:
             layer = self.iface.activeLayer()
 
-        status_vector, message = layer_utils.checkVectorLayer(layer)
-        status_raster, message = layer_utils.checkGmtsarLayer(layer)
+        status_vector, message = vector_layer_utils.checkVectorLayer(layer)
+        status_raster, message = gmtsar_layer_utils.checkGmtsarLayer(layer)
         if status_vector is False and status_raster is False:
             message = '<span style="color:red;">Could not set the symbology. Check layer validity.</span>'
             return message
@@ -176,7 +179,7 @@ class InsarMap:
             range_item = QgsRendererRange(lower, upper, symbol, label)
             ranges.append(range_item)
 
-        field_name, message = layer_utils.checkVectorLayerVelocity(layer)
+        field_name, message = vector_layer_utils.checkVectorLayerVelocity(layer)
         if field_name is None:
             return message
         else:

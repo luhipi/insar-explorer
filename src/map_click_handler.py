@@ -1,3 +1,5 @@
+import os
+
 from qgis.PyQt.QtWidgets import QMessageBox, QApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsPointXY, QgsGeometry, QgsMapLayer, QgsRectangle, QgsFeatureRequest, QgsSettings, Qgis, QgsFeature
@@ -8,8 +10,11 @@ import numpy as np
 import re
 from datetime import datetime
 
+from osgeo import gdal
+
 from . import plot_timeseries as pts
-from . import layer_utils
+from .layer_utils import vector_layer as vector_layer_utils
+from .layer_utils import gmtsar_layer as gmtsar_layer_utils
 
 
 class MapClickHandler:
@@ -38,7 +43,7 @@ class MapClickHandler:
         if not layer:
             layer = self.iface.activeLayer()
 
-        status, message = layer_utils.checkVectorLayer(layer)
+        status, message = vector_layer_utils.checkVectorLayer(layer)
         if status is False:
             self.ui.lb_msg_bar.setText(message)
             return
@@ -184,10 +189,20 @@ class TSClickHandler(MapClickHandler):
     def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         if not layer:
             layer = self.iface.activeLayer()
+        status_vector, message = vector_layer_utils.checkVectorLayer(layer)
+        status_raster, message = gmtsar_layer_utils.checkGmtsarLayer(layer)
+        if status_vector:
+            self.choosePointClickedVector(point=point, layer=layer, ref=ref)
+        elif status_raster:
+            self.choosePointClickedRaster(point=point, layer=layer, ref=ref)
+        else:
+            return
 
+
+    def choosePointClickedVector(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         feature = self.identifyClickedFeature(point, layer=layer, ref=ref)
 
-        status, message = layer_utils.checkVectorLayerTimeseries(layer)
+        status, message = vector_layer_utils.checkVectorLayerTimeseries(layer)
         if status is False:
             self.ui.lb_msg_bar.setText(message)
             return
@@ -203,10 +218,74 @@ class TSClickHandler(MapClickHandler):
             dates = date_values[:, 0]
             self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
 
+    def choosePointClickedRaster(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
+        status, message = gmtsar_layer_utils.checkGmtsarLayerTimeseries(layer)
+        if status is False:
+            self.ui.lb_msg_bar.setText(message)
+            return
+        self.ui.lb_msg_bar.setText(message)
+
+        date_values = getGmtsarTimeseriesAttributes(layer, point=point)
+        self.ui.lb_msg_bar.setText(str(np.shape(date_values)))
+
+        if date_values.size == 0:
+            return
+
+        if not ref:
+            self.ts_values = date_values[:, 1]
+        else:
+            self.ref_values = date_values[:, 1]
+
+        dates = date_values[:, 0]
+        self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
+
     def resetReferencePoint(self):
         self.ref_values = 0
         self.clearReferenceFeatureHighlight()
         self.plot_ts.plotTs(ref_values=self.ref_values)
+
+
+def getGmtsarTimeseriesAttributes(layer, point: QgsPointXY) -> dict:
+    file_path = layer.source()
+    directory = os.path.dirname(file_path)
+    pattern = re.compile(r'^\d{8}_.*\.grd')
+
+    grd_files = [f for f in os.listdir(directory) if pattern.match(f)]
+
+    if not grd_files:
+        return np.array([])
+
+    date_value_list = []
+    first_grd_file_full_path = os.path.join(directory, grd_files[0])
+    dataset = gdal.Open(first_grd_file_full_path)
+    if not dataset:
+        return np.array([])
+
+    transform = dataset.GetGeoTransform()
+    inv_transform = gdal.InvGeoTransform(transform)
+
+    x, y = point.x(), point.y()
+    px, py = gdal.ApplyGeoTransform(inv_transform, x, y)
+
+    grd_file_paths = [os.path.join(directory, grd_file) for grd_file in grd_files]
+    date_objs = [datetime.strptime(grd_file[:8], '%Y%m%d') for grd_file in grd_files]
+
+    for grd_file_full_path, date_obj in zip(grd_file_paths, date_objs):
+        dataset = gdal.Open(grd_file_full_path)
+
+        if not dataset:
+            continue
+
+        band = dataset.GetRasterBand(1)
+        pixel_value = band.ReadAsArray(int(px), int(py), 1, 1)[0, 0]
+
+        # if not pixel_value == band.GetNoDataValue():
+        #     date_value_list.append((date_obj, pixel_value))
+        if not np.isnan(pixel_value):
+            date_value_list.append((date_obj, pixel_value))
+
+    return np.array(date_value_list, dtype=object)
+
 
 def getFeatureAttributes(feature: QgsFeature) -> dict:
     """

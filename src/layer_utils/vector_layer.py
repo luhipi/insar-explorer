@@ -1,6 +1,5 @@
 import re
 from qgis.core import QgsMapLayer
-from osgeo import gdal
 
 
 def checkVectorLayer(layer):
@@ -58,35 +57,7 @@ def checkVectorLayerTimeseries(layer):
     if count >0:
         status = True
     else:
-        message = (f'<span style="color:red;">Invalid Layer: Please select a vector layer with valid timeseries fields,'
-                   f'&nbsp;e.g., D20141201, D20220123, etc.')
+        message = (f'<span style="color:red;">Invalid Layer: Please select a vector or raster layer with valid timeseries data.')
         status = False
 
     return status, message
-
-
-# TODO: check different rasters from different software outputs
-def checkGmtsarLayer(layer):
-    if layer is None:
-        message = '<span style="color:red;">No layer selected: Please select a valid layer. Please select a valid layer created by GMTSAR.</span>'
-        return False, message
-    elif not layer.isValid():
-        message = '<span style="color:red;">Invalid Layer: Please select a valid layer created by GMTSAR.</span>'
-        return False, message
-    elif (layer.type() == QgsMapLayer.VectorLayer):
-        message = '<span style="color:red;">This is a vector layers. Please select a raster layer created by GMTSAR.</span>'
-        return False, message
-
-    file_path = layer.source()
-    dataset = gdal.Open(file_path)
-
-    if dataset is None:
-        message = '<span style="color:red;">Invalid Layer: Unable to open the file with GDAL.</span>'
-        return False, message
-
-    driver = dataset.GetDriver().ShortName
-    if driver == 'netCDF': # for GMTSAR
-        return True, ""
-    else:
-        message = '<span style="color:red;">Invalid Layer: The file is not a GMTSAR file.</span>'
-        return False, message
