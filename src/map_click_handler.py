@@ -250,6 +250,10 @@ class TSClickHandler(MapClickHandler):
 
 
 def getGmtsarTimeseriesAttributes(layer, point: QgsPointXY) -> dict:
+    """
+    Get the timeseries values of the clicked point from the GMTSAR grd files.
+    The grd files should be in the same directory as the layer (typically velocity) file.
+    """
     file_path = layer.source()
     directory = os.path.dirname(file_path)
     pattern = re.compile(r'^\d{8}_.*\.grd')
