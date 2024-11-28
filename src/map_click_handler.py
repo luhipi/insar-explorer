@@ -229,6 +229,12 @@ class TSClickHandler(MapClickHandler):
         if date_values.size == 0:
             return
 
+        clicked_point = QgsGeometry.fromPointXY(point)
+        if not ref:
+            self.highlightSelectedFeatures(clicked_point)
+        else:
+            self.highlightSelectedReferenceFeature(clicked_point)
+
         if not ref:
             self.ts_values = date_values[:, 1]
         else:
