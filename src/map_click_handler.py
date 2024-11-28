@@ -223,10 +223,8 @@ class TSClickHandler(MapClickHandler):
         if status is False:
             self.ui.lb_msg_bar.setText(message)
             return
-        self.ui.lb_msg_bar.setText(message)
 
         date_values = getGmtsarTimeseriesAttributes(layer, point=point)
-        self.ui.lb_msg_bar.setText(str(np.shape(date_values)))
 
         if date_values.size == 0:
             return
