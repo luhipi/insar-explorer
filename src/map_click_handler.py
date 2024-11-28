@@ -281,6 +281,11 @@ def getGmtsarTimeseriesAttributes(layer, point: QgsPointXY) -> dict:
             continue
 
         band = dataset.GetRasterBand(1)
+        x_size = band.XSize
+        y_size = band.YSize
+        if not (0 <= px < x_size and 0 <= py < y_size):
+            return np.array([])
+
         pixel_value = band.ReadAsArray(int(px), int(py), 1, 1)[0, 0]
 
         # if not pixel_value == band.GetNoDataValue():
