@@ -34,6 +34,12 @@ class InsarMap:
         self.color_ramp_reverse_flag = False
         self.data_type = "vector"
 
+    def reset(self):
+        self.data_min = None
+        self.data_max = None
+        self.data_mean = None
+        self.data_stdv = None
+
     def setSymbologyRangeFromData(self, layer=None, n_std=None):
         if not layer:
             layer = self.iface.activeLayer()

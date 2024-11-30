@@ -28,6 +28,7 @@ class GuiController(QObject):
     def onLayerChanged(self, layer):
         if layer:
             self.choose_point_click_handler.reset()
+            self.insar_map.reset()
 
     def initializeClickTool(self):
         if not self.click_tool:
