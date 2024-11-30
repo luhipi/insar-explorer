@@ -186,7 +186,6 @@ class TSClickHandler(MapClickHandler):
         self.plot_ts = pts.PlotTs(self.ui)
         self.ts_values = 0
         self.ref_values = 0
-        self.time_series_data = None # keep data in memory for faster access
         self.raster_layer = raster_layer_utils.RasterTimeseries()
 
     def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
