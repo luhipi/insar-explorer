@@ -35,6 +35,9 @@ class RasterTimeseries:
     def __init__(self):
         self.time_series_data = None
 
+    def reset(self):
+        self.time_series_data = None
+
     def getRasterTimeseriesAttributes(self, layer, point):
         """
         Get the timeseries values of the clicked point from the GMTSAR grd files.

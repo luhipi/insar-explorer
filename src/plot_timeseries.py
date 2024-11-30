@@ -27,6 +27,10 @@ class PlotTs():
         self.plot_residuals_flag = False
         self.plot_residuals_list = []
 
+    def clear(self):
+        self.ui.figure.clear()
+        self.ui.canvas.draw()
+
     def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
         if dates is not None:
             self.dates = dates

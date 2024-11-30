@@ -23,6 +23,12 @@ class GuiController(QObject):
         self.ui.pb_choose_point.setChecked(True)
         self.activatePointSelection(True)
 
+        self.iface.currentLayerChanged.connect(self.onLayerChanged)
+
+    def onLayerChanged(self, layer):
+        if layer:
+            self.choose_point_click_handler.reset()
+
     def initializeClickTool(self):
         if not self.click_tool:
             self.click_tool = QgsMapToolEmitPoint(self.iface.mapCanvas())
