@@ -187,6 +187,7 @@ class TSClickHandler(MapClickHandler):
         self.ts_values = 0
         self.ref_values = 0
         self.time_series_data = None # keep data in memory for faster access
+        self.raster_layer = raster_layer_utils.RasterTimeseries()
 
     def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         if not layer:
@@ -226,8 +227,7 @@ class TSClickHandler(MapClickHandler):
             self.ui.lb_msg_bar.setText(message)
             return
 
-        date_values, self.time_series_data = raster_layer_utils.getRasterTimeseriesAttributes(
-            layer, point=point, time_series_data=self.time_series_data)
+        date_values = self.raster_layer.getRasterTimeseriesAttributes(layer, point=point)
 
         if date_values.size == 0:
             return
