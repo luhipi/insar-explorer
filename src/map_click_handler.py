@@ -210,8 +210,8 @@ class TSClickHandler(MapClickHandler):
             return
 
         if feature:
-            attributes = getFeatureAttributes(feature)
-            date_values = extractDateValueAttributes(attributes)
+            attributes = vector_layer_utils.getFeatureAttributes(feature)
+            date_values = vector_layer_utils.extractDateValueAttributes(attributes)
             if not ref:
                 self.ts_values = date_values[:, 1]
             else:
@@ -321,32 +321,3 @@ def getVrtTimeseriesAttributes(vrt_dataset, point, time_series_data, memory_limi
             date_value_list.append((date_obj, pixel_value))
 
     return np.array(date_value_list, dtype=object), time_series_data
-
-
-def getFeatureAttributes(feature: QgsFeature) -> dict:
-    """
-    Get the attributes of a feature as a dictionary.
-    :param feature: QgsFeature
-    :return: Dictionary of feature attributes
-    """
-    return {field.name(): feature[field.name()] for field in feature.fields()}
-
-
-
-def extractDateValueAttributes(attributes: dict) -> list:
-    """
-    Extract attributes with keys in the format 'DYYYYMMDD' and return a list of tuples with datetime and float value.
-    :param attributes: Dictionary of feature attributes
-    :return: List of tuples (datetime, float)
-    """
-    date_value_pattern = re.compile(r'^D(\d{8})$')
-    date_value_list = []
-
-    for key, value in attributes.items():
-        match = date_value_pattern.match(key)
-        if match:
-            date_str = match.group(1)
-            date_obj = datetime.strptime(date_str, '%Y%m%d')
-            date_value_list.append((date_obj, float(value)))
-
-    return np.array(date_value_list, dtype=object)

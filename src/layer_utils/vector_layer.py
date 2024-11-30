@@ -1,5 +1,7 @@
 import re
-from qgis.core import QgsMapLayer
+from datetime import datetime
+import numpy as np
+from qgis.core import QgsMapLayer, QgsFeature
 
 
 def checkVectorLayer(layer):
@@ -61,3 +63,31 @@ def checkVectorLayerTimeseries(layer):
         status = False
 
     return status, message
+
+
+def getFeatureAttributes(feature: QgsFeature) -> dict:
+    """
+    Get the attributes of a feature as a dictionary.
+    :param feature: QgsFeature
+    :return: Dictionary of feature attributes
+    """
+    return {field.name(): feature[field.name()] for field in feature.fields()}
+
+
+def extractDateValueAttributes(attributes: dict) -> list:
+    """
+    Extract attributes with keys in the format 'DYYYYMMDD' and return a list of tuples with datetime and float value.
+    :param attributes: Dictionary of feature attributes
+    :return: List of tuples (datetime, float)
+    """
+    date_value_pattern = re.compile(r'^D(\d{8})$')
+    date_value_list = []
+
+    for key, value in attributes.items():
+        match = date_value_pattern.match(key)
+        if match:
+            date_str = match.group(1)
+            date_obj = datetime.strptime(date_str, '%Y%m%d')
+            date_value_list.append((date_obj, float(value)))
+
+    return np.array(date_value_list, dtype=object)
