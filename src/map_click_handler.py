@@ -15,6 +15,7 @@ from osgeo import gdal
 from . import plot_timeseries as pts
 from .layer_utils import vector_layer as vector_layer_utils
 from .layer_utils import gmtsar_layer as gmtsar_layer_utils
+from .layer_utils import raster_layer as raster_layer_utils
 
 
 class MapClickHandler:
@@ -251,30 +252,6 @@ class TSClickHandler(MapClickHandler):
         self.plot_ts.plotTs(ref_values=self.ref_values)
 
 
-def createVrtFromFiles(*, raster_file_paths, band_names=None, out_file="") -> gdal.Dataset:
-    """
-    Create a VRT file in memory from a list of .grd files and rename each dataset based on its date.
-    :param raster_file_paths: List of .grd file paths
-    :param band_names: List of band names. Default is None.
-    :param out_file: Output file path. Default is an empty string for in-memory vrt file.
-    :return: VRT dataset
-    """
-
-    vrt_options = gdal.BuildVRTOptions(separate=True)
-    vrt_dataset = gdal.BuildVRT(out_file, raster_file_paths, options=vrt_options)
-
-    # Rename bands
-    if band_names is None:
-        return vrt_dataset
-
-    for i, band_name in enumerate(band_names, start=1):
-        band = vrt_dataset.GetRasterBand(i)
-        if band is not None:
-            band.SetDescription(band_name)
-
-    return vrt_dataset
-
-
 def getRasterTimeseriesAttributes(layer, point, time_series_data):
     """
     Get the timeseries values of the clicked point from the GMTSAR grd files.
@@ -284,8 +261,8 @@ def getRasterTimeseriesAttributes(layer, point, time_series_data):
     directory = os.path.dirname(file_path)
 
     raster_file_paths, band_names = gmtsar_layer_utils.getGmtsarGrdInfo(directory)
-    dataset = createVrtFromFiles(raster_file_paths=raster_file_paths,
-                                 band_names=band_names, out_file="")
+    dataset = raster_layer_utils.createVrtFromFiles(raster_file_paths=raster_file_paths,
+                                                    band_names=band_names, out_file="")
 
     if not dataset:
         return np.array([]), time_series_data
