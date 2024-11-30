@@ -251,34 +251,6 @@ class TSClickHandler(MapClickHandler):
         self.plot_ts.plotTs(ref_values=self.ref_values)
 
 
-def getGmtsarGrdInfo(directory) -> (list, list):
-    """
-    Get the list of GMTSAR time series grd files and their dates
-    """
-    pattern = re.compile(r'^\d{8}_.*\.grd')
-
-    grd_files = sorted([f for f in os.listdir(directory) if pattern.match(f)])
-    if not grd_files:
-        return [], []
-
-    # full paths
-    grd_file_paths = [os.path.join(directory, f) for f in grd_files]
-
-    date_pattern = re.compile(r'^\d{8}')
-    band_names = []
-    for grd_file in grd_file_paths:
-        match = date_pattern.match(os.path.basename(grd_file))
-        if match:
-            date_str = match.group(0)
-            band_name = f'D{date_str}'
-            band_names.append(band_name)
-
-    if len(grd_file_paths) != len(band_names):
-        raise ValueError("Number of .grd files and band names do not match.")
-
-    return grd_file_paths, band_names
-
-
 def createVrtFromFiles(*, raster_file_paths, band_names=None, out_file="") -> gdal.Dataset:
     """
     Create a VRT file in memory from a list of .grd files and rename each dataset based on its date.
@@ -311,7 +283,7 @@ def getRasterTimeseriesAttributes(layer, point, time_series_data):
     file_path = layer.source()
     directory = os.path.dirname(file_path)
 
-    raster_file_paths, band_names = getGmtsarGrdInfo(directory)
+    raster_file_paths, band_names = gmtsar_layer_utils.getGmtsarGrdInfo(directory)
     dataset = createVrtFromFiles(raster_file_paths=raster_file_paths,
                                  band_names=band_names, out_file="")
 
