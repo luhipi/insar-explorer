@@ -194,6 +194,9 @@ class InsarExplorer:
         # when closing the docked window:
         # self.dockwidget = None
 
+        # Released memory when widget is closed
+        self.gui_controller = None
+
         self.pluginIsActive = False
 
 
@@ -234,7 +237,8 @@ class InsarExplorer:
             # TODO: fix to allow choice of dock location
             self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
-            self.gui_controller = GuiController(self)
+            if self.gui_controller is None:
+                self.gui_controller = GuiController(self)
         else: # this will reload the widget when button clicked again
             self.iface.removeDockWidget(self.dockwidget)
             self.dockwidget = None
