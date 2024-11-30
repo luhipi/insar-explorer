@@ -185,6 +185,7 @@ class TSClickHandler(MapClickHandler):
         self.plot_ts = pts.PlotTs(self.ui)
         self.ts_values = 0
         self.ref_values = 0
+        self.time_series_data = None # keep data in memory for faster access
 
     def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         if not layer:
@@ -224,7 +225,8 @@ class TSClickHandler(MapClickHandler):
             self.ui.lb_msg_bar.setText(message)
             return
 
-        date_values = getGmtsarTimeseriesAttributes(layer, point=point)
+        date_values, self.time_series_data = (
+            getRasterTimeseriesAttributes(layer, point=point, time_series_data=self.time_series_data))
 
         if date_values.size == 0:
             return
@@ -249,55 +251,127 @@ class TSClickHandler(MapClickHandler):
         self.plot_ts.plotTs(ref_values=self.ref_values)
 
 
-def getGmtsarTimeseriesAttributes(layer, point: QgsPointXY) -> dict:
+def getGmtsarGrdInfo(directory) -> (list, list):
+    """
+    Get the list of GMTSAR time series grd files and their dates
+    """
+    pattern = re.compile(r'^\d{8}_.*\.grd')
+
+    grd_files = sorted([f for f in os.listdir(directory) if pattern.match(f)])
+    if not grd_files:
+        return [], []
+
+    # full paths
+    grd_file_paths = [os.path.join(directory, f) for f in grd_files]
+
+    date_pattern = re.compile(r'^\d{8}')
+    band_names = []
+    for grd_file in grd_file_paths:
+        match = date_pattern.match(os.path.basename(grd_file))
+        if match:
+            date_str = match.group(0)
+            band_name = f'D{date_str}'
+            band_names.append(band_name)
+
+    if len(grd_file_paths) != len(band_names):
+        raise ValueError("Number of .grd files and band names do not match.")
+
+    return grd_file_paths, band_names
+
+
+def createVrtFromFiles(*, raster_file_paths, band_names=None, out_file="") -> gdal.Dataset:
+    """
+    Create a VRT file in memory from a list of .grd files and rename each dataset based on its date.
+    :param raster_file_paths: List of .grd file paths
+    :param band_names: List of band names. Default is None.
+    :param out_file: Output file path. Default is an empty string for in-memory vrt file.
+    :return: VRT dataset
+    """
+
+    vrt_options = gdal.BuildVRTOptions(separate=True)
+    vrt_dataset = gdal.BuildVRT(out_file, raster_file_paths, options=vrt_options)
+
+    # Rename bands
+    if band_names is None:
+        return vrt_dataset
+
+    for i, band_name in enumerate(band_names, start=1):
+        band = vrt_dataset.GetRasterBand(i)
+        if band is not None:
+            band.SetDescription(band_name)
+
+    return vrt_dataset
+
+
+def getRasterTimeseriesAttributes(layer, point, time_series_data):
     """
     Get the timeseries values of the clicked point from the GMTSAR grd files.
     The grd files should be in the same directory as the layer (typically velocity) file.
     """
     file_path = layer.source()
     directory = os.path.dirname(file_path)
-    pattern = re.compile(r'^\d{8}_.*\.grd')
 
-    grd_files = [f for f in os.listdir(directory) if pattern.match(f)]
+    raster_file_paths, band_names = getGmtsarGrdInfo(directory)
+    dataset = createVrtFromFiles(raster_file_paths=raster_file_paths,
+                                 band_names=band_names, out_file="")
 
-    if not grd_files:
-        return np.array([])
-
-    date_value_list = []
-    first_grd_file_full_path = os.path.join(directory, grd_files[0])
-    dataset = gdal.Open(first_grd_file_full_path)
     if not dataset:
-        return np.array([])
+        return np.array([]), time_series_data
 
-    transform = dataset.GetGeoTransform()
+    date_value_list, time_series_data = getVrtTimeseriesAttributes(dataset, point, time_series_data)
+    return date_value_list, time_series_data
+
+
+def getVrtTimeseriesAttributes(vrt_dataset, point, time_series_data, memory_limit=500):
+    """
+    Get the timeseries values of the clicked point from a vrt file that consists of time series data.
+    The vrt file should have description for each band in the format 'DYYYYMMDD'.
+    :param vrt_dataset: VRT dataset
+    :param point: QgsPointXY
+    :param time_series_data: numpy array
+    :param memory_limit: int in Mb
+    """
+
+    transform = vrt_dataset.GetGeoTransform()
     inv_transform = gdal.InvGeoTransform(transform)
 
     x, y = point.x(), point.y()
     px, py = gdal.ApplyGeoTransform(inv_transform, x, y)
+    px, py = int(px), int(py)
 
-    grd_file_paths = [os.path.join(directory, grd_file) for grd_file in grd_files]
-    date_objs = [datetime.strptime(grd_file[:8], '%Y%m%d') for grd_file in grd_files]
+    band = vrt_dataset.GetRasterBand(1)
+    x_size = band.XSize
+    y_size = band.YSize
+    if not (0 <= px < x_size and 0 <= py < y_size):
+        return np.array([]), time_series_data
 
-    for grd_file_full_path, date_obj in zip(grd_file_paths, date_objs):
-        dataset = gdal.Open(grd_file_full_path)
+    num_bands = vrt_dataset.RasterCount
+    data_type_size = gdal.GetDataTypeSize(band.DataType) // 8  # Size in bytes
+    expected_size = x_size * y_size * num_bands * data_type_size
 
-        if not dataset:
-            continue
+    if expected_size > memory_limit*1024*1024:
+        pixel_values = vrt_dataset.ReadAsArray(px, py, 1, 1)
+        if pixel_values is None:
+            return np.array([]), time_series_data
+        pixel_values = pixel_values[:, 0, 0]
 
-        band = dataset.GetRasterBand(1)
-        x_size = band.XSize
-        y_size = band.YSize
-        if not (0 <= px < x_size and 0 <= py < y_size):
-            return np.array([])
+    else:  # read full data at once
+        if time_series_data is None:
+            time_series_data = vrt_dataset.ReadAsArray()
+        pixel_values = time_series_data[:, py, px]
 
-        pixel_value = band.ReadAsArray(int(px), int(py), 1, 1)[0, 0]
+    if pixel_values is None:
+        return np.array([]), time_series_data
 
-        # if not pixel_value == band.GetNoDataValue():
-        #     date_value_list.append((date_obj, pixel_value))
+    date_value_list = []
+    date_objs = [datetime.strptime(vrt_dataset.GetRasterBand(i).GetDescription()[1:], '%Y%m%d') for i in
+                 range(1, vrt_dataset.RasterCount + 1)]
+
+    for date_obj, pixel_value in zip(date_objs, pixel_values):
         if not np.isnan(pixel_value):
             date_value_list.append((date_obj, pixel_value))
 
-    return np.array(date_value_list, dtype=object)
+    return np.array(date_value_list, dtype=object), time_series_data
 
 
 def getFeatureAttributes(feature: QgsFeature) -> dict:
