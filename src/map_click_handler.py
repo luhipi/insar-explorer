@@ -1,3 +1,5 @@
+import os
+
 from qgis.PyQt.QtWidgets import QMessageBox, QApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsPointXY, QgsGeometry, QgsMapLayer, QgsRectangle, QgsFeatureRequest, QgsSettings, Qgis, QgsFeature
@@ -8,8 +10,12 @@ import numpy as np
 import re
 from datetime import datetime
 
+from osgeo import gdal
+
 from . import plot_timeseries as pts
-from . import layer_utils
+from .layer_utils import vector_layer as vector_layer_utils
+from .layer_utils import gmtsar_layer as gmtsar_layer_utils
+from .layer_utils import raster_layer as raster_layer_utils
 
 
 class MapClickHandler:
@@ -38,7 +44,7 @@ class MapClickHandler:
         if not layer:
             layer = self.iface.activeLayer()
 
-        status, message = layer_utils.checkVectorLayer(layer)
+        status, message = vector_layer_utils.checkVectorLayer(layer)
         if status is False:
             self.ui.lb_msg_bar.setText(message)
             return
@@ -180,21 +186,43 @@ class TSClickHandler(MapClickHandler):
         self.plot_ts = pts.PlotTs(self.ui)
         self.ts_values = 0
         self.ref_values = 0
+        self.raster_layer = raster_layer_utils.RasterTimeseries()
+
+    def reset(self):
+        self.clearFeatureHighlight()
+        self.clearReferenceFeatureHighlight()
+
+        self.ts_values = 0
+        self.ref_values = 0
+        self.raster_layer.reset()
+
+        self.plot_ts.clear()
+
 
     def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         if not layer:
             layer = self.iface.activeLayer()
+        status_vector, message = vector_layer_utils.checkVectorLayer(layer)
+        status_raster, message = gmtsar_layer_utils.checkGmtsarLayer(layer)
+        if status_vector:
+            self.choosePointClickedVector(point=point, layer=layer, ref=ref)
+        elif status_raster:
+            self.choosePointClickedRaster(point=point, layer=layer, ref=ref)
+        else:
+            return
 
+
+    def choosePointClickedVector(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         feature = self.identifyClickedFeature(point, layer=layer, ref=ref)
 
-        status, message = layer_utils.checkVectorLayerTimeseries(layer)
+        status, message = vector_layer_utils.checkVectorLayerTimeseries(layer)
         if status is False:
             self.ui.lb_msg_bar.setText(message)
             return
 
         if feature:
-            attributes = getFeatureAttributes(feature)
-            date_values = extractDateValueAttributes(attributes)
+            attributes = vector_layer_utils.getFeatureAttributes(feature)
+            date_values = vector_layer_utils.extractDateValueAttributes(attributes)
             if not ref:
                 self.ts_values = date_values[:, 1]
             else:
@@ -203,35 +231,33 @@ class TSClickHandler(MapClickHandler):
             dates = date_values[:, 0]
             self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
 
+    def choosePointClickedRaster(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
+        status, message = gmtsar_layer_utils.checkGmtsarLayerTimeseries(layer)
+        if status is False:
+            self.ui.lb_msg_bar.setText(message)
+            return
+
+        date_values = self.raster_layer.getRasterTimeseriesAttributes(layer, point=point)
+
+        if date_values.size == 0:
+            return
+
+        clicked_point = QgsGeometry.fromPointXY(point)
+        if not ref:
+            self.highlightSelectedFeatures(clicked_point)
+        else:
+            self.highlightSelectedReferenceFeature(clicked_point)
+
+        if not ref:
+            self.ts_values = date_values[:, 1]
+        else:
+            self.ref_values = date_values[:, 1]
+
+        dates = date_values[:, 0]
+        self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
+
     def resetReferencePoint(self):
         self.ref_values = 0
         self.clearReferenceFeatureHighlight()
         self.plot_ts.plotTs(ref_values=self.ref_values)
 
-def getFeatureAttributes(feature: QgsFeature) -> dict:
-    """
-    Get the attributes of a feature as a dictionary.
-    :param feature: QgsFeature
-    :return: Dictionary of feature attributes
-    """
-    return {field.name(): feature[field.name()] for field in feature.fields()}
-
-
-
-def extractDateValueAttributes(attributes: dict) -> list:
-    """
-    Extract attributes with keys in the format 'DYYYYMMDD' and return a list of tuples with datetime and float value.
-    :param attributes: Dictionary of feature attributes
-    :return: List of tuples (datetime, float)
-    """
-    date_value_pattern = re.compile(r'^D(\d{8})$')
-    date_value_list = []
-
-    for key, value in attributes.items():
-        match = date_value_pattern.match(key)
-        if match:
-            date_str = match.group(1)
-            date_obj = datetime.strptime(date_str, '%Y%m%d')
-            date_value_list.append((date_obj, float(value)))
-
-    return np.array(date_value_list, dtype=object)

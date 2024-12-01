@@ -27,6 +27,10 @@ class PlotTs():
         self.plot_residuals_flag = False
         self.plot_residuals_list = []
 
+    def clear(self):
+        self.ui.figure.clear()
+        self.ui.canvas.draw()
+
     def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
         if dates is not None:
             self.dates = dates
@@ -118,8 +122,8 @@ class PlotTs():
     def setXticks(self, ax=None):
         if not ax:
             ax = self.ax
-        min_date = np.min(self.dates)
-        max_date = np.max(self.dates)
+        min_date = np.nanmin(self.dates)
+        max_date = np.nanmax(self.dates)
         date_range = (max_date - min_date).days
 
         if date_range >= 1461:
@@ -183,8 +187,8 @@ class PlotTs():
         """
         if not ax:
             ax = self.ax
-        min_date = np.min(self.dates)
-        max_date = np.max(self.dates)
+        min_date = np.nanmin(self.dates)
+        max_date = np.nanmax(self.dates)
 
         if use_data_xlim:
             ax.set_xlim(min_date-timedelta(days=padding),
@@ -199,13 +203,15 @@ class PlotTs():
             ax = self.ax
 
         if ax == self.ax:
-            y_min = np.min(self.plot_values)
-            y_max = np.max(self.plot_values)
+            y_min = np.nanmin(self.plot_values)
+            y_max = np.nanmax(self.plot_values)
         elif ax == self.ax_residuals:
-            y_max = np.max(np.abs(self.residuals_values))
+            y_max = np.nanmax(np.abs(self.residuals_values))
             y_min = -y_max
 
         y_range = y_max - y_min
+        y_min_rounded = -5
+        y_max_rounded = 5
         for i in [10000, 1000, 100, 10]:
             if y_range >= i:
                 y_min_rounded = np.floor(y_min / i) * i
