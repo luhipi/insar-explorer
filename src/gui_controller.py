@@ -1,6 +1,6 @@
 from qgis.gui import QgsMapToolEmitPoint
 from PyQt5.QtWidgets import QFileDialog
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, QTimer
 
 from . import map_click_handler as cph
 from . import setup_frames
@@ -22,6 +22,13 @@ class GuiController(QObject):
         # make point selection active by default
         self.ui.pb_choose_point.setChecked(True)
         self.activatePointSelection(True)
+
+        self.iface.currentLayerChanged.connect(self.onLayerChanged)
+
+    def onLayerChanged(self, layer):
+        if layer:
+            self.choose_point_click_handler.reset()
+            self.insar_map.reset()
 
     def initializeClickTool(self):
         if not self.click_tool:
@@ -102,7 +109,7 @@ class GuiController(QObject):
 
     def applyLiveSymbology(self):
         if self.ui.cb_symbology_live.isChecked():
-            self.applySymbology()
+            QTimer.singleShot(0, self.applySymbology)
 
     def applySymbology(self):
         self.insar_map.min_value = float(self.ui.sb_symbol_lower_range.value())
