@@ -5,8 +5,7 @@
 ## Description
 InSAR Explorer is a QGIS plugin that allows for dynamic visualization and analysis of InSAR time series data. 
 InSAR Explorer currently supports visualizing outputs of [SARvey](https://github.com/luhipi/sarvey), [MintPy](https://github.com/insarlab/MintPy), [MiaplPy](https://github.com/insarlab/MiaplPy) and [GMTSAR](https://topex.ucsd.edu/gmtsar/).
-
-Check the [documentation](https://luhipi.github.io/insar-explorer/) for a list of all supported software and instructions on how to create the required input data.
+Check the full [documentation](https://luhipi.github.io/insar-explorer/) for a list of all supported software and instructions on how to create the required input data.
 
 ## How to use:
 ### Install the plugin
@@ -20,7 +19,7 @@ You can use the sample data provided [here](https://luhipi.github.io/insar-explo
 
 ### Use the plugin to plot time series
 Open a vector layer with InSAR time series data in QGIS. Open the plugin and click on any point in the map to display the time series data.
-More information [here](https://luhipi.github.io/insar-explorer/#usage)
+More information [here](https://luhipi.github.io/insar-explorer/#usage).
 
 ## Contributing
 We welcome contributions to the project. Please follow the guidelines below.
