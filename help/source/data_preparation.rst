@@ -1,8 +1,7 @@
-
 Data preparation
 ****************
 
-The data can be prepared for different software tools as follows:
+    The data can be prepared for different software tools as follows:
 
 .. include:: data_preparation/sarvey.rst
 
@@ -13,5 +12,3 @@ The data can be prepared for different software tools as follows:
 .. include:: data_preparation/gmtsar.rst
 
 .. include:: data_preparation/stamps.rst
-
-**Note:** if you are an InSAR software developer interested in incorporating data visualization support within InSAR Explorer, please reach out to us.
