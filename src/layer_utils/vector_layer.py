@@ -26,7 +26,7 @@ def checkVectorLayer(layer):
 def checkVectorLayerVelocity(layer):
     """ check layer is a valid vector with velocity """
 
-    velocity_field_name_options = ['velocity', 'VEL']
+    velocity_field_name_options = ['velocity', 'VEL', 'mean_velocity']
     field_name = None
     message = ""
     for velocity_field in velocity_field_name_options:
