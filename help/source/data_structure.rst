@@ -8,9 +8,9 @@ Data Structure
 
        * - Field Name
          - Description
-       * - ``velocity`` or ``VEL``
+       * - ``velocity``, ``VEL``, or ``mean_velocity``
          - A field containing the InSAR velocity data.
-       * - ``DYYYYMMDD``
+       * - ``DYYYYMMDD`` or ``YYYYMMDD``
          - Multiple fields for time series data, where ``YYYYMMDD`` is the date of the data, e.g., ``D20190101``, ``D20190201``, etc.
 
     For specific time series outputs, like from GMTSAR, InSAR Explorer supports raster format as well.
