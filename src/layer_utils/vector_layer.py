@@ -44,7 +44,9 @@ def checkVectorLayerVelocity(layer):
 
 def checkVectorLayerTimeseries(layer):
     """ check layer is a valid vector with velocity """
-    date_field_pattern = re.compile(r'^D\d{8}$')
+    pattern_options = [r'^D(\d{8})$', r'(\d{8})$']
+    date_field_patterns = [re.compile(pattern) for pattern in pattern_options]
+
     count = 0
     message = ""
 
@@ -53,7 +55,8 @@ def checkVectorLayerTimeseries(layer):
         return status, message
 
     for field in layer.fields():
-        if date_field_pattern.match(field.name()):
+        match = [pattern.match(field.name()) for pattern in date_field_patterns]
+        if any(match):
             count += 1
 
     if count >0:
@@ -76,17 +79,18 @@ def getFeatureAttributes(feature: QgsFeature) -> dict:
 
 def extractDateValueAttributes(attributes: dict) -> list:
     """
-    Extract attributes with keys in the format 'DYYYYMMDD' and return a list of tuples with datetime and float value.
+    Extract attributes with keys in the format 'DYYYYMMDD' or 'YYYYMMDD' and return a list of tuples with datetime and float value.
     :param attributes: Dictionary of feature attributes
     :return: List of tuples (datetime, float)
     """
-    date_value_pattern = re.compile(r'^D(\d{8})$')
+    pattern_options = [r'^D(\d{8})$', r'(\d{8})$']
+    date_value_patterns = [re.compile(pattern) for pattern in pattern_options]
     date_value_list = []
 
     for key, value in attributes.items():
-        match = date_value_pattern.match(key)
-        if match:
-            date_str = match.group(1)
+        match = [pattern.match(key) for pattern in date_value_patterns]
+        if any(match):
+            date_str = next(m.group(1) for m in match if m)
             date_obj = datetime.strptime(date_str, '%Y%m%d')
             date_value_list.append((date_obj, float(value)))
 
