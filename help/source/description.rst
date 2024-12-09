@@ -7,7 +7,7 @@ Description
     InSAR Explorer supports visualizing outputs of
     `SARvey <https://github.com/luhipi/sarvey>`_,
     `Mintpy <https://github.com/insarlab/MintPy>`_,
-    `MiaplPy <https://github.com/insarlab/MiaplPy>`_
+    `MiaplPy <https://github.com/insarlab/MiaplPy>`_,
     `GMTSAR <https://topex.ucsd.edu/gmtsar/>`_,
     and `EGMS <https://egms.land.copernicus.eu/>`_
     .
