@@ -1,6 +1,7 @@
 ### History
 
 v0.6.0
+- Add support for EGMS products.
 - Add support for GMTSAR grd time series.
 - Reset parameters after layer change.
 

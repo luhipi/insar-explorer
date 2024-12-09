@@ -12,3 +12,5 @@ Data preparation
 .. include:: data_preparation/gmtsar.rst
 
 .. include:: data_preparation/stamps.rst
+
+.. include:: data_preparation/egms.rst
