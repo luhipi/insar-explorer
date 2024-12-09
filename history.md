@@ -1,5 +1,11 @@
 ### History
 
+v0.6.0
+- Add support for EGMS products.
+- Add support for GMTSAR grd time series.
+- Reset parameters after layer change.
+
+
 v0.5.0
 - Add toolbar to time series plot for zooming, panning, etc.
 - Add push buttons for getting map symbology range from data

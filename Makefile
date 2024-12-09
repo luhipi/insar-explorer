@@ -40,7 +40,7 @@ SOURCES = \
 	__init__.py \
 	insar_explorer.py insar_explorer_dockwidget.py
 
-PLUGINNAME = insar_explorer
+PLUGINNAME = insar-explorer
 
 PY_FILES = \
 	__init__.py \
