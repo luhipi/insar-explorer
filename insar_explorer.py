@@ -171,7 +171,7 @@ class InsarExplorer:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/insar_explorer/icon.png'
+        icon_path = self.plugin_dir + '/icon.png'
         self.add_action(
             icon_path,
             text=self.tr(u'InSAR Explorer'),
