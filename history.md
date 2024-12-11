@@ -1,5 +1,11 @@
 ### History
 
+v0.6.1
+- Fix bug in initial import
+- Fix bugs in icon
+- Correct link to documentation
+
+
 v0.6.0
 - Add support for EGMS products.
 - Add support for GMTSAR grd time series.

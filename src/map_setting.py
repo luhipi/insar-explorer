@@ -5,7 +5,6 @@ from qgis.core import QgsRasterShader, QgsColorRampShader, QgsSingleBandPseudoCo
 
 
 from . import color_maps
-from . import layer_utils
 from .layer_utils import vector_layer as vector_layer_utils
 from .layer_utils import gmtsar_layer as gmtsar_layer_utils
 
