@@ -19,7 +19,7 @@ You can use the sample data provided [here](https://luhipi.github.io/insar-explo
 
 ### Use the plugin to plot time series
 Open a vector or raster layer with InSAR time series data in QGIS. Open the plugin and click on any point in the map to display the time series data.
-More information [here](https://luhipi.github.io/insar_explorer/#usage)
+More information [here](https://luhipi.github.io/insar-explorer/#usage)
 
 ## Contributing
 We welcome contributions to the project. Please follow the guidelines [here](https://luhipi.github.io/insar-explorer/#contributing).
