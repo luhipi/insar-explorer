@@ -28,7 +28,7 @@ except ImportError:
     from qgis.PyQt.QtGui import QColor, QBrush
 
 from json_settings import JsonSettings
-from src.object_with_checkbox import *
+from .src.object_with_checkbox import *
 
 
 class SettingsTabWidget(QTableWidget):
