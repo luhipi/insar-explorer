@@ -9,17 +9,17 @@
             },
             "xlabel": {
                 "type": "string",
-                "value": "",
+                "value": "Date",
                 "default": "Date"
             },
             "ylabel": {
                 "type": "string",
-                "value": "",
+                "value": "Deformation [mm]",
                 "default": "Deformation [mm]"
             },
             "marker": {
                 "type": "dropdown",
-                "value": "s",
+                "value": "o",
                 "options": [
                     "o",
                     ".",
@@ -31,12 +31,12 @@
             },
             "marker color": {
                 "type": "color",
-                "value": "#3859ff",
+                "value": "#1f77b4",
                 "default": "#1f77b4"
             },
             "marker size": {
                 "type": "float",
-                "value": 1.0,
+                "value": 5.0,
                 "default": 5,
                 "range": [
                     0,
@@ -45,7 +45,7 @@
             },
             "line style": {
                 "type": "dropdown",
-                "value": "-",
+                "value": "",
                 "options": [
                     "",
                     "-",
@@ -57,28 +57,41 @@
             },
             "line color": {
                 "type": "color",
-                "value": "#ffa69c",
+                "value": "#1f77b4",
                 "default": "#1f77b4"
             },
             "line width": {
                 "type": "float",
-                "value": 2.0,
+                "value": 1.0,
                 "default": 1.0,
                 "range": [
                     0,
                     100
                 ]
             },
+            "ymax": {
+                "type": "float",
+                "value": 10.0,
+                "auto": true,
+                "range": [
+                    -10000,
+                    10000
+                ]
+            },
             "ymin": {
                 "type": "float",
                 "value": 0.0,
-                "auto": false
+                "auto": true,
+                "range": [
+                    -10000,
+                    10000
+                ]
             }
         },
         "residual plot": {
             "title": {
                 "type": "string",
-                "value": "Residuals",
+                "value": "",
                 "default": ""
             }
         }
