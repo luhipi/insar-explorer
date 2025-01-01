@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 try:
     import json5 as json
@@ -39,7 +39,12 @@ class JsonSettings:
         self.data = full_data
 
         if block_key is None:
+            block_key = self.block_key
+
+        if block_key is None:
             return self.data
+
+        self.block_key = block_key
 
         if block_key not in full_data:
             full_data[block_key] = {}

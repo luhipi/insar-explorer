@@ -189,16 +189,23 @@ class SpinBoxWithCheckbox(ObjectWithCheckbox):
     :type flag: bool
     :param checkbox: Whether to include a checkbox.
     :type checkbox: bool, optional
+    :param range: The range of the QSpinBox, defaults to [None, None].
+    :type range: list of int, optional
     :param parent: The parent widget.
     :type parent: QWidget, optional
     """
-    def __init__(self, value, flag, checkbox=False, parent=None):
+    def __init__(self, value, flag, checkbox=False, range=[None, None], parent=None):
+        self.range = range
         super().__init__(value, flag, checkbox, parent)
 
     def addObject(self, flag):
         """ Adds a QSpinBox as the main widget. """
         self.wobject = QSpinBox()
         self.wobject.setEnabled(not flag)
+        if self.range[0] is not None:
+            self.wobject.setMinimum(self.range[0])
+        if self.range[1] is not None:
+            self.wobject.setMaximum(self.range[1])
 
     def setValue(self, value):
         """
@@ -229,16 +236,23 @@ class DoubleSpinBoxWithCheckbox(ObjectWithCheckbox):
     :type flag: bool
     :param checkbox: Whether to include a checkbox.
     :type checkbox: bool, optional
+    :param range: The range of the QDoubleSpinBox, defaults to [None, None].
+    :type range: list of float, optional
     :param parent: The parent widget.
     :type parent: QWidget, optional
     """
-    def __init__(self, value, flag, checkbox=False, parent=None):
-        super().__init__(value, flag, checkbox, parent)
+    def __init__(self, value, flag, checkbox=False, range=[None, None], parent=None):
+        self.range = range
+        super().__init__(value=value, flag=flag, checkbox=checkbox, parent=parent)
 
     def addObject(self, flag):
         """ Adds a QDoubleSpinBox as the main widget. """
         self.wobject = QDoubleSpinBox()
         self.wobject.setEnabled(not flag)
+        if self.range[0] is not None:
+            self.wobject.setMinimum(float(self.range[0]))
+        if self.range[1] is not None:
+            self.wobject.setMaximum(float(self.range[1]))
 
     def setValue(self, value):
         """

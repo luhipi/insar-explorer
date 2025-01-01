@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 import sys
 
@@ -71,7 +71,10 @@ class SettingsTabWidget(QTableWidget):
             param_value = info.get("value", "")
             param_default = info.get("default", "")
             auto_flag = info.get("auto", False)
+            # options for dropdown list
             options = info.get("options", None)
+            # range for int and float
+            range = info.get("range", [None, None])
 
             # add auto checkbox if auto flag is present
             add_checkbox = "auto" in info
@@ -92,11 +95,11 @@ class SettingsTabWidget(QTableWidget):
                 wobject = QCheckBox()
                 wobject.setChecked(param_value)
             elif param_type == "float":
-                wobject = DoubleSpinBoxWithCheckbox(param_value, auto_flag, add_checkbox)
+                wobject = DoubleSpinBoxWithCheckbox(param_value, auto_flag, add_checkbox, range)
                 wobject.setValue(param_value)
 
             elif param_type == "int":
-                wobject = SpinBoxWithCheckbox(param_value, auto_flag, add_checkbox)
+                wobject = SpinBoxWithCheckbox(param_value, auto_flag, add_checkbox, range)
                 wobject.setValue(param_value)
 
             elif param_type == "string":
