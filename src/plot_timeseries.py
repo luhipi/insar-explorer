@@ -1,9 +1,12 @@
+import os
+
 import numpy as np
 import matplotlib.dates as mdates
 import matplotlib.ticker as ticker
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from .model_fitting import FittingModels
+from .setting_manager_ui.json_settings import JsonSettings
 
 class PlotTs():
 
@@ -15,8 +18,9 @@ class PlotTs():
         self.ref_values = 0
         self.plot_values = None
         self.residuals_values = None
-        self.marker = '.'
-        self.residual_markers = '.'
+        script_path = os.path.abspath(__file__)
+        json_file = "config.json"
+        self.config_file = os.path.join(os.path.dirname(script_path), 'config', json_file)
         self.fit_plot_list = []
         self.fit_models = []
         self.fit_seasonal_flag = False
@@ -26,6 +30,28 @@ class PlotTs():
         self.ax_residuals = None
         self.plot_residuals_flag = False
         self.plot_residuals_list = []
+        self.parms = {}
+        self.updateSettings()
+
+    def updateSettings(self):
+        parms_ts = JsonSettings(self.config_file)
+        parms_ts.load("timeseries settings")
+
+        parms = {}
+        parms['title'] = parms_ts.get(["time series plot", "title"]) or ""
+        parms['xlabel'] = parms_ts.get(["time series plot", "xlabel"]) or ""
+        parms['ylabel'] = parms_ts.get(["time series plot", "ylabel"]) or ""
+        parms['marker'] = parms_ts.get(["time series plot", "marker"]) or "."
+        parms['marker color'] = parms_ts.get(["time series plot", "marker color"]) or None
+        parms['marker size'] = parms_ts.get(["time series plot", "marker size"])
+        parms['line style'] = parms_ts.get(["time series plot", "line style"]) or ''
+        parms['line color'] = parms_ts.get(["time series plot", "line color"]) or None
+        parms['line width'] = parms_ts.get(["time series plot", "line width"])
+
+        parms['ymin'] = parms_ts.get(["time series plot", "ymin"])
+        parms['ymax'] = parms_ts.get(["time series plot", "ymax"])
+
+        self.parms['time series plot'] = parms
 
     def clear(self):
         self.ui.figure.clear()
@@ -45,6 +71,7 @@ class PlotTs():
 
     def initializeAxes(self):
         self.ui.figure.clear()
+        self.updateSettings()
         if self.plot_residuals_flag:
             self.ax = self.ui.figure.add_subplot(211)
             self.ax_residuals = self.ui.figure.add_subplot(212)
@@ -52,15 +79,24 @@ class PlotTs():
             self.ax = self.ui.figure.add_subplot(111)
 
     def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker=None, marker_replicate='.k'):
-        if marker is None:
-            marker = self.marker
         self.initializeAxes()
+
+        if marker is None:
+            marker = self.parms['time series plot']['marker']
 
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
         if self.dates is None:
             return
 
-        self.ax.plot(self.dates, self.plot_values, marker)
+        marker_size = self.parms['time series plot']['marker size']
+        marker_color = self.parms['time series plot']['marker color']
+        line_style = self.parms['time series plot']['line style']
+        line_color = self.parms['time series plot']['line color']
+        line_width = self.parms['time series plot']['line width']
+
+        self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color)
+        if line_style:
+            self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
         if self.replicate_flag:
             replicate_up = self.ax.plot(self.dates, self.plot_values + self.replicate_value,
                                         marker_replicate, color='gray')
@@ -112,12 +148,29 @@ class PlotTs():
         self.setYlims(ax=ax)
         self.setYticks(ax=ax)
         self.setGrid(status=True, ax=ax)
+        self.setLabels(ax=ax)
         self.ui.figure.tight_layout()
 
     def setGrid(self, status, ax=None):
         if not ax:
             ax = self.ax
         ax.grid(status)
+
+    def setLabels(self, ax=None):
+        if not ax:
+            ax = self.ax
+
+        title = self.parms['time series plot']['title']
+        if title != "":
+            ax.set_title(title)
+
+        label = self.parms['time series plot']['xlabel']
+        if label != "":
+            ax.set_xlabel(label)
+
+        label = self.parms['time series plot']['ylabel']
+        if label != "":
+            ax.set_ylabel(label)
 
     def setXticks(self, ax=None):
         if not ax:
@@ -222,6 +275,12 @@ class PlotTs():
         y_max_rounded = np.max([y_max_rounded, 5])
 
         ax.set_ylim(y_min_rounded, y_max_rounded)
+
+        ymin = self.parms['time series plot']['ymin']
+        ymax = self.parms['time series plot']['ymax']
+        import warnings
+        warnings.warn(str(ymin))
+        ax.set_ylim([ymin, ymax])  # TODO: check if works with ymax or ymin=None
 
     def savePlotAsImage(self, filename=None):
         if filename:
