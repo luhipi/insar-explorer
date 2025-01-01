@@ -59,6 +59,13 @@ class PlotTs():
 
         self.parms['time series plot'] = parms
 
+        # export settings
+        parms = {}
+        parms['dpi'] = parms_ts.get(["export", "dpi"]) or 300
+        parms['pad'] = parms_ts.get(["export", "pad"]) or 0.1
+
+        self.parms['export'] = parms
+
     def clear(self):
         self.ui.figure.clear()
         self.ui.canvas.draw()
@@ -294,11 +301,20 @@ class PlotTs():
         ax.set_ylim([ymin, ymax])  # TODO: check if works with ymax or ymin=None
 
     def savePlotAsImage(self, filename=None):
+        parms = self.parms["export"]
+        dpi = int(parms["dpi"])
+        pad = parms["pad"]
+        fig_size_export = (12, 6) if self.plot_residuals_flag else (12, 3)
+        fig_size = self.ui.figure.get_size_inches()
         if filename:
-            self.ui.figure.savefig(filename, dpi=300,
+            self.ui.figure.set_size_inches(fig_size_export)
+            self.ui.figure.savefig(filename,
+                                   dpi=dpi,
                                    bbox_inches='tight',
-                                   transparent=True,
-                                   pad_inches=0)
+                                   transparent=False,
+                                   pad_inches=pad)
+            self.ui.figure.set_size_inches(fig_size)
+            self.ui.canvas.draw()
 
 # import plotly.graph_objs as go
 # import plotly.io as pio

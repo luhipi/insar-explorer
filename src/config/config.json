@@ -125,6 +125,29 @@
                 "value": "",
                 "default": ""
             }
+        },
+        "export": {
+            "dpi": {
+                "type": "dropdown",
+                "value": "72",
+                "options": [
+                    "72",
+                    "150",
+                    "300",
+                    "600",
+                    "1200"
+                ],
+                "default": "300"
+            },
+            "pad": {
+                "type": "float",
+                "value": 0.1,
+                "default": 0.1,
+                "range": [
+                    0,
+                    1
+                ]
+            }
         }
     },
     "other setting": {}
