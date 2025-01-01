@@ -244,7 +244,6 @@ class PlotTs():
         if minor_tick_interval:
             ax.yaxis.set_minor_locator(ticker.MultipleLocator(minor_tick_interval))
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.0f}'))
-        ax.set_ylabel('[mm]')
 
     def setXlims(self, *, ax=None, use_data_xlim=True, padding=30):
         """
