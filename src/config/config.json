@@ -1,0 +1,87 @@
+{
+    "global_config": {},
+    "timeseries settings": {
+        "time series plot": {
+            "title": {
+                "type": "string",
+                "value": "",
+                "default": ""
+            },
+            "xlabel": {
+                "type": "string",
+                "value": "",
+                "default": "Date"
+            },
+            "ylabel": {
+                "type": "string",
+                "value": "",
+                "default": "Deformation [mm]"
+            },
+            "marker": {
+                "type": "dropdown",
+                "value": "s",
+                "options": [
+                    "o",
+                    ".",
+                    "^",
+                    "s",
+                    "x"
+                ],
+                "default": "o"
+            },
+            "marker color": {
+                "type": "color",
+                "value": "#3859ff",
+                "default": "#1f77b4"
+            },
+            "marker size": {
+                "type": "float",
+                "value": 1.0,
+                "default": 5,
+                "range": [
+                    0,
+                    100
+                ]
+            },
+            "line style": {
+                "type": "dropdown",
+                "value": "-",
+                "options": [
+                    "",
+                    "-",
+                    "--",
+                    "-.",
+                    ":"
+                ],
+                "default": ""
+            },
+            "line color": {
+                "type": "color",
+                "value": "#ffa69c",
+                "default": "#1f77b4"
+            },
+            "line width": {
+                "type": "float",
+                "value": 2.0,
+                "default": 1.0,
+                "range": [
+                    0,
+                    100
+                ]
+            },
+            "ymin": {
+                "type": "float",
+                "value": 0.0,
+                "auto": false
+            }
+        },
+        "residual plot": {
+            "title": {
+                "type": "string",
+                "value": "Residuals",
+                "default": ""
+            }
+        }
+    },
+    "other setting": {}
+}
