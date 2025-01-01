@@ -51,6 +51,12 @@ class PlotTs():
         parms['ymin'] = parms_ts.get(["time series plot", "ymin"])
         parms['ymax'] = parms_ts.get(["time series plot", "ymax"])
 
+        # replica
+        parms['replica up color'] = parms_ts.get(["time series plot", "replica up color"]) or 'gray'
+        parms['replica down color'] = parms_ts.get(["time series plot", "replica down color"]) or 'gray'
+        parms['replica marker size'] = parms_ts.get(["time series plot", "replica marker size"]) or 5
+        parms['replica marker'] = parms_ts.get(["time series plot", "replica marker"]) or 'o'
+
         self.parms['time series plot'] = parms
 
     def clear(self):
@@ -78,7 +84,7 @@ class PlotTs():
         else:
             self.ax = self.ui.figure.add_subplot(111)
 
-    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker=None, marker_replicate='.k'):
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker=None):
         self.initializeAxes()
 
         if marker is None:
@@ -88,20 +94,25 @@ class PlotTs():
         if self.dates is None:
             return
 
-        marker_size = self.parms['time series plot']['marker size']
-        marker_color = self.parms['time series plot']['marker color']
-        line_style = self.parms['time series plot']['line style']
-        line_color = self.parms['time series plot']['line color']
-        line_width = self.parms['time series plot']['line width']
+        parms = self.parms['time series plot']
+        marker_size = parms['marker size']
+        marker_color = parms['marker color']
+        line_style = parms['line style']
+        line_color = parms['line color']
+        line_width = parms['line width']
 
         self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color)
         if line_style:
             self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
         if self.replicate_flag:
-            replicate_up = self.ax.plot(self.dates, self.plot_values + self.replicate_value,
-                                        marker_replicate, color='gray')
-            replicate_dn = self.ax.plot(self.dates, self.plot_values - self.replicate_value,
-                                        marker_replicate, color='gray')
+            marker_up_color = parms['replica up color']
+            marker_down_color = parms['replica down color']
+            marker_size_replica = parms['replica marker size']
+            marker_replica = parms['replica marker']
+            replicate_up = self.ax.scatter(self.dates, self.plot_values + self.replicate_value,
+                                           marker=marker_replica, c=marker_up_color, s=marker_size_replica)
+            replicate_dn = self.ax.scatter(self.dates, self.plot_values - self.replicate_value,
+                                             marker=marker_replica, c=marker_down_color, s=marker_size_replica)
             self.plot_replicates.append([replicate_up, replicate_dn])
         self.decoratePlot()
         self.fitModel()
