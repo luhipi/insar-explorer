@@ -17,6 +17,15 @@
                 "value": "Deformation [mm]",
                 "default": "Deformation [mm]"
             },
+            "font size": {
+                "type": "float",
+                "value": 10.0,
+                "default": 10,
+                "range": [
+                    0,
+                    30
+                ]
+            },
             "marker": {
                 "type": "dropdown",
                 "value": "o",
@@ -72,7 +81,7 @@
             "ymax": {
                 "type": "float",
                 "value": 60.0,
-                "auto": false,
+                "auto": true,
                 "range": [
                     -10000,
                     10000
@@ -81,7 +90,7 @@
             "ymin": {
                 "type": "float",
                 "value": -60.0,
-                "auto": false,
+                "auto": true,
                 "range": [
                     -10000,
                     10000
@@ -195,7 +204,7 @@
             "ymax": {
                 "type": "float",
                 "value": 60.0,
-                "auto": false,
+                "auto": true,
                 "range": [
                     -10000,
                     10000
@@ -204,7 +213,7 @@
             "ymin": {
                 "type": "float",
                 "value": -60.0,
-                "auto": false,
+                "auto": true,
                 "range": [
                     -10000,
                     10000

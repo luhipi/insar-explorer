@@ -41,6 +41,7 @@ class PlotTs():
         parms['title'] = parms_ts.get(["time series plot", "title"]) or ""
         parms['xlabel'] = parms_ts.get(["time series plot", "xlabel"]) or ""
         parms['ylabel'] = parms_ts.get(["time series plot", "ylabel"]) or ""
+        parms['font size'] = parms_ts.get(["time series plot", "font size"]) or 12
         parms['marker'] = parms_ts.get(["time series plot", "marker"]) or "."
         parms['marker color'] = parms_ts.get(["time series plot", "marker color"]) or None
         parms['marker size'] = parms_ts.get(["time series plot", "marker size"])
@@ -82,6 +83,7 @@ class PlotTs():
         parms['ymax'] = parms_ts.get(["residual plot", "ymax"])
 
         # other parameters from time series plot
+        parms['font size'] = parms_ts.get(["time series plot", "font size"]) or 12
         parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
         self.parms['residual plot'] = parms
 
@@ -193,6 +195,7 @@ class PlotTs():
         if not ax:
             ax = self.ax
         # First set lims then ticks
+        self.setFontSize(ax=ax, parms=parms)
         self.setXlims(ax=ax)
         self.setXticks(ax=ax, parms=parms)
         self.setYlims(ax=ax, parms=parms)
@@ -200,6 +203,13 @@ class PlotTs():
         self.setGrid(status=True, ax=ax)
         self.setLabels(ax=ax, parms=parms)
         self.ui.figure.tight_layout()
+
+    def setFontSize(self, ax=None, parms={}):
+        if not ax:
+            ax = self.ax
+        font_size = parms['font size']
+        ax.tick_params(axis='both', which='major', labelsize=font_size)
+        ax.tick_params(axis='both', which='minor', labelsize=font_size)
 
     def setGrid(self, status, ax=None):
         if not ax:
@@ -210,17 +220,18 @@ class PlotTs():
         if not ax:
             ax = self.ax
 
+        font_size = parms['font size']
         title = parms['title']
         if title != "":
-            ax.set_title(title)
+            ax.set_title(title, fontsize=font_size)
 
         label = parms['xlabel']
         if label != "":
-            ax.set_xlabel(label)
+            ax.set_xlabel(label, fontsize=font_size)
 
         label = parms['ylabel']
         if label != "":
-            ax.set_ylabel(label)
+            ax.set_ylabel(label, fontsize=font_size)
 
     def setXticks(self, ax=None, parms={}):
         if not ax:
