@@ -9,12 +9,12 @@
             },
             "xlabel": {
                 "type": "string",
-                "value": "",
+                "value": "Date",
                 "default": "Date"
             },
             "ylabel": {
                 "type": "string",
-                "value": " [mm]",
+                "value": "def  [mm]",
                 "default": "Deformation [mm]"
             },
             "marker": {
@@ -117,6 +117,11 @@
                     "x"
                 ],
                 "default": "o"
+            },
+            "date format": {
+                "type": "string",
+                "value": "%Y-%m-%d",
+                "auto": true
             }
         },
         "residual plot": {

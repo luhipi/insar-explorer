@@ -50,6 +50,7 @@ class PlotTs():
 
         parms['ymin'] = parms_ts.get(["time series plot", "ymin"])
         parms['ymax'] = parms_ts.get(["time series plot", "ymax"])
+        parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
 
         # replica
         parms['replica up color'] = parms_ts.get(["time series plot", "replica up color"]) or 'gray'
@@ -193,23 +194,29 @@ class PlotTs():
     def setXticks(self, ax=None):
         if not ax:
             ax = self.ax
+        parms = self.parms['time series plot']
+        date_format = parms['date format']
+
         min_date = np.nanmin(self.dates)
         max_date = np.nanmax(self.dates)
         date_range = (max_date - min_date).days
 
         if date_range >= 1461:
             ax.xaxis.set_major_locator(mdates.YearLocator())
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+            date_format = date_format or '%Y'
+            ax.xaxis.set_major_formatter(mdates.DateFormatter(date_format))
             ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[1, 7]))
             ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
         elif date_range >= 366:
             ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 7)))
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y/%m'))
+            date_format = date_format or '%Y/%m'
+            ax.xaxis.set_major_formatter(mdates.DateFormatter(date_format))
             ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))
             ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
         else:
             ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 4, 7, 10)))
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y/%m'))
+            date_format = date_format or '%Y/%m'
+            ax.xaxis.set_major_formatter(mdates.DateFormatter(date_format))
             ax.xaxis.set_minor_locator(mdates.MonthLocator(interval=1))
             ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
 
