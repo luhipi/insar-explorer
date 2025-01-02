@@ -14,7 +14,7 @@
             },
             "ylabel": {
                 "type": "string",
-                "value": "def  [mm]",
+                "value": "Deformation [mm]",
                 "default": "Deformation [mm]"
             },
             "marker": {
@@ -62,7 +62,7 @@
             },
             "line width": {
                 "type": "float",
-                "value": 0.1,
+                "value": 1.0,
                 "default": 1.0,
                 "range": [
                     0,
@@ -108,7 +108,7 @@
             },
             "replica marker": {
                 "type": "dropdown",
-                "value": ".",
+                "value": "o",
                 "options": [
                     "o",
                     ".",
@@ -129,12 +129,92 @@
                 "type": "string",
                 "value": "",
                 "default": ""
+            },
+            "xlabel": {
+                "type": "string",
+                "value": "Date",
+                "default": "Date"
+            },
+            "ylabel": {
+                "type": "string",
+                "value": "Residual [mm]",
+                "default": "Residual [mm]"
+            },
+            "marker": {
+                "type": "dropdown",
+                "value": ".",
+                "options": [
+                    "o",
+                    ".",
+                    "^",
+                    "s",
+                    "x"
+                ],
+                "default": "."
+            },
+            "marker color": {
+                "type": "color",
+                "value": "#1f77b4",
+                "default": "#1f77b4"
+            },
+            "marker size": {
+                "type": "float",
+                "value": 5.0,
+                "default": 5,
+                "range": [
+                    0,
+                    100
+                ]
+            },
+            "line style": {
+                "type": "dropdown",
+                "value": "",
+                "options": [
+                    "",
+                    "-",
+                    "--",
+                    "-.",
+                    ":"
+                ],
+                "default": ""
+            },
+            "line color": {
+                "type": "color",
+                "value": "#1f77b4",
+                "default": "#1f77b4"
+            },
+            "line width": {
+                "type": "float",
+                "value": 1.0,
+                "default": 1.0,
+                "range": [
+                    0,
+                    100
+                ]
+            },
+            "ymax": {
+                "type": "float",
+                "value": 60.0,
+                "auto": false,
+                "range": [
+                    -10000,
+                    10000
+                ]
+            },
+            "ymin": {
+                "type": "float",
+                "value": -60.0,
+                "auto": false,
+                "range": [
+                    -10000,
+                    10000
+                ]
             }
         },
         "export": {
             "dpi": {
                 "type": "dropdown",
-                "value": "72",
+                "value": "300",
                 "options": [
                     "72",
                     "150",
