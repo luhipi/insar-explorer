@@ -85,7 +85,8 @@
                 "range": [
                     -10000,
                     10000
-                ]
+                ],
+                "default": true
             },
             "ymin": {
                 "type": "float",
@@ -94,7 +95,8 @@
                 "range": [
                     -10000,
                     10000
-                ]
+                ],
+                "default": true
             },
             "replica up color": {
                 "type": "color",
@@ -130,7 +132,8 @@
             "date format": {
                 "type": "string",
                 "value": "%Y-%m-%d",
-                "auto": true
+                "auto": true,
+                "default": true
             }
         },
         "residual plot": {
@@ -208,7 +211,8 @@
                 "range": [
                     -10000,
                     10000
-                ]
+                ],
+                "default": true
             },
             "ymin": {
                 "type": "float",
@@ -217,7 +221,8 @@
                 "range": [
                     -10000,
                     10000
-                ]
+                ],
+                "default": true
             }
         },
         "export": {

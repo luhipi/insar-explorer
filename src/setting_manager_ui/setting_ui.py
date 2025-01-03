@@ -1,4 +1,4 @@
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 
 import sys
 
@@ -117,7 +117,14 @@ class SettingsTabWidget(QTableWidget):
             self.setCellWidget(row_idx, 1, wobject)
 
             # Column 2: Default value (read-only)
-            default_item = QTableWidgetItem(str(param_default))
+            param_default_to_show = param_default
+            if isinstance(wobject, ObjectWithCheckbox) and wobject.checkbox:
+                if param_default:
+                    param_default_to_show = 'auto'
+                else:
+                    param_default_to_show = 'manual'
+
+            default_item = QTableWidgetItem(str(param_default_to_show))
             default_item.setFlags(default_item.flags() & ~Qt.ItemIsEditable)
             self.setItem(row_idx, 2, default_item)
             default_item.setBackground(QBrush(QColor(250, 255, 250)))
@@ -276,7 +283,7 @@ class SettingsTableDialog(QDialog):
                         widget.setChecked(param_default)
                     else:
                         if widget.checkbox:
-                            widget.checkbox.setChecked(not auto_flag)
+                            widget.checkbox.setChecked(not param_default)
                         else:
                             widget.setValue(param_default)
 

@@ -1,4 +1,4 @@
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 
 try:
     import json5 as json
@@ -83,7 +83,7 @@ class JsonSettings:
         default = data.get("default", None)
         auto_flag = data.get("auto", False)
         if auto_flag:
-            return default
+            return None
         return data.get("value", default)
 
     def getDefault(self, key: list):

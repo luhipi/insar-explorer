@@ -243,7 +243,7 @@ class DoubleSpinBoxWithCheckbox(ObjectWithCheckbox):
     """
     def __init__(self, value, flag, checkbox=False, range=[None, None], parent=None):
         self.range = range
-        super().__init__(value=value, flag=flag, checkbox=checkbox, parent=parent)
+        super().__init__(value, flag, checkbox, parent)
 
     def addObject(self, flag):
         """ Adds a QDoubleSpinBox as the main widget. """
