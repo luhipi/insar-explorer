@@ -129,6 +129,24 @@
                 ],
                 "default": "o"
             },
+            "number of up replicas": {
+                "type": "int",
+                "value": 2,
+                "default": 1,
+                "range": [
+                    0,
+                    10
+                ]
+            },
+            "number of down replicas": {
+                "type": "int",
+                "value": 2,
+                "default": 1,
+                "range": [
+                    0,
+                    10
+                ]
+            },
             "date format": {
                 "type": "string",
                 "value": "%Y-%m-%d",
