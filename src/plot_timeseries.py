@@ -58,6 +58,8 @@ class PlotTs():
         parms['replica down color'] = parms_ts.get(["time series plot", "replica down color"]) or 'gray'
         parms['replica marker size'] = parms_ts.get(["time series plot", "replica marker size"]) or 5
         parms['replica marker'] = parms_ts.get(["time series plot", "replica marker"]) or 'o'
+        parms['number of up replicas'] = parms_ts.get(["time series plot", "number of up replicas"])
+        parms['number of down replicas'] = parms_ts.get(["time series plot", "number of down replicas"])
 
         self.parms['time series plot'] = parms
 
@@ -138,11 +140,28 @@ class PlotTs():
             marker_down_color = parms['replica down color']
             marker_size_replica = parms['replica marker size']
             marker_replica = parms['replica marker']
-            replicate_up = self.ax.scatter(self.dates, self.plot_values + self.replicate_value,
-                                           marker=marker_replica, c=marker_up_color, s=marker_size_replica)
-            replicate_dn = self.ax.scatter(self.dates, self.plot_values - self.replicate_value,
-                                             marker=marker_replica, c=marker_down_color, s=marker_size_replica)
-            self.plot_replicates.append([replicate_up, replicate_dn])
+            number_of_up_replicas = parms['number of up replicas']
+            number_of_down_replicas = parms['number of down replicas']
+
+            # plot multiple replicas
+            for i in range(number_of_up_replicas):
+                replicate_value = self.replicate_value * (i+1)
+                marker_replica_color = marker_up_color
+                if i>0:  # make additonal replicas gray
+                    marker_replica_color = 'gray'
+                replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value,
+                                                   marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+                self.plot_replicates.append([replicate_up])
+            for i in range(number_of_down_replicas):
+                replicate_value = self.replicate_value * (i+1)
+                marker_replica_color = marker_down_color
+                if i>0:  # make additonal replicas gray
+                    marker_replica_color = 'gray'
+                replicate_value = self.replicate_value * (i+1)
+                replicate_dn = self.ax.scatter(self.dates, self.plot_values - replicate_value,
+                                               marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+                self.plot_replicates.append([replicate_dn])
+
         self.decoratePlot(parms=parms)
         self.fitModel()
         self.ui.canvas.draw()
@@ -320,12 +339,18 @@ class PlotTs():
         if not ax:
             ax = self.ax
 
-        if ax == self.ax:
-            y_min = np.nanmin(self.plot_values)
-            y_max = np.nanmax(self.plot_values)
-        elif ax == self.ax_residuals:
-            y_max = np.nanmax(np.abs(self.residuals_values))
-            y_min = -y_max
+        # get min/max from data
+        # if ax == self.ax:
+        #     y_min = np.nanmin(self.plot_values)
+        #     y_max = np.nanmax(self.plot_values)
+        # elif ax == self.ax_residuals:
+        #     y_max = np.nanmax(np.abs(self.residuals_values))
+        #     y_min = -y_max
+
+        # get min/max from axis
+        y_min, y_max = ax.get_ylim()
+        y_max = np.abs([y_min, y_max]).max()
+        y_min = -y_max
 
         y_range = y_max - y_min
         y_min_rounded = -5
