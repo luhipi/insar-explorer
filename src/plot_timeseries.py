@@ -373,8 +373,6 @@ class PlotTs():
 
         ymin = parms['ymin']
         ymax = parms['ymax']
-        import warnings
-        warnings.warn(str(ymin))
         ax.set_ylim([ymin, ymax])  # TODO: check if works with ymax or ymin=None
 
     def savePlotAsImage(self, filename=None):
