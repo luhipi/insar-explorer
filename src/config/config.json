@@ -1,0 +1,289 @@
+{
+    "global_config": {},
+    "timeseries settings": {
+        "time series plot": {
+            "title": {
+                "type": "string",
+                "value": "",
+                "default": "",
+                "advanced": true
+            },
+            "xlabel": {
+                "type": "string",
+                "value": "Date",
+                "default": "Date",
+                "advanced": true
+            },
+            "ylabel": {
+                "type": "string",
+                "value": "Deformation [mm]",
+                "default": "Deformation [mm]",
+                "advanced": true
+            },
+            "font size": {
+                "type": "float",
+                "value": 10.0,
+                "default": 10,
+                "range": [
+                    0,
+                    30
+                ],
+                "advanced": true
+            },
+            "marker": {
+                "type": "dropdown",
+                "value": "o",
+                "options": [
+                    "o",
+                    ".",
+                    "^",
+                    "s",
+                    "x"
+                ],
+                "default": "o"
+            },
+            "marker color": {
+                "type": "color",
+                "value": "#1f77b4",
+                "default": "#1f77b4"
+            },
+            "marker size": {
+                "type": "float",
+                "value": 5.0,
+                "default": 5,
+                "range": [
+                    0,
+                    100
+                ]
+            },
+            "line style": {
+                "type": "dropdown",
+                "value": "",
+                "options": [
+                    "",
+                    "-",
+                    "--",
+                    "-.",
+                    ":"
+                ],
+                "default": "",
+                "advanced": true
+            },
+            "line color": {
+                "type": "color",
+                "value": "#1f77b4",
+                "default": "#1f77b4",
+                "advanced": true
+            },
+            "line width": {
+                "type": "float",
+                "value": 1.0,
+                "default": 1.0,
+                "range": [
+                    0,
+                    100
+                ],
+                "advanced": true
+            },
+            "ymax": {
+                "type": "float",
+                "value": 60.0,
+                "auto": true,
+                "range": [
+                    -10000,
+                    10000
+                ],
+                "default": true
+            },
+            "ymin": {
+                "type": "float",
+                "value": -60.0,
+                "auto": true,
+                "range": [
+                    -10000,
+                    10000
+                ],
+                "default": true
+            },
+            "replica color 1": {
+                "type": "color",
+                "value": "#ff7f0e",
+                "default": "#ff7f0e",
+                "advanced": true
+            },
+            "replica color 2": {
+                "type": "color",
+                "value": "#2ca02c",
+                "default": "#2ca02c",
+                "advanced": true
+            },
+            "replica marker size": {
+                "type": "float",
+                "value": 5.0,
+                "default": 5,
+                "range": [
+                    0,
+                    100
+                ]
+            },
+            "replica marker": {
+                "type": "dropdown",
+                "value": "o",
+                "options": [
+                    "o",
+                    ".",
+                    "^",
+                    "s",
+                    "x"
+                ],
+                "default": "o"
+            },
+            "number of up replicas": {
+                "type": "int",
+                "value": 1,
+                "default": 1,
+                "range": [
+                    0,
+                    10
+                ]
+            },
+            "number of down replicas": {
+                "type": "int",
+                "value": 1,
+                "default": 1,
+                "range": [
+                    0,
+                    10
+                ]
+            },
+            "date format": {
+                "type": "string",
+                "value": "%Y-%m-%d",
+                "auto": true,
+                "default": true,
+                "advanced": true
+            }
+        },
+        "residual plot": {
+            "title": {
+                "type": "string",
+                "value": "",
+                "default": "",
+                "advanced": true
+            },
+            "xlabel": {
+                "type": "string",
+                "value": "Date",
+                "default": "Date",
+                "advanced": true
+            },
+            "ylabel": {
+                "type": "string",
+                "value": "Residual [mm]",
+                "default": "Residual [mm]",
+                "advanced": true
+            },
+            "marker": {
+                "type": "dropdown",
+                "value": ".",
+                "options": [
+                    "o",
+                    ".",
+                    "^",
+                    "s",
+                    "x"
+                ],
+                "default": "."
+            },
+            "marker color": {
+                "type": "color",
+                "value": "#1f77b4",
+                "default": "#1f77b4"
+            },
+            "marker size": {
+                "type": "float",
+                "value": 5.0,
+                "default": 5,
+                "range": [
+                    0,
+                    100
+                ]
+            },
+            "line style": {
+                "type": "dropdown",
+                "value": "",
+                "options": [
+                    "",
+                    "-",
+                    "--",
+                    "-.",
+                    ":"
+                ],
+                "default": "",
+                "advanced": true
+            },
+            "line color": {
+                "type": "color",
+                "value": "#1f77b4",
+                "default": "#1f77b4",
+                "advanced": true
+            },
+            "line width": {
+                "type": "float",
+                "value": 1.0,
+                "default": 1.0,
+                "range": [
+                    0,
+                    100
+                ],
+                "advanced": true
+            },
+            "ymax": {
+                "type": "float",
+                "value": 60.0,
+                "auto": true,
+                "range": [
+                    -10000,
+                    10000
+                ],
+                "default": true
+            },
+            "ymin": {
+                "type": "float",
+                "value": -60.0,
+                "auto": true,
+                "range": [
+                    -10000,
+                    10000
+                ],
+                "default": true
+            }
+        },
+        "export": {
+            "dpi": {
+                "type": "dropdown",
+                "value": "300",
+                "options": [
+                    "72",
+                    "150",
+                    "300",
+                    "600",
+                    "1200"
+                ],
+                "default": "300",
+                "advanced": true
+            },
+            "pad": {
+                "type": "float",
+                "value": 0.1,
+                "default": 0.1,
+                "range": [
+                    0,
+                    1
+                ],
+                "advanced": true
+            }
+        }
+    },
+    "other setting": {}
+}

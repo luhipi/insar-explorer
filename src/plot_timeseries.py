@@ -1,9 +1,12 @@
+import os
+
 import numpy as np
 import matplotlib.dates as mdates
 import matplotlib.ticker as ticker
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from .model_fitting import FittingModels
+from .setting_manager_ui.json_settings import JsonSettings
 
 class PlotTs():
 
@@ -15,8 +18,9 @@ class PlotTs():
         self.ref_values = 0
         self.plot_values = None
         self.residuals_values = None
-        self.marker = '.'
-        self.residual_markers = '.'
+        script_path = os.path.abspath(__file__)
+        json_file = "config.json"
+        self.config_file = os.path.join(os.path.dirname(script_path), 'config', json_file)
         self.fit_plot_list = []
         self.fit_models = []
         self.fit_seasonal_flag = False
@@ -26,6 +30,65 @@ class PlotTs():
         self.ax_residuals = None
         self.plot_residuals_flag = False
         self.plot_residuals_list = []
+        self.parms = {}
+        self.updateSettings()
+
+    def updateSettings(self):
+        parms_ts = JsonSettings(self.config_file)
+        parms_ts.load("timeseries settings")
+
+        parms = {}
+        parms['title'] = parms_ts.get(["time series plot", "title"]) or ""
+        parms['xlabel'] = parms_ts.get(["time series plot", "xlabel"]) or ""
+        parms['ylabel'] = parms_ts.get(["time series plot", "ylabel"]) or ""
+        parms['font size'] = parms_ts.get(["time series plot", "font size"]) or 12
+        parms['marker'] = parms_ts.get(["time series plot", "marker"]) or "."
+        parms['marker color'] = parms_ts.get(["time series plot", "marker color"]) or None
+        parms['marker size'] = parms_ts.get(["time series plot", "marker size"])
+        parms['line style'] = parms_ts.get(["time series plot", "line style"]) or ''
+        parms['line color'] = parms_ts.get(["time series plot", "line color"]) or None
+        parms['line width'] = parms_ts.get(["time series plot", "line width"])
+
+        parms['ymin'] = parms_ts.get(["time series plot", "ymin"])
+        parms['ymax'] = parms_ts.get(["time series plot", "ymax"])
+        parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
+
+        # replica
+        parms['replica color 1'] = parms_ts.get(["time series plot", "replica color 1"]) or 'gray'
+        parms['replica color 2'] = parms_ts.get(["time series plot", "replica color 2"]) or 'gray'
+        parms['replica marker size'] = parms_ts.get(["time series plot", "replica marker size"]) or 5
+        parms['replica marker'] = parms_ts.get(["time series plot", "replica marker"]) or 'o'
+        parms['number of up replicas'] = parms_ts.get(["time series plot", "number of up replicas"])
+        parms['number of down replicas'] = parms_ts.get(["time series plot", "number of down replicas"])
+
+        self.parms['time series plot'] = parms
+
+        # export settings
+        parms = {}
+        parms['dpi'] = parms_ts.get(["export", "dpi"]) or 300
+        parms['pad'] = parms_ts.get(["export", "pad"]) or 0.1
+
+        self.parms['export'] = parms
+
+        # residual plot
+        parms = {}
+        parms['title'] = parms_ts.get(["residual plot", "title"]) or ""
+        parms['xlabel'] = parms_ts.get(["residual plot", "xlabel"]) or ""
+        parms['ylabel'] = parms_ts.get(["residual plot", "ylabel"]) or ""
+        parms['marker'] = parms_ts.get(["residual plot", "marker"]) or "."
+        parms['marker color'] = parms_ts.get(["residual plot", "marker color"]) or None
+        parms['marker size'] = parms_ts.get(["residual plot", "marker size"])
+        parms['line style'] = parms_ts.get(["residual plot", "line style"]) or ''
+        parms['line color'] = parms_ts.get(["residual plot", "line color"]) or None
+        parms['line width'] = parms_ts.get(["residual plot", "line width"])
+        parms['ymin'] = parms_ts.get(["residual plot", "ymin"])
+        parms['ymax'] = parms_ts.get(["residual plot", "ymax"])
+
+        # other parameters from time series plot
+        parms['font size'] = parms_ts.get(["time series plot", "font size"]) or 12
+        parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
+        self.parms['residual plot'] = parms
+
 
     def clear(self):
         self.ui.figure.clear()
@@ -45,29 +108,66 @@ class PlotTs():
 
     def initializeAxes(self):
         self.ui.figure.clear()
+        self.updateSettings()
         if self.plot_residuals_flag:
             self.ax = self.ui.figure.add_subplot(211)
             self.ax_residuals = self.ui.figure.add_subplot(212)
         else:
             self.ax = self.ui.figure.add_subplot(111)
 
-    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker=None, marker_replicate='.k'):
-        if marker is None:
-            marker = self.marker
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker=None):
         self.initializeAxes()
+
+        if marker is None:
+            marker = self.parms['time series plot']['marker']
 
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
         if self.dates is None:
             return
 
-        self.ax.plot(self.dates, self.plot_values, marker)
+        parms = self.parms['time series plot']
+        marker_size = parms['marker size']
+        marker_color = parms['marker color']
+        line_style = parms['line style']
+        line_color = parms['line color']
+        line_width = parms['line width']
+
+        self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color)
+        if line_style:
+            self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
         if self.replicate_flag:
-            replicate_up = self.ax.plot(self.dates, self.plot_values + self.replicate_value,
-                                        marker_replicate, color='gray')
-            replicate_dn = self.ax.plot(self.dates, self.plot_values - self.replicate_value,
-                                        marker_replicate, color='gray')
-            self.plot_replicates.append([replicate_up, replicate_dn])
-        self.decoratePlot()
+            marker_color_1 = parms['replica color 1']  # replica up
+            marker_color_2 = parms['replica color 2']  # replica down
+            marker_size_replica = parms['replica marker size']
+            marker_replica = parms['replica marker']
+            number_of_up_replicas = parms['number of up replicas']
+            number_of_down_replicas = parms['number of down replicas']
+
+            # plot multiple replicas
+            for i in range(number_of_up_replicas):
+                replicate_value = self.replicate_value * (i+1)
+
+                if i % 2 ==0:
+                    marker_replica_color = marker_color_1
+                else:
+                    marker_replica_color = marker_color_2
+
+                replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value,
+                                                   marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+                self.plot_replicates.append([replicate_up])
+            for i in range(number_of_down_replicas):
+                replicate_value = self.replicate_value * (i+1)
+
+                if i % 2 ==0:
+                    marker_replica_color = marker_color_2
+                else:
+                    marker_replica_color = marker_color_1
+
+                replicate_dn = self.ax.scatter(self.dates, self.plot_values - replicate_value,
+                                               marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+                self.plot_replicates.append([replicate_dn])
+
+        self.decoratePlot(parms=parms)
         self.fitModel()
         self.ui.canvas.draw()
 
@@ -97,48 +197,91 @@ class PlotTs():
         [plot.remove() for plot in self.plot_residuals_list]
         self.plot_residuals_list = []
         if self.plot_residuals_flag:
-            plot_residual = self.ax_residuals.plot(self.dates, self.residuals_values, self.residual_markers,
-                                                   color='C2')
-            self.plot_residuals_list.append(plot_residual[0])
-            self.decoratePlot(ax=self.ax_residuals)
+            parms = self.parms['residual plot']
+            marker = parms['marker']
+            marker_size = parms['marker size']
+            marker_color = parms['marker color']
+            line_style = parms['line style']
+            line_color = parms['line color']
+            line_width = parms['line width']
+
+            plot_residual = self.ax_residuals.scatter(self.dates, self.residuals_values, marker=marker,
+                                                      c=marker_color, s=marker_size)
+            self.plot_residuals_list.append(plot_residual)
+            if line_style:
+                plot_residual_line = self.ax_residuals.plot(self.dates, self.residuals_values, line_style,
+                                                            color=line_color, linewidth=line_width)
+                self.plot_residuals_list.append(plot_residual_line[0])
+            self.decoratePlot(ax=self.ax_residuals, parms=parms)
             self.ui.canvas.draw_idle()
 
-    def decoratePlot(self, ax=None):
+    def decoratePlot(self, ax=None, parms ={}):
         if not ax:
             ax = self.ax
         # First set lims then ticks
+        self.setFontSize(ax=ax, parms=parms)
         self.setXlims(ax=ax)
-        self.setXticks(ax=ax)
-        self.setYlims(ax=ax)
+        self.setXticks(ax=ax, parms=parms)
+        self.setYlims(ax=ax, parms=parms)
         self.setYticks(ax=ax)
         self.setGrid(status=True, ax=ax)
+        self.setLabels(ax=ax, parms=parms)
         self.ui.figure.tight_layout()
+
+    def setFontSize(self, ax=None, parms={}):
+        if not ax:
+            ax = self.ax
+        font_size = parms['font size']
+        ax.tick_params(axis='both', which='major', labelsize=font_size)
+        ax.tick_params(axis='both', which='minor', labelsize=font_size)
 
     def setGrid(self, status, ax=None):
         if not ax:
             ax = self.ax
         ax.grid(status)
 
-    def setXticks(self, ax=None):
+    def setLabels(self, ax=None, parms={}):
         if not ax:
             ax = self.ax
+
+        font_size = parms['font size']
+        title = parms['title']
+        if title != "":
+            ax.set_title(title, fontsize=font_size)
+
+        label = parms['xlabel']
+        if label != "":
+            ax.set_xlabel(label, fontsize=font_size)
+
+        label = parms['ylabel']
+        if label != "":
+            ax.set_ylabel(label, fontsize=font_size)
+
+    def setXticks(self, ax=None, parms={}):
+        if not ax:
+            ax = self.ax
+        date_format = parms['date format']
+
         min_date = np.nanmin(self.dates)
         max_date = np.nanmax(self.dates)
         date_range = (max_date - min_date).days
 
         if date_range >= 1461:
             ax.xaxis.set_major_locator(mdates.YearLocator())
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+            date_format = date_format or '%Y'
+            ax.xaxis.set_major_formatter(mdates.DateFormatter(date_format))
             ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[1, 7]))
             ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
         elif date_range >= 366:
             ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 7)))
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y/%m'))
+            date_format = date_format or '%Y/%m'
+            ax.xaxis.set_major_formatter(mdates.DateFormatter(date_format))
             ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))
             ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
         else:
             ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 4, 7, 10)))
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y/%m'))
+            date_format = date_format or '%Y/%m'
+            ax.xaxis.set_major_formatter(mdates.DateFormatter(date_format))
             ax.xaxis.set_minor_locator(mdates.MonthLocator(interval=1))
             ax.xaxis.set_minor_formatter(mdates.DateFormatter(''))
 
@@ -173,7 +316,6 @@ class PlotTs():
         if minor_tick_interval:
             ax.yaxis.set_minor_locator(ticker.MultipleLocator(minor_tick_interval))
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.0f}'))
-        ax.set_ylabel('[mm]')
 
     def setXlims(self, *, ax=None, use_data_xlim=True, padding=30):
         """
@@ -198,16 +340,22 @@ class PlotTs():
             end_of_year = mdates.num2date(mdates.datestr2num(f'{max_date.year+1}-01-01'))
             ax.set_xlim(start_of_year, end_of_year)
 
-    def setYlims(self, ax=None):
+    def setYlims(self, ax=None, parms={}):
         if not ax:
             ax = self.ax
 
-        if ax == self.ax:
-            y_min = np.nanmin(self.plot_values)
-            y_max = np.nanmax(self.plot_values)
-        elif ax == self.ax_residuals:
-            y_max = np.nanmax(np.abs(self.residuals_values))
-            y_min = -y_max
+        # get min/max from data
+        # if ax == self.ax:
+        #     y_min = np.nanmin(self.plot_values)
+        #     y_max = np.nanmax(self.plot_values)
+        # elif ax == self.ax_residuals:
+        #     y_max = np.nanmax(np.abs(self.residuals_values))
+        #     y_min = -y_max
+
+        # get min/max from axis
+        y_min, y_max = ax.get_ylim()
+        y_max = np.abs([y_min, y_max]).max()
+        y_min = -y_max
 
         y_range = y_max - y_min
         y_min_rounded = -5
@@ -223,12 +371,25 @@ class PlotTs():
 
         ax.set_ylim(y_min_rounded, y_max_rounded)
 
+        ymin = parms['ymin']
+        ymax = parms['ymax']
+        ax.set_ylim([ymin, ymax])  # TODO: check if works with ymax or ymin=None
+
     def savePlotAsImage(self, filename=None):
+        parms = self.parms["export"]
+        dpi = int(parms["dpi"])
+        pad = parms["pad"]
+        fig_size_export = (12, 6) if self.plot_residuals_flag else (12, 3)
+        fig_size = self.ui.figure.get_size_inches()
         if filename:
-            self.ui.figure.savefig(filename, dpi=300,
+            self.ui.figure.set_size_inches(fig_size_export)
+            self.ui.figure.savefig(filename,
+                                   dpi=dpi,
                                    bbox_inches='tight',
-                                   transparent=True,
-                                   pad_inches=0)
+                                   transparent=False,
+                                   pad_inches=pad)
+            self.ui.figure.set_size_inches(fig_size)
+            self.ui.canvas.draw()
 
 # import plotly.graph_objs as go
 # import plotly.io as pio

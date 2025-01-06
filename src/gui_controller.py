@@ -1,3 +1,5 @@
+import os
+
 from qgis.gui import QgsMapToolEmitPoint
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtCore import QObject, QTimer
@@ -5,6 +7,7 @@ from PyQt5.QtCore import QObject, QTimer
 from . import map_click_handler as cph
 from . import setup_frames
 from .map_setting import InsarMap
+from .setting_manager_ui.setting_ui import SettingsTableDialog
 
 
 class GuiController(QObject):
@@ -62,6 +65,11 @@ class GuiController(QObject):
         self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
         self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
 
+        # Setting popup
+        self.ui.pb_ts_settings.clicked.connect(self.settingsWidgetPopup)
+        # map
+        self.connectMapSignals()
+
     def connectMapSignals(self):
         self.ui.pb_symbology.clicked.connect(self.applySymbology)
         self.ui.sb_symbol_lower_range.valueChanged.connect(self.setSymbologyLowerRange)
@@ -78,6 +86,19 @@ class GuiController(QObject):
         self.ui.cb_symbology_live.toggled.connect(self.applyLiveSymbology)
         self.ui.cmb_colormap.currentIndexChanged.connect(self.applyLiveSymbology)
         self.ui.cb_colormap_reverse.toggled.connect(self.applyLiveSymbology)
+
+    def settingsWidgetPopup(self):
+        json_file = "config/config.json"
+        block_key = "timeseries settings"
+        script_path = os.path.abspath(__file__)
+        json_file_path = os.path.join(os.path.dirname(script_path), json_file)
+        dialog = SettingsTableDialog(json_file_path, block_key=block_key)
+        dialog.accepted.connect(self.onSettingDialogChanged)
+        dialog.applyClicked.connect(self.onSettingDialogChanged)
+        dialog.exec()
+
+    def onSettingDialogChanged(self):
+        self.choose_point_click_handler.plot_ts.plotTs()
 
     def setSymbologyUpperRange(self):
         self.ui.sb_symbol_lower_range.blockSignals(True)

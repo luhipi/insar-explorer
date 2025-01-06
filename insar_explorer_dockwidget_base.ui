@@ -118,7 +118,7 @@
                </size>
               </property>
               <property name="currentIndex">
-               <number>0</number>
+               <number>1</number>
               </property>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
@@ -1619,7 +1619,7 @@
                      <string>no fit</string>
                     </property>
                     <property name="title">
-                     <string>Export</string>
+                     <string>Settings and Export</string>
                     </property>
                     <layout class="QGridLayout" name="gridLayout_7">
                      <property name="leftMargin">
@@ -1634,10 +1634,49 @@
                      <property name="bottomMargin">
                       <number>0</number>
                      </property>
-                     <property name="spacing">
+                     <property name="horizontalSpacing">
+                      <number>5</number>
+                     </property>
+                     <property name="verticalSpacing">
                       <number>0</number>
                      </property>
-                     <item row="0" column="0">
+                     <item row="0" column="1">
+                      <widget class="QPushButton" name="pb_ts_settings">
+                       <property name="maximumSize">
+                        <size>
+                         <width>40</width>
+                         <height>40</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset>
+                         <normaloff>:/icons/icons/setting_gray.png</normaloff>:/icons/icons/setting_gray.png</iconset>
+                       </property>
+                       <property name="iconSize">
+                        <size>
+                         <width>20</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="3">
+                      <spacer name="horizontalSpacer_7">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                     <item row="0" column="2">
                       <widget class="QPushButton" name="pb_ts_save">
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1677,19 +1716,6 @@
                         <bool>false</bool>
                        </property>
                       </widget>
-                     </item>
-                     <item row="0" column="1">
-                      <spacer name="horizontalSpacer_7">
-                       <property name="orientation">
-                        <enum>Qt::Horizontal</enum>
-                       </property>
-                       <property name="sizeHint" stdset="0">
-                        <size>
-                         <width>40</width>
-                         <height>20</height>
-                        </size>
-                       </property>
-                      </spacer>
                      </item>
                     </layout>
                    </widget>

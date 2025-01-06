@@ -1,5 +1,10 @@
 ### History
 
+v0.7.0
+- Read settings from a JSON file
+- Integrate SettingsManagerUI for managing settings
+- Add setting button to the time series tab
+
 v0.6.1
 - Fix bug in initial import
 - Fix bugs in icon
