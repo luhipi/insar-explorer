@@ -5,17 +5,20 @@
             "title": {
                 "type": "string",
                 "value": "",
-                "default": ""
+                "default": "",
+                "advanced": true
             },
             "xlabel": {
                 "type": "string",
                 "value": "Date",
-                "default": "Date"
+                "default": "Date",
+                "advanced": true
             },
             "ylabel": {
                 "type": "string",
                 "value": "Deformation [mm]",
-                "default": "Deformation [mm]"
+                "default": "Deformation [mm]",
+                "advanced": true
             },
             "font size": {
                 "type": "float",
@@ -24,7 +27,8 @@
                 "range": [
                     0,
                     30
-                ]
+                ],
+                "advanced": true
             },
             "marker": {
                 "type": "dropdown",
@@ -62,12 +66,14 @@
                     "-.",
                     ":"
                 ],
-                "default": ""
+                "default": "",
+                "advanced": true
             },
             "line color": {
                 "type": "color",
                 "value": "#1f77b4",
-                "default": "#1f77b4"
+                "default": "#1f77b4",
+                "advanced": true
             },
             "line width": {
                 "type": "float",
@@ -76,7 +82,8 @@
                 "range": [
                     0,
                     100
-                ]
+                ],
+                "advanced": true
             },
             "ymax": {
                 "type": "float",
@@ -101,12 +108,14 @@
             "replica color 1": {
                 "type": "color",
                 "value": "#ff7f0e",
-                "default": "#ff7f0e"
+                "default": "#ff7f0e",
+                "advanced": true
             },
             "replica color 2": {
                 "type": "color",
                 "value": "#2ca02c",
-                "default": "#2ca02c"
+                "default": "#2ca02c",
+                "advanced": true
             },
             "replica marker size": {
                 "type": "float",
@@ -131,7 +140,7 @@
             },
             "number of up replicas": {
                 "type": "int",
-                "value": 2,
+                "value": 1,
                 "default": 1,
                 "range": [
                     0,
@@ -140,7 +149,7 @@
             },
             "number of down replicas": {
                 "type": "int",
-                "value": 2,
+                "value": 1,
                 "default": 1,
                 "range": [
                     0,
@@ -151,24 +160,28 @@
                 "type": "string",
                 "value": "%Y-%m-%d",
                 "auto": true,
-                "default": true
+                "default": true,
+                "advanced": true
             }
         },
         "residual plot": {
             "title": {
                 "type": "string",
                 "value": "",
-                "default": ""
+                "default": "",
+                "advanced": true
             },
             "xlabel": {
                 "type": "string",
                 "value": "Date",
-                "default": "Date"
+                "default": "Date",
+                "advanced": true
             },
             "ylabel": {
                 "type": "string",
                 "value": "Residual [mm]",
-                "default": "Residual [mm]"
+                "default": "Residual [mm]",
+                "advanced": true
             },
             "marker": {
                 "type": "dropdown",
@@ -206,12 +219,14 @@
                     "-.",
                     ":"
                 ],
-                "default": ""
+                "default": "",
+                "advanced": true
             },
             "line color": {
                 "type": "color",
                 "value": "#1f77b4",
-                "default": "#1f77b4"
+                "default": "#1f77b4",
+                "advanced": true
             },
             "line width": {
                 "type": "float",
@@ -220,7 +235,8 @@
                 "range": [
                     0,
                     100
-                ]
+                ],
+                "advanced": true
             },
             "ymax": {
                 "type": "float",
@@ -254,7 +270,8 @@
                     "600",
                     "1200"
                 ],
-                "default": "300"
+                "default": "300",
+                "advanced": true
             },
             "pad": {
                 "type": "float",
@@ -263,7 +280,8 @@
                 "range": [
                     0,
                     1
-                ]
+                ],
+                "advanced": true
             }
         }
     },
