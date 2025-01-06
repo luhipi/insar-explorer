@@ -43,11 +43,15 @@ class GuiController(QObject):
 
     def connectUiSignals(self):
         self.ui.visibilityChanged.connect(self.handleUiClose)
+        # self.ui.pb_add_layers.clicked.connect(self.addSelectedLayers)
+        # self.ui.pb_remove_layers.clicked.connect(self.removeSelectedLayers)
+        self.connectTimeseriesSignals()
+        self.connectMapSignals()
+
+    def connectTimeseriesSignals(self):
         self.ui.pb_choose_point.clicked.connect(self.activatePointSelection)
         self.ui.pb_set_reference.clicked.connect(self.activateReferencePointSelection)
         self.ui.pb_reset_reference.clicked.connect(self.resetReferencePoint)
-        # self.ui.pb_add_layers.clicked.connect(self.addSelectedLayers)
-        # self.ui.pb_remove_layers.clicked.connect(self.removeSelectedLayers)
         # TS fit handler
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
@@ -57,8 +61,6 @@ class GuiController(QObject):
         # Replica
         self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
         self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
-        # map
-        self.connectMapSignals()
 
     def connectMapSignals(self):
         self.ui.pb_symbology.clicked.connect(self.applySymbology)
