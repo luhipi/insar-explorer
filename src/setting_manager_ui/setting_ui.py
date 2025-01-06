@@ -1,4 +1,4 @@
-__version__ = '0.3.0'
+__version__ = '0.4.1'
 
 import sys
 
@@ -27,7 +27,7 @@ except ImportError:
     from qgis.PyQt.QtCore import Qt, pyqtSignal as Signal
     from qgis.PyQt.QtGui import QColor, QBrush
 
-from json_settings import JsonSettings
+from .json_settings import JsonSettings
 from .src.object_with_checkbox import *
 
 
@@ -43,7 +43,7 @@ class SettingsTabWidget(QTableWidget):
     :type parent: QWidget, optional
     """
 
-    def __init__(self, section_name, params_dict, parent=None):
+    def __init__(self, section_name, params_dict, hide_advanced=False, parent=None):
         super().__init__(parent)
         self.section_name = section_name
         self.params_dict = params_dict
@@ -56,6 +56,7 @@ class SettingsTabWidget(QTableWidget):
 
         self.verticalHeader().setVisible(False)
 
+        self.hide_advanced = hide_advanced
         self.loadData()
 
     def loadData(self):
@@ -73,9 +74,9 @@ class SettingsTabWidget(QTableWidget):
             auto_flag = info.get("auto", False)
             # options for dropdown list
             options = info.get("options", None)
+            advanced = info.get("advanced", False)
             # range for int and float
             range = info.get("range", [None, None])
-
             # add auto checkbox if auto flag is present
             add_checkbox = "auto" in info
 
@@ -129,6 +130,9 @@ class SettingsTabWidget(QTableWidget):
             self.setItem(row_idx, 2, default_item)
             default_item.setBackground(QBrush(QColor(250, 255, 250)))
 
+            if self.hide_advanced and advanced:
+                self.hideRow(row_idx)
+
 
 class SettingsTableDialog(QDialog):
     """
@@ -157,8 +161,16 @@ class SettingsTableDialog(QDialog):
         main_layout = QVBoxLayout(self)
         self.tab_widget = QTabWidget()
         main_layout.addWidget(self.tab_widget)
+        advanced_layout = QHBoxLayout()
+        main_layout.addLayout(advanced_layout)
         button_layout = QHBoxLayout()
         main_layout.addLayout(button_layout)
+
+        # Advanced checkbox
+        self.advanced_checkbox = QCheckBox("Hide advanced parameters")
+        self.advanced_checkbox.setChecked(True)
+        self.advanced_checkbox.clicked.connect(self.onAdvancedCheckboxToggled)
+        advanced_layout.addWidget(self.advanced_checkbox)
 
         # OK button
         self.save_button = QPushButton("Ok")
@@ -185,15 +197,25 @@ class SettingsTableDialog(QDialog):
         self.close_button.clicked.connect(self.reject)
         button_layout.addWidget(self.close_button)
 
-        self.loadData()
+        self.loadData(self.advanced_checkbox.isChecked())
 
-    def loadData(self):
+    def loadData(self, hide_advanced=False):
         """ Reads the entire JSON file and extracts only the block we care about. """
         settings_block = self.settings.load(self.block_key)
 
+        current_tab_index = self.tab_widget.currentIndex()
+
+        self.tab_widget.clear()
         for section_name, params_dict in settings_block.items():
-            table = SettingsTabWidget(section_name, params_dict, parent=self.tab_widget)
+            table = SettingsTabWidget(section_name, params_dict, parent=self.tab_widget, hide_advanced=hide_advanced)
             self.tab_widget.addTab(table, section_name)
+
+        if current_tab_index != -1 and current_tab_index < self.tab_widget.count():
+            self.tab_widget.setCurrentIndex(current_tab_index)
+
+    def onAdvancedCheckboxToggled(self):
+        """ Handles the advanced checkbox toggled event. """
+        self.loadData(hide_advanced=self.advanced_checkbox.isChecked())
 
     def collectData(self):
         """
