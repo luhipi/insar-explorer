@@ -44,6 +44,7 @@ class PlotTs():
         parms['font size'] = parms_ts.get(["time series plot", "font size"]) or 12
         parms['marker'] = parms_ts.get(["time series plot", "marker"]) or "."
         parms['marker color'] = parms_ts.get(["time series plot", "marker color"]) or None
+        parms['marker edge color'] = parms_ts.get(["time series plot", "marker edge color"]) or None
         parms['marker size'] = parms_ts.get(["time series plot", "marker size"])
         parms['line style'] = parms_ts.get(["time series plot", "line style"]) or ''
         parms['line color'] = parms_ts.get(["time series plot", "line color"]) or None
@@ -51,6 +52,8 @@ class PlotTs():
 
         parms['ymin'] = parms_ts.get(["time series plot", "ymin"])
         parms['ymax'] = parms_ts.get(["time series plot", "ymax"])
+        parms['grid'] = parms_ts.get(["time series plot", "grid"])
+        parms['background color'] = parms_ts.get(["time series plot", "background color"]) or 'white'
         parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
 
         # replica
@@ -62,6 +65,12 @@ class PlotTs():
         parms['number of down replicas'] = parms_ts.get(["time series plot", "number of down replicas"])
 
         self.parms['time series plot'] = parms
+
+        # figure settings
+        parms = {}
+        parms['background color'] = parms_ts.get(["figure", "background color"]) or 'white'
+
+        self.parms['figure'] = parms
 
         # export settings
         parms = {}
@@ -77,6 +86,7 @@ class PlotTs():
         parms['ylabel'] = parms_ts.get(["residual plot", "ylabel"]) or ""
         parms['marker'] = parms_ts.get(["residual plot", "marker"]) or "."
         parms['marker color'] = parms_ts.get(["residual plot", "marker color"]) or None
+        parms['marker edge color'] = parms_ts.get(["residual plot", "marker edge color"]) or None
         parms['marker size'] = parms_ts.get(["residual plot", "marker size"])
         parms['line style'] = parms_ts.get(["residual plot", "line style"]) or ''
         parms['line color'] = parms_ts.get(["residual plot", "line color"]) or None
@@ -85,6 +95,8 @@ class PlotTs():
         parms['ymax'] = parms_ts.get(["residual plot", "ymax"])
 
         # other parameters from time series plot
+        parms['grid'] = parms_ts.get(["time series plot", "grid"]) or False
+        parms['background color'] = parms_ts.get(["time series plot", "background color"]) or 'white'
         parms['font size'] = parms_ts.get(["time series plot", "font size"]) or 12
         parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
         self.parms['residual plot'] = parms
@@ -128,11 +140,14 @@ class PlotTs():
         parms = self.parms['time series plot']
         marker_size = parms['marker size']
         marker_color = parms['marker color']
+        edge_color = parms['marker edge color']
         line_style = parms['line style']
         line_color = parms['line color']
         line_width = parms['line width']
 
         self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color)
+        self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
+                        edgecolors=edge_color)
         if line_style:
             self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
         if self.replicate_flag:
@@ -169,6 +184,10 @@ class PlotTs():
 
         self.decoratePlot(parms=parms)
         self.fitModel()
+
+        parms_figure = self.parms['figure']
+        self.decorateFigure(parms=parms_figure)
+
         self.ui.canvas.draw()
 
     def fitModel(self):
@@ -201,12 +220,13 @@ class PlotTs():
             marker = parms['marker']
             marker_size = parms['marker size']
             marker_color = parms['marker color']
+            edge_color = parms['marker edge color']
             line_style = parms['line style']
             line_color = parms['line color']
             line_width = parms['line width']
 
             plot_residual = self.ax_residuals.scatter(self.dates, self.residuals_values, marker=marker,
-                                                      c=marker_color, s=marker_size)
+                                                      c=marker_color, s=marker_size, edgecolors=edge_color)
             self.plot_residuals_list.append(plot_residual)
             if line_style:
                 plot_residual_line = self.ax_residuals.plot(self.dates, self.residuals_values, line_style,
@@ -214,6 +234,9 @@ class PlotTs():
                 self.plot_residuals_list.append(plot_residual_line[0])
             self.decoratePlot(ax=self.ax_residuals, parms=parms)
             self.ui.canvas.draw_idle()
+
+    def decorateFigure(self, parms={}):
+        self.setFigureStyle(parms=parms)
 
     def decoratePlot(self, ax=None, parms ={}):
         if not ax:
@@ -224,8 +247,9 @@ class PlotTs():
         self.setXticks(ax=ax, parms=parms)
         self.setYlims(ax=ax, parms=parms)
         self.setYticks(ax=ax)
-        self.setGrid(status=True, ax=ax)
+        self.setGrid(ax=ax, parms=parms)
         self.setLabels(ax=ax, parms=parms)
+        self.setAxisStyle(ax=ax, parms=parms)
         self.ui.figure.tight_layout()
 
     def setFontSize(self, ax=None, parms={}):
@@ -235,9 +259,11 @@ class PlotTs():
         ax.tick_params(axis='both', which='major', labelsize=font_size)
         ax.tick_params(axis='both', which='minor', labelsize=font_size)
 
-    def setGrid(self, status, ax=None):
+    def setGrid(self, ax=None, parms={}):
         if not ax:
             ax = self.ax
+        status = parms['grid']
+
         ax.grid(status)
 
     def setLabels(self, ax=None, parms={}):
@@ -374,6 +400,17 @@ class PlotTs():
         ymin = parms['ymin']
         ymax = parms['ymax']
         ax.set_ylim([ymin, ymax])  # TODO: check if works with ymax or ymin=None
+
+    def setAxisStyle(self, ax=None, parms={}):
+        if not ax:
+            ax = self.ax
+
+        background_color = parms['background color']
+        ax.set_facecolor(background_color)
+
+    def setFigureStyle(self, parms={}):
+        background_color = parms['background color']
+        self.ui.figure.patch.set_facecolor(background_color)
 
     def savePlotAsImage(self, filename=None):
         parms = self.parms["export"]
