@@ -112,10 +112,16 @@
                 "default": true
             },
             "grid": {
-                "type": "bool",
-                "value": false,
-                "default": true,
-                "advanced": false
+                "type": "dropdown",
+                "value": "both",
+                "options": [
+                    "both",
+                    "horizontal",
+                    "vertical",
+                    "none"
+                ],
+                "default": "both",
+                "advanced": true
             },
             "background color": {
                 "type": "color",

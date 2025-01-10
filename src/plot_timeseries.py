@@ -95,7 +95,7 @@ class PlotTs():
         parms['ymax'] = parms_ts.get(["residual plot", "ymax"])
 
         # other parameters from time series plot
-        parms['grid'] = parms_ts.get(["time series plot", "grid"]) or False
+        parms['grid'] = parms_ts.get(["time series plot", "grid"])
         parms['background color'] = parms_ts.get(["time series plot", "background color"]) or 'white'
         parms['font size'] = parms_ts.get(["time series plot", "font size"]) or 12
         parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
@@ -262,9 +262,17 @@ class PlotTs():
     def setGrid(self, ax=None, parms={}):
         if not ax:
             ax = self.ax
-        status = parms['grid']
+        grid_type = parms['grid']
 
-        ax.grid(status)
+        ax.grid(False)
+        if grid_type == 'horizontal':
+            ax.grid(True, axis='y')
+        elif grid_type == 'vertical':
+            ax.grid(True, axis='x')
+        elif grid_type == 'both':
+            ax.grid(True)
+        else:
+            ax.grid(False)
 
     def setLabels(self, ax=None, parms={}):
         if not ax:
