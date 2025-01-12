@@ -962,7 +962,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Set reference point</string>
+                          <string>Draw polygon for point selection</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -1006,7 +1006,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Set reference point</string>
+                          <string>Draw polygon for reference points</string>
                          </property>
                          <property name="text">
                           <string/>
