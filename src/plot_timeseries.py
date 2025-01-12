@@ -17,6 +17,7 @@ class PlotTs():
         self.ts_values = 0
         self.ref_values = 0
         self.plot_values = None
+        self.error_values = None
         self.residuals_values = None
         script_path = os.path.abspath(__file__)
         json_file = "config.json"
@@ -115,7 +116,7 @@ class PlotTs():
         else:
             self.ax = self.ui.figure.add_subplot(111)
 
-    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker=None):
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker=None, plot_error=True):
         self.initializeAxes()
 
         if marker is None:
@@ -131,6 +132,11 @@ class PlotTs():
         line_style = parms['line style']
         line_color = parms['line color']
         line_width = parms['line width']
+
+        if plot_error and not np.all(self.error_values == 0):
+            lower_bound = self.plot_values - self.error_values
+            upper_bound = self.plot_values + self.error_values
+            self.ax.fill_between(self.dates, lower_bound, upper_bound, color='blue', alpha=0.2)
 
         self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color)
         if line_style:
