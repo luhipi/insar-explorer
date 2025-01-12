@@ -9,6 +9,8 @@
   </qresource>
   <qresource prefix="icons">
     <file>icons/setting_gray.png</file>
+    <file>icons/polygon_reference_selection.png</file>
+    <file>icons/polygon_selection.png</file>
     <file>icons/synchronise_gray.png</file>
     <file>icons/screenshot.png</file>
     <file>icons/plot_fit_exp_amber.png</file>
