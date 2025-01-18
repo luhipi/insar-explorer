@@ -50,9 +50,10 @@ class GuiController(QObject):
     def initializeClickTool(self):
         if not self.click_tool:
             self.click_tool = QgsMapToolEmitPoint(self.iface.mapCanvas())
-            # self.click_tool.canvasClicked.connect(lambda point: self.choose_point_click_handler.choosePointClicked(point))
             self.click_tool.canvasClicked.connect(lambda point: self.choose_point_click_handler.choosePointClicked(
-                                                  point=point, layer=None, ref=self.ui.pb_set_reference.isChecked()))
+                                                  point=point, layer=None, ref=self.ui.pb_set_reference.isChecked(),
+                                                  start_callback=self.removePolygonDrawingTool(
+                                                      self.ui.pb_set_reference.isChecked())))
 
     def removeClickTool(self):
         self.iface.mapCanvas().unsetMapTool(self.click_tool)
