@@ -53,6 +53,36 @@ class GuiController(QObject):
         self.iface.mapCanvas().unsetMapTool(self.click_tool)
         self.click_tool = None
 
+    def initializePolygonDrawingTool(self, reference=False):
+        if not reference:
+            if not self.drawing_tool:
+                self.drawing_tool = (
+                    PolygonDrawingTool(self.iface.mapCanvas(), callback=self.polygonDrawnCallback,
+                                       start_callback=self.choose_point_click_handler.clearFeatureHighlight))
+            self.iface.mapCanvas().setMapTool(self.drawing_tool)
+        else:
+            if not self.drawing_tool_reference:
+                self.drawing_tool_reference = (
+                    PolygonDrawingTool(self.iface.mapCanvas(), callback=self.polygonDrawnCallback,
+                                       start_callback=self.choose_point_click_handler.clearReferenceFeatureHighlight))
+                self.drawing_tool_reference.polygon_marker.setStyle(color=(255, 100, 100, 80))
+            self.iface.mapCanvas().setMapTool(self.drawing_tool_reference)
+
+    def removePolygonDrawingTool(self, reference=False):
+        if not reference and self.drawing_tool:
+            self.iface.mapCanvas().unsetMapTool(self.drawing_tool)
+            if self.drawing_tool:
+                self.drawing_tool.clear()
+            self.drawing_tool = None
+        elif reference and self.drawing_tool_reference:
+            self.iface.mapCanvas().unsetMapTool(self.drawing_tool_reference)
+            if self.drawing_tool_reference:
+                self.drawing_tool_reference.clear()
+            self.drawing_tool_reference = None
+
+    def polygonDrawnCallback(self, polygon):
+        self.choose_point_click_handler.choosePolygonDrawn(polygon=polygon, ref=self.ui.pb_set_reference_polygon.isChecked())
+
     def connectUiSignals(self):
         self.ui.visibilityChanged.connect(self.handleUiClose)
         # self.ui.pb_add_layers.clicked.connect(self.addSelectedLayers)
