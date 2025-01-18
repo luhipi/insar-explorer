@@ -99,13 +99,32 @@ class PlotTs():
         if dates is not None:
             self.dates = dates
 
-        if ts_values is not None:
-            self.ts_values = ts_values
+        def prepareValues(values):
+            if values is not None:
+                values = np.array(values, dtype=float, ndmin=2)
+                if values.shape[0] == 1:
+                    values = values.T
+            else:
+                values = np.zeros((len(self.dates), 1))
+            return values
 
-        if ref_values is not None:
-            self.ref_values = ref_values
+        if ts_values is None:
+            ts_values = self.ts_values
+        if ref_values is None:
+            ref_values = self.ref_values
 
-        self.plot_values = self.ts_values - self.ref_values
+        self.ts_values = prepareValues(ts_values)
+        self.ref_values = prepareValues(ref_values)
+
+        self.plot_values = np.mean(self.ts_values, axis=1) - np.mean(self.ref_values, axis=1)
+        self.error_values = self.prepareErrorValues()
+
+    def prepareErrorValues(self):
+        # TODO: implement different uncertainty estimation methods
+        ts_values_std = np.std(self.ts_values, axis=1)
+        ref_values_std = np.std(self.ref_values, axis=1)
+        error_values = np.sqrt(ts_values_std**2 + ref_values_std**2)
+        return error_values
 
     def initializeAxes(self):
         self.ui.figure.clear()
