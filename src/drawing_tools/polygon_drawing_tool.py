@@ -85,6 +85,7 @@ class PolygonDrawingTool(QgsMapTool):
         # self.polygon_marker.points = []
         # self.polygon_marker.rubber_band.reset(QgsWkbTypes.PolygonGeometry)
         self.polygon_marker.reset()
+        self.deactivate()
 
     def activate(self):
         self.polygon_marker.reset()
