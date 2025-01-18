@@ -181,6 +181,7 @@ class MapClickHandler:
         return ret
 
 class TSClickHandler(MapClickHandler):
+    # TODO: separate PointClickHandler from TSClickHandler
     def __init__(self, plugin):
         super().__init__(plugin)
         self.plot_ts = pts.PlotTs(self.ui)
@@ -198,8 +199,9 @@ class TSClickHandler(MapClickHandler):
 
         self.plot_ts.clear()
 
-
-    def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
+    def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False, start_callback=None):
+        if start_callback:  # use start_callback to remove previous polygon from map
+            start_callback()
         if not layer:
             layer = self.iface.activeLayer()
         status_vector, message = vector_layer_utils.checkVectorLayer(layer)
