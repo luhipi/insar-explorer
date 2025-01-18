@@ -8,6 +8,7 @@ from . import map_click_handler as cph
 from . import setup_frames
 from .map_setting import InsarMap
 from .setting_manager_ui.setting_ui import SettingsTableDialog
+from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 
 
 class GuiController(QObject):
@@ -15,9 +16,13 @@ class GuiController(QObject):
         super().__init__()
         self.iface = plugin.iface
         self.ui = plugin.dockwidget
-        self.choose_point_click_handler = cph.TSClickHandler(plugin)
+        self.choose_point_click_handler = cph.ClickHandler(plugin)
+        # self.choose_polygon_click_handler = cph.ClickHandler(plugin)
         self.click_tool = None #plugin.click_tool
-        self.initializeClickTool()
+        self.drawing_tool = None  # for polygon drawing
+        self.drawing_tool_reference = None  # for reference polygon drawing
+        self.selection_type = "point"  # "point" or "polygon" or "reference polygon"
+        self.initializeSelection()
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
         self.last_saved_ts_path = "ts_plot.png"
@@ -94,6 +99,8 @@ class GuiController(QObject):
         self.ui.pb_choose_point.clicked.connect(self.activatePointSelection)
         self.ui.pb_set_reference.clicked.connect(self.activateReferencePointSelection)
         self.ui.pb_reset_reference.clicked.connect(self.resetReferencePoint)
+        self.ui.pb_choose_polygon.clicked.connect(self.activatePolygonSelection)
+        self.ui.pb_set_reference_polygon.clicked.connect(self.activateReferencePolygonSelection)
         # TS fit handler
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
@@ -224,11 +231,16 @@ class GuiController(QObject):
             self.choose_point_click_handler.clearFeatureHighlight()
             self.choose_point_click_handler.clearReferenceFeatureHighlight()
             self.removeClickTool()
+            self.removePolygonDrawingTool(reference=False)
+            self.removePolygonDrawingTool(reference=True)
             self.ui.pb_choose_point.setChecked(False)
             self.ui.pb_set_reference.setChecked(False)
+            self.ui.pb_choose_polygon.setChecked(False)
 
     def activatePointSelection(self, status):
         self.ui.pb_set_reference.setChecked(False)
+        self.ui.pb_choose_polygon.setChecked(False)
+        self.ui.pb_set_reference_polygon.setChecked(False)
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
@@ -237,12 +249,32 @@ class GuiController(QObject):
 
     def activateReferencePointSelection(self, status):
         self.ui.pb_choose_point.setChecked(False)
+        self.ui.pb_choose_polygon.setChecked(False)
+        self.ui.pb_set_reference_polygon.setChecked(False)
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
         else:
             self.ui.pb_set_reference.setChecked(False)
             self.removeClickTool()
+
+    def activatePolygonSelection(self, status):
+        self.ui.pb_choose_point.setChecked(False)
+        self.ui.pb_set_reference.setChecked(False)
+        self.ui.pb_set_reference_polygon.setChecked(False)
+        if status:
+            self.initializePolygonDrawingTool()
+        else:
+            self.removePolygonDrawingTool()
+
+    def activateReferencePolygonSelection(self, status):
+        self.ui.pb_choose_point.setChecked(False)
+        self.ui.pb_set_reference.setChecked(False)
+        self.ui.pb_choose_polygon.setChecked(False)
+        if status:
+            self.initializePolygonDrawingTool(reference=True)
+        else:
+            self.removePolygonDrawingTool(reference=True)
 
     def resetReferencePoint(self):
         self.choose_point_click_handler.resetReferencePoint()
