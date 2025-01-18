@@ -28,7 +28,16 @@ class GuiController(QObject):
 
         self.iface.currentLayerChanged.connect(self.onLayerChanged)
 
+    def initializeSelection(self):
+        if self.selection_type == "point":
+            self.initializeClickTool()
+        elif self.selection_type == "polygon":
+            self.initializePolygonDrawingTool()
+        elif self.selection_type == "reference polygon":
+            self.initializePolygonDrawingTool(reference=True)
+
     def onLayerChanged(self, layer):
+        """Reset the click handler and the map when the active layer changes."""
         if layer:
             self.choose_point_click_handler.reset()
             self.insar_map.reset()
