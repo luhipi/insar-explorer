@@ -1,5 +1,5 @@
 [pycodestyle]
 max-line-length = 120
-exclude = .git,__pycache__,venv,env,*.ipynb
+exclude = .git,__pycache__,venv,env,*.ipynb,./src/setting_manager_ui/**
 ignore = D213,D203,D213,D212,D413,D409
 
