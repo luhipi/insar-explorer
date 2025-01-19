@@ -1,7 +1,7 @@
 ### History
 
 v0.8.0
-- Add Linting
+- Add linting to improve code readability, consistency, and maintainability.
 
 
 v0.7.0
