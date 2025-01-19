@@ -242,3 +242,12 @@ pep8:
 	@echo "-----------"
 	@echo "Ignored in PEP8 check:"
 	@echo $(PEP8EXCLUDE)
+
+
+# Linting
+lint:
+	flake8 --max-line-length=120 . > ./test/linting/flake8.log || \
+		(cat ./test/linting/flake8.log && exit 1)
+	pycodestyle . > ./test/linting/pycodestyle.log || \
+		(cat ./test/linting/pycodestyle.log && exit 1)
+
