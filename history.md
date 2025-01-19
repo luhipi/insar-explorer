@@ -1,5 +1,9 @@
 ### History
 
+v0.8.0
+- Add Linting
+
+
 v0.7.0
 - Read settings from a JSON file
 - Integrate SettingsManagerUI for managing settings
