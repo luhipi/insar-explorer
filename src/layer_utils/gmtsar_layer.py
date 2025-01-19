@@ -51,7 +51,7 @@ def checkGmtsarLayerTimeseries(layer):
         status = True
     else:
         message = ('<span style="color:red;">Invalid Layer: Please select a vector or raster layer with valid '
-                  'timeseries data.')
+                   'timeseries data.')
         status = False
 
     return status, message
