@@ -24,14 +24,16 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
-# Initialize Qt resources from file resources.py
-from .resources import *
 
 # Import the code for the DockWidget
 from .insar_explorer_dockwidget import InsarExplorerDockWidget
 import os.path
 
 from .src.gui_controller import GuiController
+
+# Initialize Qt resources from file resources.py
+from .resources import qInitResources
+qInitResources()  # not necessary, but to avoid F401 warning
 
 
 class InsarExplorer:
@@ -70,7 +72,7 @@ class InsarExplorer:
         self.toolbar = self.iface.addToolBar(u'InsarExplorer')
         self.toolbar.setObjectName(u'InsarExplorer')
 
-        #print "** INITIALIZING InsarExplorer"
+        # print "** INITIALIZING InsarExplorer"
 
         self.pluginIsActive = False
         self.dockwidget = None
@@ -93,18 +95,17 @@ class InsarExplorer:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('InsarExplorer', message)
 
-
     def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+            self,
+            icon_path,
+            text,
+            callback,
+            enabled_flag=True,
+            add_to_menu=True,
+            add_to_toolbar=True,
+            status_tip=None,
+            whats_this=None,
+            parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -167,7 +168,6 @@ class InsarExplorer:
 
         return action
 
-
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
@@ -178,12 +178,12 @@ class InsarExplorer:
             callback=self.run,
             parent=self.iface.mainWindow())
 
-    #--------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
 
-        #print "** CLOSING InsarExplorer"
+        # print "** CLOSING InsarExplorer"
 
         # disconnects
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
@@ -199,11 +199,10 @@ class InsarExplorer:
 
         self.pluginIsActive = False
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
-        #print "** UNLOAD InsarExplorer"
+        # print "** UNLOAD InsarExplorer"
 
         for action in self.actions:
             self.iface.removePluginMenu(
@@ -213,7 +212,7 @@ class InsarExplorer:
         # remove the toolbar
         del self.toolbar
 
-    #--------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -221,12 +220,12 @@ class InsarExplorer:
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
-            #print "** STARTING InsarExplorer"
+            # print "** STARTING InsarExplorer"
 
             # dockwidget may not exist if:
             #    first run of plugin
             #    removed on close (see self.onClosePlugin method)
-            if self.dockwidget == None:
+            if self.dockwidget is None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = InsarExplorerDockWidget()
 
@@ -239,7 +238,7 @@ class InsarExplorer:
             self.dockwidget.show()
             if self.gui_controller is None:
                 self.gui_controller = GuiController(self)
-        else: # this will reload the widget when button clicked again
+        else:  # this will reload the widget when button clicked again
             self.iface.removeDockWidget(self.dockwidget)
             self.dockwidget = None
             self.pluginIsActive = False

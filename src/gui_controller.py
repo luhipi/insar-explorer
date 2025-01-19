@@ -16,7 +16,7 @@ class GuiController(QObject):
         self.iface = plugin.iface
         self.ui = plugin.dockwidget
         self.choose_point_click_handler = cph.TSClickHandler(plugin)
-        self.click_tool = None #plugin.click_tool
+        self.click_tool = None  # plugin.click_tool
         self.initializeClickTool()
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
@@ -36,7 +36,6 @@ class GuiController(QObject):
     def initializeClickTool(self):
         if not self.click_tool:
             self.click_tool = QgsMapToolEmitPoint(self.iface.mapCanvas())
-            # self.click_tool.canvasClicked.connect(lambda point: self.choose_point_click_handler.choosePointClicked(point))
             self.click_tool.canvasClicked.connect(lambda point: self.choose_point_click_handler.choosePointClicked(
                                                   point=point, layer=None, ref=self.ui.pb_set_reference.isChecked()))
 
@@ -138,7 +137,7 @@ class GuiController(QObject):
         self.insar_map.min_value = float(self.ui.sb_symbol_lower_range.value())
         self.insar_map.max_value = float(self.ui.sb_symbol_upper_range.value())
         self.insar_map.num_classes = int(self.ui.sb_symbol_classes.value())
-        self.insar_map.alpha = float(self.ui.sb_symbol_opacity.value())/100
+        self.insar_map.alpha = float(self.ui.sb_symbol_opacity.value()) / 100
         self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
         self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
         self.insar_map.color_ramp_reverse_flag = self.ui.cb_colormap_reverse.isChecked()
@@ -166,8 +165,8 @@ class GuiController(QObject):
         self.choose_point_click_handler.plot_ts.fitModel()
 
     def timeseriesPlotResiduals(self):
-        self.choose_point_click_handler.plot_ts.plot_residuals_flag = (
-                self.ui.cb_plot_residuals.isChecked() and not self.ui.pb_ts_nofit.isChecked())
+        self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.cb_plot_residuals.isChecked()
+                                                                       and not self.ui.pb_ts_nofit.isChecked())
         self.choose_point_click_handler.plot_ts.plotTs()
 
     def timeseriesReplica(self):
@@ -177,8 +176,6 @@ class GuiController(QObject):
         else:
             self.choose_point_click_handler.plot_ts.replicate_flag = False
         self.choose_point_click_handler.plot_ts.plotTs()
-
-
 
     def handleUiClose(self, visible):
         if not visible:

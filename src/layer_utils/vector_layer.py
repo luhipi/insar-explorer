@@ -59,10 +59,11 @@ def checkVectorLayerTimeseries(layer):
         if any(match):
             count += 1
 
-    if count >0:
+    if count > 0:
         status = True
     else:
-        message = (f'<span style="color:red;">Invalid Layer: Please select a vector or raster layer with valid timeseries data.')
+        message = ('<span style="color:red;">Invalid Layer: Please select a vector or raster layer with valid '
+                   'timeseries data.')
         status = False
 
     return status, message
@@ -79,7 +80,8 @@ def getFeatureAttributes(feature: QgsFeature) -> dict:
 
 def extractDateValueAttributes(attributes: dict) -> list:
     """
-    Extract attributes with keys in the format 'DYYYYMMDD' or 'YYYYMMDD' and return a list of tuples with datetime and float value.
+    Extract attributes with keys in the format 'DYYYYMMDD' or 'YYYYMMDD' and return a list of tuples with datetime and
+    float value.
     :param attributes: Dictionary of feature attributes
     :return: List of tuples (datetime, float)
     """

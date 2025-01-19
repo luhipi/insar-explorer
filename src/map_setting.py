@@ -16,6 +16,7 @@ class velocity():
         self.mean_value = None
         self.std_value = None
 
+
 class InsarMap:
     def __init__(self, iface):
         self.iface = iface

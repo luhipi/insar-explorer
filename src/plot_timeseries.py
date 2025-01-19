@@ -8,6 +8,7 @@ from datetime import timedelta
 from .model_fitting import FittingModels
 from .setting_manager_ui.json_settings import JsonSettings
 
+
 class PlotTs():
 
     def __init__(self, ui):
@@ -26,7 +27,7 @@ class PlotTs():
         self.fit_seasonal_flag = False
         self.replicate_flag = False
         self.plot_replicates = []
-        self.replicate_value = 5.6/2
+        self.replicate_value = 5.6 / 2
         self.ax_residuals = None
         self.plot_residuals_flag = False
         self.plot_residuals_list = []
@@ -89,7 +90,6 @@ class PlotTs():
         parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
         self.parms['residual plot'] = parms
 
-
     def clear(self):
         self.ui.figure.clear()
         self.ui.canvas.draw()
@@ -145,20 +145,20 @@ class PlotTs():
 
             # plot multiple replicas
             for i in range(number_of_up_replicas):
-                replicate_value = self.replicate_value * (i+1)
+                replicate_value = self.replicate_value * (i + 1)
 
-                if i % 2 ==0:
+                if i % 2 == 0:
                     marker_replica_color = marker_color_1
                 else:
                     marker_replica_color = marker_color_2
 
                 replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value,
-                                                   marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+                                               marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
                 self.plot_replicates.append([replicate_up])
             for i in range(number_of_down_replicas):
-                replicate_value = self.replicate_value * (i+1)
+                replicate_value = self.replicate_value * (i + 1)
 
-                if i % 2 ==0:
+                if i % 2 == 0:
                     marker_replica_color = marker_color_2
                 else:
                     marker_replica_color = marker_color_1
@@ -215,7 +215,7 @@ class PlotTs():
             self.decoratePlot(ax=self.ax_residuals, parms=parms)
             self.ui.canvas.draw_idle()
 
-    def decoratePlot(self, ax=None, parms ={}):
+    def decoratePlot(self, ax=None, parms={}):
         if not ax:
             ax = self.ax
         # First set lims then ticks
@@ -292,11 +292,11 @@ class PlotTs():
         y_min, y_max = ax.get_ylim()
         y_range = y_max - y_min
 
-        ideal_intervals = (list(range(1,10, 1)) +
-                           list(range(10, 100, 10)) +
-                           list(range(100, 1000, 100)) +
-                           list(range(1000, 10000, 1000)) +
-                           list(range(10000, 100000, 10000)))
+        ideal_intervals = (list(range(1, 10, 1))
+                           + list(range(10, 100, 10))
+                           + list(range(100, 1000, 100))
+                           + list(range(1000, 10000, 1000))
+                           + list(range(10000, 100000, 10000)))
 
         ideal_i = np.argmin(np.abs(np.array(ideal_intervals) - y_range / 3))
         major_tick_interval = ideal_intervals[ideal_i]
@@ -333,8 +333,8 @@ class PlotTs():
         max_date = np.nanmax(self.dates)
 
         if use_data_xlim:
-            ax.set_xlim(min_date-timedelta(days=padding),
-                             max_date+timedelta(days=padding))
+            ax.set_xlim(min_date - timedelta(days=padding),
+                        max_date + timedelta(days=padding))
         else:
             start_of_year = mdates.num2date(mdates.datestr2num(f'{min_date.year}-01-01'))
             end_of_year = mdates.num2date(mdates.datestr2num(f'{max_date.year+1}-01-01'))

@@ -53,4 +53,3 @@ class CustomToolbar(NavigationToolbar):
         for action in self.actions():
             if action.text() in items_to_remove:
                 self.removeAction(action)
-
