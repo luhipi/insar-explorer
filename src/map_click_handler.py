@@ -322,7 +322,7 @@ class PolygonClickHandler(MapClickHandler):
         else:
             return
 
-    def choosePolygonDrawnVector(self, *, layer: QgsMapLayer = None, polygon = None, ref=False):
+    def choosePolygonDrawnVector(self, *, layer: QgsMapLayer = None, polygon=None, ref=False):
         if not layer:
             layer = self.iface.activeLayer()
 

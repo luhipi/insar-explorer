@@ -18,7 +18,7 @@ class GuiController(QObject):
         self.ui = plugin.dockwidget
         self.choose_point_click_handler = cph.ClickHandler(plugin)
         # self.choose_polygon_click_handler = cph.ClickHandler(plugin)
-        self.click_tool = None #plugin.click_tool
+        self.click_tool = None  # plugin.click_tool
         self.drawing_tool = None  # for polygon drawing
         self.drawing_tool_reference = None  # for reference polygon drawing
         self.selection_type = "point"  # "point" or "polygon" or "reference polygon"
@@ -91,7 +91,8 @@ class GuiController(QObject):
             self.drawing_tool_reference = None
 
     def polygonDrawnCallback(self, polygon):
-        self.choose_point_click_handler.choosePolygonDrawn(polygon=polygon, ref=self.ui.pb_set_reference_polygon.isChecked())
+        self.choose_point_click_handler.choosePolygonDrawn(polygon=polygon,
+                                                           ref=self.ui.pb_set_reference_polygon.isChecked())
 
     def connectUiSignals(self):
         self.ui.visibilityChanged.connect(self.handleUiClose)
