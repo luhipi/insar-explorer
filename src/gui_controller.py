@@ -283,6 +283,8 @@ class GuiController(QObject):
     def resetReferencePoint(self):
         self.choose_point_click_handler.resetReferencePoint()
         self.activateReferencePointSelection(status=False)
+        self.removePolygonDrawingTool(reference=True)  # remove reference polygon
+        self.deactivatePolygonDrawingTool(reference=False)  # deactivate polygon
 
     def addSelectedLayers(self):
         """
