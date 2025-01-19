@@ -65,6 +65,7 @@ class GuiController(QObject):
                 self.drawing_tool = (
                     PolygonDrawingTool(self.iface.mapCanvas(), callback=self.polygonDrawnCallback,
                                        start_callback=self.choose_point_click_handler.clearFeatureHighlight))
+            # FIXME: when push button is reactivated, current polygon is removed
             self.iface.mapCanvas().setMapTool(self.drawing_tool)
         else:
             if not self.drawing_tool_reference:
@@ -74,16 +75,19 @@ class GuiController(QObject):
                 self.drawing_tool_reference.polygon_marker.setStyle(color=(255, 100, 100, 80))
             self.iface.mapCanvas().setMapTool(self.drawing_tool_reference)
 
-    def removePolygonDrawingTool(self, reference=False):
+    def deactivatePolygonDrawingTool(self, reference=False):
         if not reference and self.drawing_tool:
             self.iface.mapCanvas().unsetMapTool(self.drawing_tool)
-            if self.drawing_tool:
-                self.drawing_tool.clear()
-            self.drawing_tool = None
         elif reference and self.drawing_tool_reference:
             self.iface.mapCanvas().unsetMapTool(self.drawing_tool_reference)
-            if self.drawing_tool_reference:
-                self.drawing_tool_reference.clear()
+
+    def removePolygonDrawingTool(self, reference=False):
+        self.deactivatePolygonDrawingTool(reference=reference)
+        if not reference and self.drawing_tool:
+            self.drawing_tool.clear()
+            self.drawing_tool = None
+        elif reference and self.drawing_tool_reference:
+            self.drawing_tool_reference.clear()
             self.drawing_tool_reference = None
 
     def polygonDrawnCallback(self, polygon):
@@ -266,7 +270,7 @@ class GuiController(QObject):
         if status:
             self.initializePolygonDrawingTool()
         else:
-            self.removePolygonDrawingTool()
+            self.deactivatePolygonDrawingTool(reference=False)
 
     def activateReferencePolygonSelection(self, status):
         self.ui.pb_choose_point.setChecked(False)
@@ -275,7 +279,7 @@ class GuiController(QObject):
         if status:
             self.initializePolygonDrawingTool(reference=True)
         else:
-            self.removePolygonDrawingTool(reference=True)
+            self.deactivatePolygonDrawingTool(reference=True)
 
     def resetReferencePoint(self):
         self.choose_point_click_handler.resetReferencePoint()
