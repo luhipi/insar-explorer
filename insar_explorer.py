@@ -70,7 +70,7 @@ class InsarExplorer:
         self.toolbar = self.iface.addToolBar(u'InsarExplorer')
         self.toolbar.setObjectName(u'InsarExplorer')
 
-        #print "** INITIALIZING InsarExplorer"
+        # print "** INITIALIZING InsarExplorer"
 
         self.pluginIsActive = False
         self.dockwidget = None
