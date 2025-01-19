@@ -49,7 +49,7 @@ class MapClickHandler:
                                                      only_the_closest_one=True, only_ids=True)
 
         if closest_feature_id:
-            self.ui.lb_msg_bar.setText(f"")
+            self.ui.lb_msg_bar.setText("")
         else:
             self.ui.lb_msg_bar.setText("Identify Result: No nearby point found. Select another point.")
 
@@ -176,6 +176,7 @@ class MapClickHandler:
         QApplication.restoreOverrideCursor()
         return ret
 
+
 class TSClickHandler(MapClickHandler):
     # TODO: separate PointClickHandler from TSClickHandler
     def __init__(self, plugin):
@@ -208,7 +209,6 @@ class TSClickHandler(MapClickHandler):
             self.choosePointClickedRaster(point=point, layer=layer, ref=ref)
         else:
             return
-
 
     def choosePointClickedVector(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         feature = self.identifyClickedFeature(point, layer=layer, ref=ref)

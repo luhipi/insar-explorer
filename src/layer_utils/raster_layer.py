@@ -6,7 +6,6 @@ from osgeo import gdal
 from . import gmtsar_layer as gmtsar_layer_utils
 
 
-
 def createVrtFromFiles(*, raster_file_paths, band_names=None, out_file="") -> gdal.Dataset:
     """
     Create a VRT file in memory from a list of .grd files and rename each dataset based on its date.
@@ -48,14 +47,13 @@ class RasterTimeseries:
 
         raster_file_paths, band_names = gmtsar_layer_utils.getGmtsarGrdInfo(directory)
         dataset = createVrtFromFiles(raster_file_paths=raster_file_paths,
-                                                        band_names=band_names, out_file="")
+                                     band_names=band_names, out_file="")
 
         if not dataset:
             return np.array([])
 
         date_value_list = self.getVrtTimeseriesAttributes(dataset, point)
         return date_value_list
-
 
     def getVrtTimeseriesAttributes(self, vrt_dataset, point, memory_limit=500):
         """
@@ -83,7 +81,7 @@ class RasterTimeseries:
         data_type_size = gdal.GetDataTypeSize(band.DataType) // 8  # Size in bytes
         expected_size = x_size * y_size * num_bands * data_type_size
 
-        if expected_size > memory_limit*1024*1024:
+        if expected_size > memory_limit * 1024 * 1024:
             pixel_values = vrt_dataset.ReadAsArray(px, py, 1, 1)
             if pixel_values is None:
                 return np.array([])
