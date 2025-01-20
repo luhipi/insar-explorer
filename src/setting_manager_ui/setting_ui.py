@@ -1,4 +1,4 @@
-__version__ = '0.4.1'
+__version__ = '0.5.0'
 
 import sys
 
@@ -8,9 +8,13 @@ try:
         QApplication,
         QDialog,
         QVBoxLayout,
+        QHBoxLayout,
         QTableWidget,
         QTableWidgetItem,
         QTabWidget,
+        QCheckBox,
+        QMessageBox,
+        QPushButton
     )
     from PySide6.QtCore import Qt, Signal
     from PySide6.QtGui import QColor, QBrush
@@ -20,15 +24,25 @@ except ImportError:
         QApplication,
         QDialog,
         QVBoxLayout,
+        QHBoxLayout,
         QTableWidget,
         QTableWidgetItem,
         QTabWidget,
+        QCheckBox,
+        QMessageBox,
+        QPushButton
     )
     from qgis.PyQt.QtCore import Qt, pyqtSignal as Signal
     from qgis.PyQt.QtGui import QColor, QBrush
 
 from .json_settings import JsonSettings
-from .src.object_with_checkbox import *
+from .src.object_with_checkbox import (
+    ObjectWithCheckbox,
+    ColorPickerWithCheckbox,
+    DoubleSpinBoxWithCheckbox,
+    SpinBoxWithCheckbox,
+    LineEditWithCheckbox,
+    ComboBoxWithCheckbox)
 
 
 class SettingsTabWidget(QTableWidget):
@@ -62,6 +76,9 @@ class SettingsTabWidget(QTableWidget):
     def loadData(self):
         """ Loads the parameters into the table widget. """
 
+        column_color = QBrush(QColor(240, 248, 255))
+        column_color2 = QBrush(QColor(250, 250, 250))
+
         # TODO: implement a way to hide/show certain parameters
         param_dict_visible = self.params_dict
 
@@ -73,7 +90,7 @@ class SettingsTabWidget(QTableWidget):
             param_default = info.get("default", "")
             auto_flag = info.get("auto", False)
             # options for dropdown list
-            options = info.get("options", None)
+            options = info.get("options", [])
             advanced = info.get("advanced", False)
             # range for int and float
             range = info.get("range", [None, None])
@@ -87,11 +104,14 @@ class SettingsTabWidget(QTableWidget):
             param_item = QTableWidgetItem(param_name)
             param_item.setFlags(param_item.flags() & ~Qt.ItemIsEditable)
             self.setItem(row_idx, 0, param_item)
-            param_item.setBackground(QBrush(QColor(240, 240, 240)))  # Light gray background
+            if advanced:
+                param_item.setBackground(column_color)
+            else:
+                param_item.setBackground(column_color2)
 
             # Column 1: Value (editable)
             if param_type == "color":
-                wobject = ColorPickerWithCheckbox(param_value, auto_flag, add_checkbox)
+                wobject = ColorPickerWithCheckbox(param_value, auto_flag, add_checkbox, options=options)
             elif param_type == "bool":
                 wobject = QCheckBox()
                 wobject.setChecked(param_value)
@@ -108,9 +128,7 @@ class SettingsTabWidget(QTableWidget):
                 wobject.setValue(param_value)
 
             elif param_type == "dropdown":
-                wobject = ComboBoxWithCheckbox(param_value, auto_flag, add_checkbox)
-                wobject.addItems(options)
-                wobject.setCurrentText(param_value)
+                wobject = ComboBoxWithCheckbox(param_value, auto_flag, add_checkbox, options)
             else:
                 QMessageBox.warning(self, "Unknown parameter type", f"Unknown parameter type: {param_type}")
                 raise ValueError(f"Unknown parameter type: {param_type}")
@@ -128,7 +146,10 @@ class SettingsTabWidget(QTableWidget):
             default_item = QTableWidgetItem(str(param_default_to_show))
             default_item.setFlags(default_item.flags() & ~Qt.ItemIsEditable)
             self.setItem(row_idx, 2, default_item)
-            default_item.setBackground(QBrush(QColor(250, 255, 250)))
+            if advanced:
+                default_item.setBackground(column_color)
+            else:
+                default_item.setBackground(column_color2)
 
             if self.hide_advanced and advanced:
                 self.hideRow(row_idx)
@@ -331,4 +352,3 @@ if __name__ == "__main__":
     dialog = SettingsTableDialog(JSON_FILE, "test setting")
     dialog.exec()
     sys.exit(app.exec())
-

@@ -1,9 +1,6 @@
-__version__ = '0.4.1'
+__version__ = '0.5.0'
 
-try:
-    import json5 as json
-except ImportError:
-    import json
+import json
 
 
 class JsonSettings:
@@ -101,4 +98,3 @@ class JsonSettings:
             if data is None:
                 return None
         return data.get("default", None)
-
