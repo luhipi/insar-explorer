@@ -47,6 +47,12 @@
                 "value": "#1f77b4",
                 "default": "#1f77b4"
             },
+            "marker edge color": {
+                "type": "color",
+                "value": "black",
+                "default": "black",
+                "advanced": true
+            },
             "marker size": {
                 "type": "float",
                 "value": 5.0,
@@ -104,6 +110,24 @@
                     10000
                 ],
                 "default": true
+            },
+            "grid": {
+                "type": "dropdown",
+                "value": "both",
+                "options": [
+                    "both",
+                    "horizontal",
+                    "vertical",
+                    "none"
+                ],
+                "default": "both",
+                "advanced": true
+            },
+            "background color": {
+                "type": "color",
+                "value": "#ededed",
+                "default": "#ededed",
+                "advanced": true
             },
             "replica color 1": {
                 "type": "color",
@@ -200,6 +224,12 @@
                 "value": "#1f77b4",
                 "default": "#1f77b4"
             },
+            "marker edge color": {
+                "type": "color",
+                "value": "black",
+                "default": "black",
+                "advanced": true
+            },
             "marker size": {
                 "type": "float",
                 "value": 5.0,
@@ -257,6 +287,14 @@
                     10000
                 ],
                 "default": true
+            }
+        },
+        "figure": {
+            "background color": {
+                "type": "color",
+                "value": "white",
+                "default": "white",
+                "advanced": true
             }
         },
         "export": {
