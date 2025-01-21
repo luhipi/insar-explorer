@@ -1,16 +1,9 @@
-import os
-
-from qgis.PyQt.QtWidgets import QMessageBox, QApplication
+from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtCore import Qt
-from qgis.core import QgsPointXY, QgsGeometry, QgsMapLayer, QgsRectangle, QgsFeatureRequest, QgsSettings, Qgis, QgsFeature
+from qgis.core import (QgsPointXY, QgsGeometry, QgsMapLayer, QgsRectangle, QgsFeatureRequest, QgsSettings, Qgis,
+                       )
 from qgis.gui import QgsHighlight
 from PyQt5.QtGui import QCursor
-
-import numpy as np
-import re
-from datetime import datetime
-
-from osgeo import gdal
 
 from . import plot_timeseries as pts
 from .layer_utils import vector_layer as vector_layer_utils
@@ -53,7 +46,7 @@ class MapClickHandler:
                                                      only_the_closest_one=True, only_ids=True)
 
         if closest_feature_id:
-            self.ui.lb_msg_bar.setText(f"")
+            self.ui.lb_msg_bar.setText("")
         else:
             self.ui.lb_msg_bar.setText("Identify Result: No nearby point found. Select another point.")
 
@@ -180,6 +173,7 @@ class MapClickHandler:
         QApplication.restoreOverrideCursor()
         return ret
 
+
 class TSClickHandler(MapClickHandler):
     def __init__(self, plugin):
         super().__init__(plugin)
@@ -198,7 +192,6 @@ class TSClickHandler(MapClickHandler):
 
         self.plot_ts.clear()
 
-
     def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         if not layer:
             layer = self.iface.activeLayer()
@@ -210,7 +203,6 @@ class TSClickHandler(MapClickHandler):
             self.choosePointClickedRaster(point=point, layer=layer, ref=ref)
         else:
             return
-
 
     def choosePointClickedVector(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         feature = self.identifyClickedFeature(point, layer=layer, ref=ref)
@@ -260,4 +252,3 @@ class TSClickHandler(MapClickHandler):
         self.ref_values = 0
         self.clearReferenceFeatureHighlight()
         self.plot_ts.plotTs(ref_values=self.ref_values)
-

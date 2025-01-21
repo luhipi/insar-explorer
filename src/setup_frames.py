@@ -6,6 +6,7 @@ from qgis.PyQt.QtWidgets import QVBoxLayout
 
 from .mpl_toolbar import CustomToolbar
 
+
 def setupTsFrame(ui):
     print(ui)
     plt.style.use('bmh')

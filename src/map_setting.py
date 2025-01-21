@@ -7,6 +7,7 @@ from qgis.core import QgsRasterShader, QgsColorRampShader, QgsSingleBandPseudoCo
 from . import color_maps
 from .layer_utils import vector_layer as vector_layer_utils
 from .layer_utils import gmtsar_layer as gmtsar_layer_utils
+from .get_version import qgisVresion
 
 
 class velocity():
@@ -15,6 +16,7 @@ class velocity():
         self.max_value = None
         self.mean_value = None
         self.std_value = None
+
 
 class InsarMap:
     def __init__(self, iface):
@@ -62,7 +64,11 @@ class InsarMap:
 
         if n_std is None:
             if self.data_min is None or self.data_max is None:
-                min_max = layer.minimumAndMaximumValue(layer.fields().indexFromName(field_name))
+                if qgisVresion() > (3, 20):
+                    min_max = layer.minimumAndMaximumValue(layer.fields().indexFromName(field_name))
+                else:
+                    min_max = [layer.minimumValue(layer.fields().indexFromName(field_name)),
+                               layer.maximumValue(layer.fields().indexFromName(field_name))]
                 self.data_min, self.data_max = min_max
                 if self.data_min is None or self.data_max is None:
                     values = [feature[field_name] for feature in layer.getFeatures() if feature[field_name] is not None]
