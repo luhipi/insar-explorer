@@ -6,7 +6,7 @@ import matplotlib.ticker as ticker
 from datetime import timedelta
 
 from .model_fitting import FittingModels
-from .setting_manager_ui.json_settings import JsonSettings
+from ..external.setting_manager_ui.json_settings import JsonSettings
 
 
 class PlotTs():

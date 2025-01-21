@@ -7,7 +7,7 @@ from PyQt5.QtCore import QObject, QTimer
 from . import map_click_handler as cph
 from . import setup_frames
 from .map_setting import InsarMap
-from .setting_manager_ui.setting_ui import SettingsTableDialog
+from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
 
 
 class GuiController(QObject):
