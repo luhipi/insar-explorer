@@ -97,3 +97,9 @@ def extractDateValueAttributes(attributes: dict) -> list:
             date_value_list.append((date_obj, float(value)))
 
     return np.array(date_value_list, dtype=object)
+
+
+def getVectorFields(layer):
+    """ get field names from vector layer"""
+    fields = [field.name() for field in layer.fields()]
+    return fields
