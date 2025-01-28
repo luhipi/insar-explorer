@@ -1,6 +1,7 @@
 ### History
 
 v0.8.0
+- Allow D_YYYYMMDD time series date format
 - Add combobox to select field for visualization
 - Change Groupbox name: Range to Value
 - Add linting to improve code readability, consistency, and maintainability.

@@ -44,7 +44,7 @@ def getVectorVelocityFieldName(layer):
 
 def checkVectorLayerTimeseries(layer):
     """ check layer is a valid vector with velocity """
-    pattern_options = [r'^D(\d{8})$', r'(\d{8})$']
+    pattern_options = [r'^D(\d{8})$', r'(\d{8})$', r'^D_(\d{8})$']
     date_field_patterns = [re.compile(pattern) for pattern in pattern_options]
 
     count = 0
@@ -85,7 +85,7 @@ def extractDateValueAttributes(attributes: dict) -> list:
     :param attributes: Dictionary of feature attributes
     :return: List of tuples (datetime, float)
     """
-    pattern_options = [r'^D(\d{8})$', r'(\d{8})$']
+    pattern_options = [r'^D(\d{8})$', r'(\d{8})$',  r'^D_(\d{8})$']
     date_value_patterns = [re.compile(pattern) for pattern in pattern_options]
     date_value_list = []
 
