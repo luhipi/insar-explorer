@@ -21,6 +21,7 @@ class velocity():
 class InsarMap:
     def __init__(self, iface):
         self.iface = iface
+        self.selected_field_name = None
         self.symbol_size = 1
         self.min_value = -5
         self.max_value = 5
@@ -58,9 +59,9 @@ class InsarMap:
             return message
 
     def getDataRangeFromVectorLayer(self, layer, n_std=None):
-        field_name, message = vector_layer_utils.checkVectorLayerVelocity(layer)
+        field_name = self.selected_field_name
         if field_name is None:
-            return message
+            return "layer field name is None"
 
         if n_std is None:
             if self.data_min is None or self.data_max is None:
@@ -190,9 +191,9 @@ class InsarMap:
             range_item = QgsRendererRange(lower, upper, symbol, label)
             ranges.append(range_item)
 
-        field_name, message = vector_layer_utils.checkVectorLayerVelocity(layer)
+        field_name = self.selected_field_name
         if field_name is None:
-            return message
+            return "layer field name is None"
         else:
             renderer = QgsGraduatedSymbolRenderer(field_name, ranges)
             # renderer.setMode(QgsGraduatedSymbolRenderer.Custom)

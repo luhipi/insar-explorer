@@ -23,7 +23,7 @@ def checkVectorLayer(layer):
         return True, ""
 
 
-def checkVectorLayerVelocity(layer):
+def getVectorVelocityFieldName(layer):
     """ check layer is a valid vector with velocity """
 
     velocity_field_name_options = ['velocity', 'VEL', 'mean_velocity']
