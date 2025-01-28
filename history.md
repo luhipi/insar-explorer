@@ -1,11 +1,8 @@
 ### History
 
-v0.9.0
+v0.8.0
 - Add combobox to select field for visualization
 - Change Groupbox name: Range to Value
-
-
-v0.8.0
 - Add linting to improve code readability, consistency, and maintainability.
 - Upgrade to SettingsManagerUI v0.5.0
 - Move external libraries to `external` folder.
