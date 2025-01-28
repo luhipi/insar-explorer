@@ -43,10 +43,11 @@ class GuiController(QObject):
             return
         status, message = vector_layer_utils.checkVectorLayer(layer)
         if status is False:
-            self.ui.cb_select_field.setEditable(False)
+            self.ui.cb_select_field.clear()
+            self.ui.cb_select_field.setEnabled(False)
             return
         else:
-            self.ui.cb_select_field.setEditable(False)
+            self.ui.cb_select_field.setEnabled(True)
 
         field_list = vector_layer_utils.getVectorFields(layer)
         velocity_field, message = vector_layer_utils.getVectorVelocityFieldName(layer)
