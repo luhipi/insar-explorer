@@ -28,11 +28,11 @@ We welcome contributions to the project. Please follow the guidelines [here](htt
 This plugin is licensed under the GPL-2.0 license. See the LICENSE file for more details.
 
 ## Authors
-[Mahmud Haghighi](https://www.ipi.uni-hannover.de/en/haghighi/),
-           [Andreas Piter](https://www.ipi.uni-hannover.de/en/piter/),
-           [Erik Rivas](https://www.ipi.uni-hannover.de/en/institute/team/erik-rivas)
+[Mahmud Haghighi](https://www.ipi.uni-hannover.de/en/haghighi/)
+
+## Contributors
+[Andreas Piter](https://www.ipi.uni-hannover.de/en/piter/),
+[Erik Rivas](https://www.ipi.uni-hannover.de/en/institute/team/erik-rivas)
 
 ## Contact
 For any questions or issues, please create an issue on the GitHub repository.
-
-
