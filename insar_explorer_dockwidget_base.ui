@@ -177,7 +177,11 @@
                       <number>0</number>
                      </property>
                      <item>
-                      <widget class="QComboBox" name="cb_select_field"/>
+                      <widget class="QComboBox" name="cb_select_field">
+                       <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
                      </item>
                      <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_9">
@@ -199,10 +203,10 @@
                           <number>1</number>
                          </property>
                          <property name="minimum">
-                          <double>-1000.000000000000000</double>
+                          <double>-1000000000.000000000000000</double>
                          </property>
                          <property name="maximum">
-                          <double>1000.000000000000000</double>
+                          <double>1000000000.000000000000000</double>
                          </property>
                          <property name="value">
                           <double>-10.000000000000000</double>
@@ -268,10 +272,10 @@
                           <number>1</number>
                          </property>
                          <property name="minimum">
-                          <double>-1000.000000000000000</double>
+                          <double>-1000000000.000000000000000</double>
                          </property>
                          <property name="maximum">
-                          <double>1000.000000000000000</double>
+                          <double>1000000000.000000000000000</double>
                          </property>
                          <property name="value">
                           <double>10.000000000000000</double>
