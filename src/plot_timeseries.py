@@ -238,7 +238,7 @@ class PlotTs():
     def decorateFigure(self, parms={}):
         self.setFigureStyle(parms=parms)
 
-    def decoratePlot(self, ax=None, parms ={}):
+    def decoratePlot(self, ax=None, parms={}):
         if not ax:
             ax = self.ax
         # First set lims then ticks
