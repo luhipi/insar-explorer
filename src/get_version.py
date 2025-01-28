@@ -13,5 +13,3 @@ def qgisVresion():
     version_str = Qgis.QGIS_VERSION
     numeric_parts = re.findall(r'\d+', version_str)
     return tuple(map(int, numeric_parts))
-
-

@@ -7,6 +7,7 @@ from PyQt5.QtCore import QObject, QTimer
 from . import map_click_handler as cph
 from . import setup_frames
 from .map_setting import InsarMap
+from .layer_utils import vector_layer as vector_layer_utils
 from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
 
 
@@ -28,10 +29,39 @@ class GuiController(QObject):
 
         self.iface.currentLayerChanged.connect(self.onLayerChanged)
 
+        self.setVectorFields()
+
     def onLayerChanged(self, layer):
         if layer:
             self.choose_point_click_handler.reset()
             self.insar_map.reset()
+            self.setVectorFields()
+
+    def setVectorFields(self):
+        layer = self.iface.activeLayer()
+        if not layer:
+            return
+        status, message = vector_layer_utils.checkVectorLayer(layer)
+        if status is False:
+            self.ui.cb_select_field.setEditable(False)
+            return
+        else:
+            self.ui.cb_select_field.setEditable(False)
+
+        field_list = vector_layer_utils.getVectorFields(layer)
+        velocity_field, message = vector_layer_utils.getVectorVelocityFieldName(layer)
+        self.ui.cb_select_field.clear()
+        self.ui.cb_select_field.addItems(field_list)
+        if velocity_field:
+            self.ui.cb_select_field.setCurrentText(velocity_field)
+
+        self.insar_map.reset()
+        self.insar_map.selected_field_name = self.ui.cb_select_field.currentText()
+
+    def selectVectorFieldChanged(self):
+        self.insar_map.selected_field_name = self.ui.cb_select_field.currentText()
+        self.insar_map.reset()
+        self.applyLiveSymbology()
 
     def initializeClickTool(self):
         if not self.click_tool:
@@ -66,10 +96,9 @@ class GuiController(QObject):
 
         # Setting popup
         self.ui.pb_ts_settings.clicked.connect(self.settingsWidgetPopup)
-        # map
-        self.connectMapSignals()
 
     def connectMapSignals(self):
+        self.ui.cb_select_field.currentTextChanged.connect(self.selectVectorFieldChanged)
         self.ui.pb_symbology.clicked.connect(self.applySymbology)
         self.ui.sb_symbol_lower_range.valueChanged.connect(self.setSymbologyLowerRange)
         self.ui.sb_symbol_upper_range.valueChanged.connect(self.setSymbologyUpperRange)
@@ -134,6 +163,7 @@ class GuiController(QObject):
             QTimer.singleShot(0, self.applySymbology)
 
     def applySymbology(self):
+        self.insar_map.selected_field_name = self.ui.cb_select_field.currentText()
         self.insar_map.min_value = float(self.ui.sb_symbol_lower_range.value())
         self.insar_map.max_value = float(self.ui.sb_symbol_upper_range.value())
         self.insar_map.num_classes = int(self.ui.sb_symbol_classes.value())

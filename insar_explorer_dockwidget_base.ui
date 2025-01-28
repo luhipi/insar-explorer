@@ -118,7 +118,7 @@
                </size>
               </property>
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
@@ -158,7 +158,7 @@
                      <bool>false</bool>
                     </property>
                     <property name="title">
-                     <string>Range</string>
+                     <string>Value</string>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_10">
                      <property name="spacing">
@@ -176,6 +176,9 @@
                      <property name="bottomMargin">
                       <number>0</number>
                      </property>
+                     <item>
+                      <widget class="QComboBox" name="cb_select_field"/>
+                     </item>
                      <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_9">
                        <property name="spacing">
