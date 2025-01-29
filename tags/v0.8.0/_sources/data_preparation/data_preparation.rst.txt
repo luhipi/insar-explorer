@@ -1,0 +1,17 @@
+
+Data preparation
+****************
+
+The data can be prepared for different software tools as follows:
+
+.. include:: sarvey.rst
+
+.. include:: mintpy.rst
+
+.. include:: miaplpy.rst
+
+.. include:: gmtsar.rst
+
+.. include:: stamps.rst
+
+**Note:** if you are an InSAR software developer interested in incorporating data visualization support within InSAR Explorer, please reach out to us.
