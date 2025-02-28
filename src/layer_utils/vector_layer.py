@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 import numpy as np
 from qgis.core import QgsMapLayer, QgsFeature
+from qgis.PyQt.QtCore import QVariant
 
 
 def checkVectorLayer(layer):
@@ -23,7 +24,7 @@ def checkVectorLayer(layer):
         return True, ""
 
 
-def checkVectorLayerVelocity(layer):
+def getVectorVelocityFieldName(layer):
     """ check layer is a valid vector with velocity """
 
     velocity_field_name_options = ['velocity', 'VEL', 'mean_velocity']
@@ -44,7 +45,7 @@ def checkVectorLayerVelocity(layer):
 
 def checkVectorLayerTimeseries(layer):
     """ check layer is a valid vector with velocity """
-    pattern_options = [r'^D(\d{8})$', r'(\d{8})$']
+    pattern_options = [r'^D(\d{8})$', r'(\d{8})$', r'^D_(\d{8})$']
     date_field_patterns = [re.compile(pattern) for pattern in pattern_options]
 
     count = 0
@@ -85,7 +86,7 @@ def extractDateValueAttributes(attributes: dict) -> list:
     :param attributes: Dictionary of feature attributes
     :return: List of tuples (datetime, float)
     """
-    pattern_options = [r'^D(\d{8})$', r'(\d{8})$']
+    pattern_options = [r'^D(\d{8})$', r'(\d{8})$', r'^D_(\d{8})$']
     date_value_patterns = [re.compile(pattern) for pattern in pattern_options]
     date_value_list = []
 
@@ -94,6 +95,18 @@ def extractDateValueAttributes(attributes: dict) -> list:
         if any(match):
             date_str = next(m.group(1) for m in match if m)
             date_obj = datetime.strptime(date_str, '%Y%m%d')
-            date_value_list.append((date_obj, float(value)))
+
+            # check if field value is NULL
+            if isinstance(value, QVariant):
+                if value.isNull():
+                    value = np.nan
+
+            date_value_list.append((date_obj, value))
 
     return np.array(date_value_list, dtype=object)
+
+
+def getVectorFields(layer):
+    """ get field names from vector layer"""
+    fields = [field.name() for field in layer.fields()]
+    return fields

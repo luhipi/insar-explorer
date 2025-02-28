@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 120
-exclude = test,./src/setting_manager_ui,docs,./plugin_upload.py,help,i18n,icons,plugin_builder,scripts,resources.py,.git,__pycache__,venv,env,*.ipynb
+exclude = test,external,./plugin_upload.py,help,i18n,icons,plugin_builder,scripts,resources.py,.git,__pycache__,venv,env,*.ipynb
 ignore = E203, W503
 count = True
 statistics = True

@@ -99,7 +99,7 @@
              <x>0</x>
              <y>0</y>
              <width>244</width>
-             <height>470</height>
+             <height>524</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout">
@@ -158,7 +158,7 @@
                      <bool>false</bool>
                     </property>
                     <property name="title">
-                     <string>Range</string>
+                     <string>Value</string>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_10">
                      <property name="spacing">
@@ -176,6 +176,13 @@
                      <property name="bottomMargin">
                       <number>0</number>
                      </property>
+                     <item>
+                      <widget class="QComboBox" name="cb_select_field">
+                       <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
                      <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_9">
                        <property name="spacing">
@@ -196,10 +203,10 @@
                           <number>1</number>
                          </property>
                          <property name="minimum">
-                          <double>-1000.000000000000000</double>
+                          <double>-1000000000.000000000000000</double>
                          </property>
                          <property name="maximum">
-                          <double>1000.000000000000000</double>
+                          <double>1000000000.000000000000000</double>
                          </property>
                          <property name="value">
                           <double>-10.000000000000000</double>
@@ -222,8 +229,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>40</width>
-                           <height>40</height>
+                           <width>30</width>
+                           <height>30</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -265,10 +272,10 @@
                           <number>1</number>
                          </property>
                          <property name="minimum">
-                          <double>-1000.000000000000000</double>
+                          <double>-1000000000.000000000000000</double>
                          </property>
                          <property name="maximum">
-                          <double>1000.000000000000000</double>
+                          <double>1000000000.000000000000000</double>
                          </property>
                          <property name="value">
                           <double>10.000000000000000</double>
@@ -735,8 +742,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>40</width>
-                           <height>40</height>
+                           <width>30</width>
+                           <height>30</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -812,6 +819,12 @@
                 </item>
                 <item row="0" column="0">
                  <layout class="QVBoxLayout" name="verticalLayout_5">
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
                   <item>
                    <widget class="QGroupBox" name="groupBox_3">
                     <property name="sizePolicy">
@@ -831,6 +844,9 @@
                     </property>
                     <property name="title">
                      <string>Select point</string>
+                    </property>
+                    <property name="flat">
+                     <bool>false</bool>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_8">
                      <property name="spacing">
@@ -869,8 +885,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>40</width>
-                           <height>40</height>
+                           <width>30</width>
+                           <height>30</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -913,8 +929,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>40</width>
-                           <height>40</height>
+                           <width>30</width>
+                           <height>30</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -1104,8 +1120,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>40</width>
-                           <height>40</height>
+                           <width>30</width>
+                           <height>30</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -1201,8 +1217,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>40</width>
-                           <height>40</height>
+                           <width>30</width>
+                           <height>30</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -1238,6 +1254,12 @@
                           </sizepolicy>
                          </property>
                          <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="sizeIncrement">
                           <size>
                            <width>0</width>
                            <height>0</height>
@@ -1349,12 +1371,16 @@
                             <number>-1</number>
                            </property>
                            <property name="text">
-                            <string>X</string>
+                            <string/>
+                           </property>
+                           <property name="icon">
+                            <iconset>
+                             <normaloff>:/icons/icons/x.svg</normaloff>:/icons/icons/x.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
-                             <width>25</width>
-                             <height>25</height>
+                             <width>20</width>
+                             <height>20</height>
                             </size>
                            </property>
                            <property name="checkable">
@@ -1401,8 +1427,8 @@
                            </property>
                            <property name="iconSize">
                             <size>
-                             <width>25</width>
-                             <height>25</height>
+                             <width>20</width>
+                             <height>20</height>
                             </size>
                            </property>
                            <property name="checkable">
@@ -1446,8 +1472,8 @@
                            </property>
                            <property name="iconSize">
                             <size>
-                             <width>25</width>
-                             <height>25</height>
+                             <width>20</width>
+                             <height>20</height>
                             </size>
                            </property>
                            <property name="checkable">
@@ -1514,8 +1540,8 @@
                            </property>
                            <property name="iconSize">
                             <size>
-                             <width>25</width>
-                             <height>25</height>
+                             <width>20</width>
+                             <height>20</height>
                             </size>
                            </property>
                            <property name="checkable">
@@ -1562,8 +1588,8 @@
                            </property>
                            <property name="iconSize">
                             <size>
-                             <width>25</width>
-                             <height>25</height>
+                             <width>20</width>
+                             <height>20</height>
                             </size>
                            </property>
                            <property name="checkable">
@@ -1606,8 +1632,8 @@
                            </property>
                            <property name="iconSize">
                             <size>
-                             <width>25</width>
-                             <height>25</height>
+                             <width>20</width>
+                             <height>20</height>
                             </size>
                            </property>
                            <property name="checkable">
@@ -1690,6 +1716,209 @@
                    </widget>
                   </item>
                   <item>
+                   <widget class="QGroupBox" name="groupBox_14">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>150</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="toolTip">
+                     <string>Y-axis settings</string>
+                    </property>
+                    <property name="title">
+                     <string>Y-axis setting</string>
+                    </property>
+                    <property name="flat">
+                     <bool>false</bool>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_12">
+                     <property name="spacing">
+                      <number>0</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <layout class="QHBoxLayout" name="horizontalLayout_16">
+                       <property name="spacing">
+                        <number>5</number>
+                       </property>
+                       <item>
+                        <widget class="QPushButton" name="cb_y_from_data">
+                         <property name="enabled">
+                          <bool>true</bool>
+                         </property>
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>30</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Y axis from data</string>
+                         </property>
+                         <property name="toolTipDuration">
+                          <number>-1</number>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                         <property name="icon">
+                          <iconset>
+                           <normaloff>:/icons/icons/y_axis_from_data.svg</normaloff>:/icons/icons/y_axis_from_data.svg</iconset>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>true</bool>
+                         </property>
+                         <property name="checked">
+                          <bool>true</bool>
+                         </property>
+                         <attribute name="buttonGroup">
+                          <string notr="true">gb_y_axis</string>
+                         </attribute>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="cb_y_symmetric">
+                         <property name="enabled">
+                          <bool>true</bool>
+                         </property>
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>30</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Symmetric Y axis</string>
+                         </property>
+                         <property name="toolTipDuration">
+                          <number>-1</number>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                         <property name="icon">
+                          <iconset>
+                           <normaloff>:/icons/icons/y_axis_symmetric.svg</normaloff>:/icons/icons/y_axis_symmetric.svg</iconset>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>true</bool>
+                         </property>
+                         <property name="checked">
+                          <bool>false</bool>
+                         </property>
+                         <attribute name="buttonGroup">
+                          <string notr="true">gb_y_axis</string>
+                         </attribute>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="cb_y_adaptive">
+                         <property name="enabled">
+                          <bool>true</bool>
+                         </property>
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>30</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Adaptice Y axis</string>
+                         </property>
+                         <property name="toolTipDuration">
+                          <number>-1</number>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                         <property name="icon">
+                          <iconset>
+                           <normaloff>:/icons/icons/y_axis_adaptive.svg</normaloff>:/icons/icons/y_axis_adaptive.svg</iconset>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>true</bool>
+                         </property>
+                         <property name="checked">
+                          <bool>false</bool>
+                         </property>
+                         <attribute name="buttonGroup">
+                          <string notr="true">gb_y_axis</string>
+                         </attribute>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_10">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>40</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item>
                    <widget class="QGroupBox" name="groupBox_12">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -1732,8 +1961,8 @@
                       <widget class="QPushButton" name="pb_ts_settings">
                        <property name="maximumSize">
                         <size>
-                         <width>40</width>
-                         <height>40</height>
+                         <width>30</width>
+                         <height>30</height>
                         </size>
                        </property>
                        <property name="text">
@@ -1774,8 +2003,8 @@
                        </property>
                        <property name="maximumSize">
                         <size>
-                         <width>40</width>
-                         <height>40</height>
+                         <width>30</width>
+                         <height>30</height>
                         </size>
                        </property>
                        <property name="toolTip">
@@ -1916,6 +2145,7 @@
  <resources/>
  <connections/>
  <buttongroups>
+  <buttongroup name="gb_y_axis"/>
   <buttongroup name="gb_ts_fit">
    <property name="exclusive">
     <bool>true</bool>

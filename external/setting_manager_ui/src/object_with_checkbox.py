@@ -3,7 +3,6 @@ try:
         QWidget,
         QPushButton,
         QHBoxLayout,
-        QMessageBox,
         QColorDialog,
         QCheckBox,
         QSpinBox,
@@ -12,12 +11,12 @@ try:
         QLineEdit,
         QComboBox
     )
+    from PySide6.QtGui import QColor
 except ImportError:
     from qgis.PyQt.QtWidgets import (
         QWidget,
         QPushButton,
         QHBoxLayout,
-        QMessageBox,
         QColorDialog,
         QCheckBox,
         QSpinBox,
@@ -26,6 +25,7 @@ except ImportError:
         QLineEdit,
         QComboBox
     )
+    from qgis.PyQt.QtGui import QColor
 
 
 class ColorPicker(QWidget):
@@ -37,7 +37,7 @@ class ColorPicker(QWidget):
     :param parent: The parent widget.
     :type parent: QWidget, optional
     """
-    def __init__(self, initial_color, parent=None):
+    def __init__(self, initial_color, use_native_flag=False, parent=None):
         super().__init__(parent)
         self.color = initial_color
         self.layout = QHBoxLayout(self)
@@ -47,9 +47,53 @@ class ColorPicker(QWidget):
         self.layout.addWidget(self.button)
         self.setLayout(self.layout)
 
+        self.use_native_flag = use_native_flag
+        self.color_dialog = QColorDialog()
+        self.custom_colors = [
+            "#1f77b4",  # Blue
+            "#ff7f0e",  # Orange
+            "#2ca02c",  # Green
+            "#d62728",  # Red
+            "#9467bd",  # Purple
+            "#8c564b",  # Brown
+            "#e377c2",  # Pink
+            "#7f7f7f",  # Gray
+            "#bcbd22",  # Yellow-green
+            "#17becf"  # Cyan
+        ]
+
+    def setCustomColors(self, custom_colors=None):
+        """
+        Sets the custom colors for the color dialog.
+
+        :param custom_colors: The list of custom colors
+        :type custom_colors: list of str or None
+        """
+        #  Hint: Mac Native Dialog does not setCustomColor
+        if custom_colors is not None:
+            self.custom_colors = custom_colors
+
+        # clear the firt 10 custom colors if there is a new list
+        # leave the last 6 custom colors unchanged, for more flexibility
+        for i in range(10):  # QColorDialog supports up to 16 custom colors
+            self.color_dialog.setCustomColor(i, QColor(255, 255, 255))
+
+        for i, custom_color in enumerate(self.custom_colors):
+            self.color_dialog.setCustomColor(i, QColor(custom_color))
+
     def openColorDialog(self):
         """ Opens a color dialog to select a new color. """
-        color = QColorDialog.getColor()
+
+        initial_color = QColor(self.color)
+        color_dialog = self.color_dialog
+
+        self.setCustomColors()
+
+        if self.use_native_flag:
+            color = color_dialog.getColor(initial_color)
+        else:
+            color = color_dialog.getColor(initial_color, options=QColorDialog.DontUseNativeDialog)
+
         if color.isValid():
             self.color = color.name()
             self.button.setStyleSheet(f"background-color: {self.color}")
@@ -94,7 +138,7 @@ class ObjectWithCheckbox(QWidget):
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)  # Set layout margins to zero
         self.wobject = None
-        self.addObject(flag)
+        self.addObject()
         if checkbox:
             self.checkbox = QCheckBox()
             self.checkbox.setChecked(not flag)
@@ -109,10 +153,10 @@ class ObjectWithCheckbox(QWidget):
         self.setLayout(self.layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  # Adjust size policy
         self.wobject.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setEnabled(flag)
 
-    def addObject(self, flag):
-        """ Adds the main widget. This method should be overridden by subclasses. """
-        pass
+    def setEnabled(self, flag):
+        self.wobject.setEnabled(not flag)
 
     def toggleObject(self, state):
         """
@@ -134,8 +178,8 @@ class ObjectWithCheckbox(QWidget):
 
         if self.checkbox:
             return not self.checkbox.isChecked()
-        else:
-            return False
+
+        return False
 
 
 class LineEditWithCheckbox(ObjectWithCheckbox):
@@ -151,14 +195,11 @@ class LineEditWithCheckbox(ObjectWithCheckbox):
     :param parent: The parent widget.
     :type parent: QWidget, optional
     """
-    def __init__(self, value, flag, checkbox=False, parent=None):
-        super().__init__(value, flag, checkbox, parent)
 
-    def addObject(self, flag):
+    def addObject(self):
         """ Adds a QLineEdit as the main widget. """
         self.wobject = QLineEdit()
         self.wobject.setText(self.value)
-        self.wobject.setEnabled(not flag)
 
     def setValue(self, value):
         """
@@ -189,19 +230,19 @@ class SpinBoxWithCheckbox(ObjectWithCheckbox):
     :type flag: bool
     :param checkbox: Whether to include a checkbox.
     :type checkbox: bool, optional
-    :param range: The range of the QSpinBox, defaults to [None, None].
-    :type range: list of int, optional
+    :param value_range: The value_range of the QSpinBox, defaults to None
+    :type value_range: list of int or None, optional
     :param parent: The parent widget.
     :type parent: QWidget, optional
     """
-    def __init__(self, value, flag, checkbox=False, range=[None, None], parent=None):
-        self.range = range
+    def __init__(self, *, value, flag, checkbox=False, value_range=None, parent=None):
+        value_range = value_range if value_range is not None else [None, None]
+        self.range = value_range
         super().__init__(value, flag, checkbox, parent)
 
-    def addObject(self, flag):
+    def addObject(self):
         """ Adds a QSpinBox as the main widget. """
         self.wobject = QSpinBox()
-        self.wobject.setEnabled(not flag)
         if self.range[0] is not None:
             self.wobject.setMinimum(self.range[0])
         if self.range[1] is not None:
@@ -236,19 +277,19 @@ class DoubleSpinBoxWithCheckbox(ObjectWithCheckbox):
     :type flag: bool
     :param checkbox: Whether to include a checkbox.
     :type checkbox: bool, optional
-    :param range: The range of the QDoubleSpinBox, defaults to [None, None].
-    :type range: list of float, optional
+    :param value_range: The value_range of the QDoubleSpinBox, defaults to None
+    :type value_range: list of float or None, optional
     :param parent: The parent widget.
     :type parent: QWidget, optional
     """
-    def __init__(self, value, flag, checkbox=False, range=[None, None], parent=None):
-        self.range = range
+    def __init__(self, *, value, flag, checkbox=False, value_range=None, parent=None):
+        value_range = value_range if value_range is not None else [None, None]
+        self.range = value_range
         super().__init__(value, flag, checkbox, parent)
 
-    def addObject(self, flag):
+    def addObject(self):
         """ Adds a QDoubleSpinBox as the main widget. """
         self.wobject = QDoubleSpinBox()
-        self.wobject.setEnabled(not flag)
         if self.range[0] is not None:
             self.wobject.setMinimum(float(self.range[0]))
         if self.range[1] is not None:
@@ -283,11 +324,18 @@ class ComboBoxWithCheckbox(ObjectWithCheckbox):
     :type flag: bool
     :param checkbox: Whether to include a checkbox.
     :type checkbox: bool, optional
+    :param options: The list of options to be added to the QComboBox.
+    :type options: list of str or None, optional
     :param parent: The parent widget.
     :type parent: QWidget, optional
     """
-    def __init__(self, value, flag, checkbox=False, parent=None):
+    def __init__(self, *, value, flag, checkbox=False, options=None, parent=None):
         super().__init__(value, flag, checkbox, parent)
+        if options is None:
+            options = []
+        if len(options) > 0:
+            self.addItems(options)
+            self.setCurrentText(value)
 
     def addItems(self, items):
         """
@@ -307,10 +355,9 @@ class ComboBoxWithCheckbox(ObjectWithCheckbox):
         """
         self.wobject.setCurrentText(text)
 
-    def addObject(self, flag):
+    def addObject(self):
         """ Adds a QComboBox as the main widget. """
         self.wobject = QComboBox()
-        self.wobject.setEnabled(not flag)
 
     def setValue(self, value):
         """
@@ -344,13 +391,16 @@ class ColorPickerWithCheckbox(ObjectWithCheckbox):
     :param parent: The parent widget.
     :type parent: QWidget, optional
     """
-    def __init__(self, value, flag, checkbox=False, parent=None):
+    def __init__(self, *, value, flag, checkbox=False, options=None, parent=None):
         super().__init__(value, flag, checkbox, parent)
+        self.setCustomColors(options)
 
-    def addObject(self, flag):
+    def setCustomColors(self, options):
+        self.wobject.setCustomColors(options)
+
+    def addObject(self):
         """ Adds a ColorPicker as the main widget. """
         self.wobject = ColorPicker(self.value)
-        self.wobject.setEnabled(not flag)
 
     def setValue(self, value):
         """
@@ -369,5 +419,3 @@ class ColorPickerWithCheckbox(ObjectWithCheckbox):
         :rtype: str
         """
         return self.wobject.getColor()
-
-

@@ -7,7 +7,8 @@ from PyQt5.QtCore import QObject, QTimer
 from . import map_click_handler as cph
 from . import setup_frames
 from .map_setting import InsarMap
-from .setting_manager_ui.setting_ui import SettingsTableDialog
+from .layer_utils import vector_layer as vector_layer_utils
+from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 
 
@@ -33,6 +34,8 @@ class GuiController(QObject):
 
         self.iface.currentLayerChanged.connect(self.onLayerChanged)
 
+        self.setVectorFields()
+
     def initializeSelection(self):
         if self.selection_type == "point":
             self.initializeClickTool()
@@ -46,6 +49,34 @@ class GuiController(QObject):
         if layer:
             self.choose_point_click_handler.reset()
             self.insar_map.reset()
+            self.setVectorFields()
+
+    def setVectorFields(self):
+        layer = self.iface.activeLayer()
+        if not layer:
+            return
+        status, message = vector_layer_utils.checkVectorLayer(layer)
+        if status is False:
+            self.ui.cb_select_field.clear()
+            self.ui.cb_select_field.setEnabled(False)
+            return
+        else:
+            self.ui.cb_select_field.setEnabled(True)
+
+        field_list = vector_layer_utils.getVectorFields(layer)
+        velocity_field, message = vector_layer_utils.getVectorVelocityFieldName(layer)
+        self.ui.cb_select_field.clear()
+        self.ui.cb_select_field.addItems(field_list)
+        if velocity_field:
+            self.ui.cb_select_field.setCurrentText(velocity_field)
+
+        self.insar_map.reset()
+        self.insar_map.selected_field_name = self.ui.cb_select_field.currentText()
+
+    def selectVectorFieldChanged(self):
+        self.insar_map.selected_field_name = self.ui.cb_select_field.currentText()
+        self.insar_map.reset()
+        self.applyLiveSymbology()
 
     def initializeClickTool(self):
         if not self.click_tool:
@@ -111,6 +142,8 @@ class GuiController(QObject):
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
         self.ui.cb_plot_residuals.toggled.connect(self.timeseriesPlotResiduals)
+        # TS settings
+        self.ui.gb_y_axis.buttonClicked.connect(self.plotYAxis)
         # TS save
         self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
         # Replica
@@ -123,6 +156,7 @@ class GuiController(QObject):
         self.connectMapSignals()
 
     def connectMapSignals(self):
+        self.ui.cb_select_field.currentTextChanged.connect(self.selectVectorFieldChanged)
         self.ui.pb_symbology.clicked.connect(self.applySymbology)
         self.ui.sb_symbol_lower_range.valueChanged.connect(self.setSymbologyLowerRange)
         self.ui.sb_symbol_upper_range.valueChanged.connect(self.setSymbologyUpperRange)
@@ -187,6 +221,7 @@ class GuiController(QObject):
             QTimer.singleShot(0, self.applySymbology)
 
     def applySymbology(self):
+        self.insar_map.selected_field_name = self.ui.cb_select_field.currentText()
         self.insar_map.min_value = float(self.ui.sb_symbol_lower_range.value())
         self.insar_map.max_value = float(self.ui.sb_symbol_upper_range.value())
         self.insar_map.num_classes = int(self.ui.sb_symbol_classes.value())
@@ -221,6 +256,20 @@ class GuiController(QObject):
         self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.cb_plot_residuals.isChecked()
                                                                        and not self.ui.pb_ts_nofit.isChecked())
         self.choose_point_click_handler.plot_ts.plotTs()
+
+    def plotYAxis(self):
+        if self.ui.cb_y_from_data.isChecked():
+            self.choose_point_click_handler.plot_ts.plot_y_axis = "from_data"
+        elif self.ui.cb_y_symmetric.isChecked():
+            self.choose_point_click_handler.plot_ts.plot_y_axis = "symmetric"
+        elif self.ui.cb_y_adaptive.isChecked():
+            self.choose_point_click_handler.plot_ts.plot_y_axis = "adaptive"
+
+        self.choose_point_click_handler.plot_ts.plotTs()
+
+
+
+
 
     def timeseriesReplica(self):
         if self.ui.pb_ts_replica.isChecked():

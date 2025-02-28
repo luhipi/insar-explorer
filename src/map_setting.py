@@ -7,6 +7,7 @@ from qgis.core import QgsRasterShader, QgsColorRampShader, QgsSingleBandPseudoCo
 from . import color_maps
 from .layer_utils import vector_layer as vector_layer_utils
 from .layer_utils import gmtsar_layer as gmtsar_layer_utils
+from .get_version import qgisVresion
 
 
 class velocity():
@@ -20,6 +21,7 @@ class velocity():
 class InsarMap:
     def __init__(self, iface):
         self.iface = iface
+        self.selected_field_name = None
         self.symbol_size = 1
         self.min_value = -5
         self.max_value = 5
@@ -57,13 +59,17 @@ class InsarMap:
             return message
 
     def getDataRangeFromVectorLayer(self, layer, n_std=None):
-        field_name, message = vector_layer_utils.checkVectorLayerVelocity(layer)
+        field_name = self.selected_field_name
         if field_name is None:
-            return message
+            return "layer field name is None"
 
         if n_std is None:
             if self.data_min is None or self.data_max is None:
-                min_max = layer.minimumAndMaximumValue(layer.fields().indexFromName(field_name))
+                if qgisVresion() > (3, 20):
+                    min_max = layer.minimumAndMaximumValue(layer.fields().indexFromName(field_name))
+                else:
+                    min_max = [layer.minimumValue(layer.fields().indexFromName(field_name)),
+                               layer.maximumValue(layer.fields().indexFromName(field_name))]
                 self.data_min, self.data_max = min_max
                 if self.data_min is None or self.data_max is None:
                     values = [feature[field_name] for feature in layer.getFeatures() if feature[field_name] is not None]
@@ -185,9 +191,9 @@ class InsarMap:
             range_item = QgsRendererRange(lower, upper, symbol, label)
             ranges.append(range_item)
 
-        field_name, message = vector_layer_utils.checkVectorLayerVelocity(layer)
+        field_name = self.selected_field_name
         if field_name is None:
-            return message
+            return "layer field name is None"
         else:
             renderer = QgsGraduatedSymbolRenderer(field_name, ranges)
             # renderer.setMode(QgsGraduatedSymbolRenderer.Custom)

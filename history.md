@@ -1,7 +1,16 @@
 ### History
 
+v0.9.0b
+- handle NULL values in time series data
+- Add different options to control y-axis limits
+
 v0.8.0
+- Allow D_YYYYMMDD time series date format
+- Add combobox to select field for visualization
+- Change Groupbox name: Range to Value
 - Add linting to improve code readability, consistency, and maintainability.
+- Upgrade to SettingsManagerUI v0.5.0
+- Move external libraries to `external` folder.
 
 
 v0.7.0
