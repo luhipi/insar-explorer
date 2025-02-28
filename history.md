@@ -1,6 +1,7 @@
 ### History
 
 v0.9.0b
+- Add support for polygon selection
 - handle NULL values in time series data
 - Add different options to control y-axis limits
 
