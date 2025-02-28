@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 import numpy as np
 from qgis.core import QgsMapLayer, QgsFeature
+from qgis.PyQt.QtCore import QVariant
 
 
 def checkVectorLayer(layer):
@@ -94,7 +95,13 @@ def extractDateValueAttributes(attributes: dict) -> list:
         if any(match):
             date_str = next(m.group(1) for m in match if m)
             date_obj = datetime.strptime(date_str, '%Y%m%d')
-            date_value_list.append((date_obj, float(value)))
+
+            # check if field value is NULL
+            if isinstance(value, QVariant):
+                if value.isNull():
+                    value = np.nan
+
+            date_value_list.append((date_obj, value))
 
     return np.array(date_value_list, dtype=object)
 
