@@ -27,6 +27,7 @@ class PlotTs():
         self.fit_seasonal_flag = False
         self.replicate_flag = False
         self.plot_replicates = []
+        self.plot_y_axis = "from_data"
         self.replicate_value = 5.6 / 2
         self.ax_residuals = None
         self.plot_residuals_flag = False
@@ -388,22 +389,26 @@ class PlotTs():
 
         # get min/max from axis
         y_min, y_max = ax.get_ylim()
-        y_max = np.abs([y_min, y_max]).max()
-        y_min = -y_max
+        if self.plot_y_axis != "from_data":
+            y_max = np.abs([y_min, y_max]).max()
+            y_min = -y_max
 
-        y_range = y_max - y_min
-        y_min_rounded = -5
-        y_max_rounded = 5
-        for i in [10000, 1000, 100, 10]:
-            if y_range >= i:
-                y_min_rounded = np.floor(y_min / i) * i
-                y_max_rounded = np.ceil(y_max / i) * i
-                break
+        ax.set_ylim(y_min, y_max)
 
-        y_min_rounded = np.min([y_min_rounded, -5])
-        y_max_rounded = np.max([y_max_rounded, 5])
+        if self.plot_y_axis == "adaptive":
+            y_range = y_max - y_min
+            y_min_rounded = -5
+            y_max_rounded = 5
+            for i in [10000, 1000, 100, 10]:
+                if y_range >= i:
+                    y_min_rounded = np.floor(y_min / i) * i
+                    y_max_rounded = np.ceil(y_max / i) * i
+                    break
 
-        ax.set_ylim(y_min_rounded, y_max_rounded)
+            y_min_rounded = np.min([y_min_rounded, -5])
+            y_max_rounded = np.max([y_max_rounded, 5])
+
+            ax.set_ylim(y_min_rounded, y_max_rounded)
 
         ymin = parms['ymin']
         ymax = parms['ymax']
