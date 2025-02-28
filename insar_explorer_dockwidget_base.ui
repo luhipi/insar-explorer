@@ -118,7 +118,7 @@
                </size>
               </property>
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
@@ -179,6 +179,20 @@
                      <item>
                       <widget class="QComboBox" name="cb_select_field">
                        <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                       <property name="font">
+                        <font>
+                         <strikeout>false</strikeout>
+                        </font>
+                       </property>
+                       <property name="acceptDrops">
+                        <bool>false</bool>
+                       </property>
+                       <property name="autoFillBackground">
+                        <bool>false</bool>
+                       </property>
+                       <property name="editable">
                         <bool>true</bool>
                        </property>
                       </widget>

@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 import numpy as np
-from qgis.core import QgsMapLayer, QgsFeature
+from qgis.core import QgsMapLayer, QgsFeature, QgsVectorLayer
 from qgis.PyQt.QtCore import QVariant
 
 
@@ -109,4 +109,5 @@ def extractDateValueAttributes(attributes: dict) -> list:
 def getVectorFields(layer):
     """ get field names from vector layer"""
     fields = [field.name() for field in layer.fields()]
-    return fields
+    field_types = [field.typeName() for field in layer.fields()]
+    return fields, field_types

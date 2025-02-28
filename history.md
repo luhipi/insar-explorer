@@ -3,6 +3,8 @@
 v0.9.0b
 - handle NULL values in time series data
 - Add different options to control y-axis limits
+- Make field selector editable to improve user experience
+- Ignore non-numerical fields in the field selector
 
 v0.8.0
 - Allow D_YYYYMMDD time series date format
