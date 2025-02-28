@@ -1,6 +1,7 @@
 ### History
 
-v0.9.0
+v0.9.0b
+- handle NULL values in time series data
 - Add different options to control y-axis limits
 
 v0.8.0
