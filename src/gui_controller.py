@@ -2,7 +2,7 @@ import os
 
 from qgis.gui import QgsMapToolEmitPoint
 from PyQt5.QtWidgets import QFileDialog
-from PyQt5.QtCore import QObject, QTimer
+from PyQt5.QtCore import QObject, QTimer, QVariant
 
 from . import map_click_handler as cph
 from . import setup_frames
@@ -49,10 +49,14 @@ class GuiController(QObject):
         else:
             self.ui.cb_select_field.setEnabled(True)
 
-        field_list = vector_layer_utils.getVectorFields(layer)
+        field_list, field_types = vector_layer_utils.getVectorFields(layer)
         velocity_field, message = vector_layer_utils.getVectorVelocityFieldName(layer)
         self.ui.cb_select_field.clear()
-        self.ui.cb_select_field.addItems(field_list)
+        field_list_to_display = [
+            field for field, type_name in zip(field_list, field_types)
+            if type_name == 'Real'
+        ]
+        self.ui.cb_select_field.addItems(field_list_to_display)
         if velocity_field:
             self.ui.cb_select_field.setCurrentText(velocity_field)
 
