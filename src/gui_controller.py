@@ -89,6 +89,8 @@ class GuiController(QObject):
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
         self.ui.cb_plot_residuals.toggled.connect(self.timeseriesPlotResiduals)
+        # TS settings
+        self.ui.gb_y_axis.buttonClicked.connect(self.plotYAxis)
         # TS save
         self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
         # Replica
@@ -199,6 +201,20 @@ class GuiController(QObject):
         self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.cb_plot_residuals.isChecked()
                                                                        and not self.ui.pb_ts_nofit.isChecked())
         self.choose_point_click_handler.plot_ts.plotTs()
+
+    def plotYAxis(self):
+        if self.ui.cb_y_from_data.isChecked():
+            self.choose_point_click_handler.plot_ts.plot_y_axis = "from_data"
+        elif self.ui.cb_y_symmetric.isChecked():
+            self.choose_point_click_handler.plot_ts.plot_y_axis = "symmetric"
+        elif self.ui.cb_y_adaptive.isChecked():
+            self.choose_point_click_handler.plot_ts.plot_y_axis = "adaptive"
+
+        self.choose_point_click_handler.plot_ts.plotTs()
+
+
+
+
 
     def timeseriesReplica(self):
         if self.ui.pb_ts_replica.isChecked():
