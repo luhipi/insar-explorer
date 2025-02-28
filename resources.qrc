@@ -9,6 +9,8 @@
   </qresource>
   <qresource prefix="icons">
     <file>icons/setting_gray.png</file>
+    <file>icons/polygon_selection.png</file>
+    <file>icons/polygon_reference_selection.png</file>
     <file>icons/x.svg</file>
     <file>icons/y_axis_symmetric.svg</file>
     <file>icons/y_axis_from_data.svg</file>
