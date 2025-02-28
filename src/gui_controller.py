@@ -51,12 +51,19 @@ class GuiController(QObject):
 
         field_list, field_types = vector_layer_utils.getVectorFields(layer)
         velocity_field, message = vector_layer_utils.getVectorVelocityFieldName(layer)
-        self.ui.cb_select_field.clear()
-        field_list_to_display = [
-            field for field, type_name in zip(field_list, field_types)
-            if type_name == 'Real'
-        ]
-        self.ui.cb_select_field.addItems(field_list_to_display)
+        # self.ui.cb_select_field.clear()
+        # field_list_to_display = [
+        #     field for field, type_name in zip(field_list, field_types)
+        #     if type_name == 'Real'
+        # ]
+        # self.ui.cb_select_field.addItems(field_list_to_display)
+
+        for field, type_name in zip(field_list, field_types):
+            self.ui.cb_select_field.addItem(field)
+            if type_name not in ['Real', 'Integer', 'Integer64']:
+                index = self.ui.cb_select_field.count() - 1
+                self.ui.cb_select_field.model().item(index).setEnabled(False)
+
         if velocity_field:
             self.ui.cb_select_field.setCurrentText(velocity_field)
 
