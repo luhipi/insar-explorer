@@ -1,5 +1,8 @@
 ### History
 
+v0.9.0b
+- handle NULL values in time series data
+
 v0.8.0
 - Allow D_YYYYMMDD time series date format
 - Add combobox to select field for visualization
