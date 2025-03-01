@@ -108,3 +108,22 @@ class Vik(ColorMaps):
             (0.95, QColor(108, 15, 7)),
             (1., QColor(90, 0, 8)),
         ]
+
+
+class Gray(ColorMaps):
+    """Gray color map."""
+    def __init__(self):
+        super().__init__()
+        self.ramp = [
+            (0.0, QColor(0, 0, 0)),       # Black
+            (0.1, QColor(28, 28, 28)),
+            (0.2, QColor(56, 56, 56)),
+            (0.3, QColor(84, 84, 84)),
+            (0.4, QColor(112, 112, 112)),
+            (0.5, QColor(140, 140, 140)),
+            (0.6, QColor(168, 168, 168)),
+            (0.7, QColor(196, 196, 196)),
+            (0.8, QColor(224, 224, 224)),
+            (0.9, QColor(240, 240, 240)),
+            (1.0, QColor(255, 255, 255))  # White
+        ]
