@@ -6,6 +6,7 @@ v0.9.0b
 - Make field selector editable to improve user experience
 - Ignore non-numerical fields in the field selector
 - A hold-on button to keep the plot after selecting a new point
+- Keep the time series plot when layer changed
 
 v0.8.0
 - Allow D_YYYYMMDD time series date format

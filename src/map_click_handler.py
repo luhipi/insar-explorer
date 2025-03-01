@@ -190,8 +190,6 @@ class TSClickHandler(MapClickHandler):
         self.ref_values = 0
         self.raster_layer.reset()
 
-        self.plot_ts.clear()
-
     def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         if not layer:
             layer = self.iface.activeLayer()
