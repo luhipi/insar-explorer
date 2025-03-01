@@ -42,8 +42,8 @@ class GuiController(QObject):
         if not layer:
             return
         status, message = vector_layer_utils.checkVectorLayer(layer)
+        self.ui.cb_select_field.clear()
         if status is False:
-            self.ui.cb_select_field.clear()
             self.ui.cb_select_field.setEnabled(False)
             return
         else:
