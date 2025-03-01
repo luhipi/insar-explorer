@@ -122,7 +122,7 @@ class GuiController(QObject):
         self.ui.sb_symbol_opacity.valueChanged.connect(self.applyLiveSymbology)
         self.ui.cb_symbology_live.toggled.connect(self.applyLiveSymbology)
         self.ui.cmb_colormap.currentIndexChanged.connect(self.applyLiveSymbology)
-        self.ui.cb_colormap_reverse.toggled.connect(self.applyLiveSymbology)
+        self.ui.pb_colormap_reverse.toggled.connect(self.applyLiveSymbology)
 
     def settingsWidgetPopup(self):
         json_file = "config/config.json"
@@ -179,7 +179,7 @@ class GuiController(QObject):
         self.insar_map.alpha = float(self.ui.sb_symbol_opacity.value()) / 100
         self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
         self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
-        self.insar_map.color_ramp_reverse_flag = self.ui.cb_colormap_reverse.isChecked()
+        self.insar_map.color_ramp_reverse_flag = self.ui.pb_colormap_reverse.isChecked()
         message = self.insar_map.setSymbology()
         self.ui.lb_msg_bar.setText(message)
 

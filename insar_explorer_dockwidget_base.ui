@@ -114,7 +114,7 @@
              <x>0</x>
              <y>0</y>
              <width>244</width>
-             <height>536</height>
+             <height>505</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout">
@@ -136,7 +136,7 @@
                <string>Plot fit residual</string>
               </property>
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
@@ -551,12 +551,31 @@
                           </widget>
                          </item>
                          <item>
-                          <widget class="QCheckBox" name="cb_colormap_reverse">
+                          <widget class="QPushButton" name="pb_colormap_reverse">
+                           <property name="maximumSize">
+                            <size>
+                             <width>30</width>
+                             <height>30</height>
+                            </size>
+                           </property>
                            <property name="toolTip">
                             <string>Reverse colormap</string>
                            </property>
                            <property name="text">
-                            <string>Reverse</string>
+                            <string/>
+                           </property>
+                           <property name="icon">
+                            <iconset>
+                             <normaloff>:/icons/icons/reverse.svg</normaloff>:/icons/icons/reverse.svg</iconset>
+                           </property>
+                           <property name="iconSize">
+                            <size>
+                             <width>20</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="checkable">
+                            <bool>true</bool>
                            </property>
                           </widget>
                          </item>
