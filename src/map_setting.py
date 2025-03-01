@@ -175,7 +175,10 @@ class InsarMap:
 
             symbol = QgsSymbol.defaultSymbol(layer.geometryType())
 
-            color_ratio = float(i) / (self.num_classes - 1)
+            if self.num_classes == 1:
+                color_ratio = 0.5
+            else:
+                color_ratio = float(i) / (self.num_classes - 1)
             color = color_ramp.getColor(color_ratio)
             color.setAlphaF(self.alpha)
             symbol.setColor(color)
