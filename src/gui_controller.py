@@ -94,8 +94,9 @@ class GuiController(QObject):
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
         self.ui.cb_plot_residuals.toggled.connect(self.timeseriesPlotResiduals)
-        # TS settings
+        # Plot setting
         self.ui.gb_y_axis.buttonClicked.connect(self.plotYAxis)
+        self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
         # TS save
         self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
         # Replica
@@ -206,6 +207,9 @@ class GuiController(QObject):
         self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.cb_plot_residuals.isChecked()
                                                                        and not self.ui.pb_ts_nofit.isChecked())
         self.choose_point_click_handler.plot_ts.plotTs()
+
+    def holdOnPlot(self):
+        self.choose_point_click_handler.plot_ts.hold_on_flag = self.ui.cb_hold_on_plot.isChecked()
 
     def plotYAxis(self):
         if self.ui.cb_y_from_data.isChecked():
