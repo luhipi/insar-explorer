@@ -32,6 +32,7 @@ class PlotTs():
         self.ax_residuals = None
         self.plot_residuals_flag = False
         self.plot_residuals_list = []
+        self.hold_on_flag = False
         self.parms = {}
         self.updateSettings()
 
@@ -104,7 +105,8 @@ class PlotTs():
         self.parms['residual plot'] = parms
 
     def clear(self):
-        self.ui.figure.clear()
+        if not self.hold_on_flag:
+            self.ui.figure.clear()
         self.ui.canvas.draw()
 
     def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
@@ -120,7 +122,8 @@ class PlotTs():
         self.plot_values = self.ts_values - self.ref_values
 
     def initializeAxes(self):
-        self.ui.figure.clear()
+        if not self.hold_on_flag:
+            self.ui.figure.clear()
         self.updateSettings()
         if self.plot_residuals_flag:
             self.ax = self.ui.figure.add_subplot(211)

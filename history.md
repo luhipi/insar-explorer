@@ -5,6 +5,9 @@ v0.9.0b
 - Add different options to control y-axis limits
 - Make field selector editable to improve user experience
 - Ignore non-numerical fields in the field selector
+- A hold-on button to keep the plot after selecting a new point
+- Keep the time series plot when layer changed
+- New icon for residual plot button
 
 v0.8.0
 - Allow D_YYYYMMDD time series date format

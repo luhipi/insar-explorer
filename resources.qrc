@@ -10,11 +10,13 @@
   <qresource prefix="icons">
     <file>icons/setting_gray.png</file>
     <file>icons/x.svg</file>
+    <file>icons/residual.svg</file>
     <file>icons/y_axis_symmetric.svg</file>
     <file>icons/y_axis_from_data.svg</file>
     <file>icons/y_axis_adaptive.svg</file>
     <file>icons/synchronise_gray.png</file>
     <file>icons/screenshot.png</file>
+    <file>icons/hold_on_gray.png</file>
     <file>icons/plot_fit_exp_amber.png</file>
     <file>icons/symbology.png</file>
     <file>icons/select_point.png</file>
