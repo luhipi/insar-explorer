@@ -121,12 +121,15 @@ class InsarMap:
         if status_vector or status_raster:
             interval = (self.max_value - self.min_value) / self.num_classes
 
-            if color_ramp_name == 'Turbo':
-                color_ramp = color_maps.Turbo()
-            if color_ramp_name == 'Roma':
-                color_ramp = color_maps.Roma()
-            if color_ramp_name == 'Vik':
-                color_ramp = color_maps.Vik()
+            color_map_dict = {
+                'Turbo': color_maps.Turbo,
+                'Roma': color_maps.Roma,
+                'Vik': color_maps.Vik,
+                'Gray': color_maps.Gray}
+
+            if color_ramp_name not in color_map_dict.keys():
+                color_ramp_name = 'Gray'
+            color_ramp = color_map_dict[color_ramp_name]()
 
             if self.color_ramp_reverse_flag:
                 color_ramp.reverse()

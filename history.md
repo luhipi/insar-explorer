@@ -1,7 +1,8 @@
 ### History
 
 v0.9.0b
-- handle NULL values in time series data
+- Add gray to the list of colormaps
+- Handle NULL values in time series data
 - Add different options to control y-axis limits
 - Make field selector editable to improve user experience
 - Ignore non-numerical fields in the field selector

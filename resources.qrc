@@ -6,6 +6,7 @@
     <file>icons/colormaps/turbo.png</file>
     <file>icons/colormaps/roma.png</file>
     <file>icons/colormaps/vik.png</file>
+    <file>icons/colormaps/gray.png</file>
   </qresource>
   <qresource prefix="icons">
     <file>icons/setting_gray.png</file>
@@ -25,6 +26,9 @@
     <file>icons/plot_ts_duplicate_amber.png</file>
     <file>icons/plot_ts_duplicate_gray.png</file>
     <file>icons/plot_ts_duplicate_blue.png</file>
+    <file>icon.png</file>
+    <file>icons/synched.svg</file>
+    <file>icons/reverse.svg</file>
     <file>icons/plot_fit_exp_blue.png</file>
     <file>icons/plot_fit_exp_gray.png</file>
     <file>icons/plot_fit_poly1_amber.png</file>

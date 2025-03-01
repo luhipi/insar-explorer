@@ -503,6 +503,9 @@
                            <property name="autoFillBackground">
                             <bool>false</bool>
                            </property>
+                           <property name="editable">
+                            <bool>true</bool>
+                           </property>
                            <property name="iconSize">
                             <size>
                              <width>24</width>
@@ -534,6 +537,15 @@
                             <property name="icon">
                              <iconset>
                               <normaloff>:/colormaps/icons/colormaps/turbo.png</normaloff>:/colormaps/icons/colormaps/turbo.png</iconset>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>Gray</string>
+                            </property>
+                            <property name="icon">
+                             <iconset>
+                              <normaloff>:/colormaps/icons/colormaps/gray.png</normaloff>:/colormaps/icons/colormaps/gray.png</iconset>
                             </property>
                            </item>
                           </widget>
