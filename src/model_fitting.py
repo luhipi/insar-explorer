@@ -48,6 +48,8 @@ class FittingModels:
     def __init__(self, x=None, y=None, model="poly-1"):
         self.x = x
         self.y = y
+        self.mask = np.isfinite(np.array(y, dtype=np.float64))
+
         self.model = model
         self.ordinal_dates = self.datesToOrdinal()
 
@@ -57,15 +59,17 @@ class FittingModels:
     def fit(self, model=None, seasonal=False):
         x = self.ordinal_dates
         y = self.y
+        mask = self.mask
+
         if model is None:
             model = self.model
         fit_models_dict = {"poly-1": modelPoly1, "poly-2": modelPoly2,
                            "poly-3": modelPoly3, "exp": modelExponential}
         fit_model = fit_models_dict[model]
         if fit_model == modelExponential:
-            popt, pcov, fit_model = fitExponential(x, y)
+            popt, pcov, fit_model = fitExponential(x[mask], y[mask])
         else:
-            popt, pcov = curve_fit(fit_model, x, y)
+            popt, pcov = curve_fit(fit_model, x[mask], y[mask])
 
         model_x_linspace = np.linspace(min(x), max(x), 100)
         model_x = ordinalTodates(model_x_linspace)
@@ -73,7 +77,8 @@ class FittingModels:
         fit_y = fit_model(x, *popt)
 
         if seasonal:
-            popt_seasonal, _ = curve_fit(modelAnnual, x, y - fit_y)
+            residual = y - fit_y
+            popt_seasonal, _ = curve_fit(modelAnnual, x[mask], residual[mask])
             model_y_seasonal = modelAnnual(model_x_linspace, *popt_seasonal)
             fit_y_seasonal = modelAnnual(x, *popt_seasonal)
             model_y += model_y_seasonal
@@ -84,5 +89,6 @@ class FittingModels:
     def fitVelocity(self):
         x = self.ordinal_dates
         y = self.y
-        popt, pcov = curve_fit(modelPoly1, x, y)
+        mask = self.mask
+        popt, pcov = curve_fit(modelPoly1, x[mask], y[mask])
         return popt[1] * 365.25
