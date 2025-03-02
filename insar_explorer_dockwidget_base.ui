@@ -136,7 +136,7 @@
                <string>Plot fit residual</string>
               </property>
               <property name="currentIndex">
-               <number>0</number>
+               <number>1</number>
               </property>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
@@ -1182,7 +1182,7 @@
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/plot_ts_duplicate_gray.png</normaloff>:/icons/icons/plot_ts_duplicate_gray.png</iconset>
+                           <normaloff>:/icons/icons/replica.svg</normaloff>:/icons/icons/replica.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -1381,8 +1381,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_poly1_gray.png</normaloff>
-                             <normalon>:/icons/icons/plot_fit_poly1_blue.png</normalon>:/icons/icons/plot_fit_poly1_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_poly1.svg</normaloff>:/icons/icons/fit_poly1.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1426,8 +1425,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_poly2_gray.png</normaloff>
-                             <normalon>:/icons/icons/plot_fit_poly2_blue.png</normalon>:/icons/icons/plot_fit_poly2_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_poly2.svg</normaloff>:/icons/icons/fit_poly2.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1474,8 +1472,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_poly3_gray.png</normaloff>
-                             <normalon>:/icons/icons/plot_fit_poly3_blue.png</normalon>:/icons/icons/plot_fit_poly3_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_poly3.svg</normaloff>:/icons/icons/fit_poly3.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1522,8 +1519,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_exp_gray.png</normaloff>
-                             <disabledon>:/icons/icons/plot_fit_exp_blue.png</disabledon>:/icons/icons/plot_fit_exp_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_exponential.svg</normaloff>:/icons/icons/fit_exponential.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1590,7 +1586,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_seasonal_gray.png</normaloff>:/icons/icons/plot_fit_seasonal_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit__add_seasonal.svg</normaloff>:/icons/icons/fit__add_seasonal.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
