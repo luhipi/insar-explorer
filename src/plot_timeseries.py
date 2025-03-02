@@ -141,6 +141,11 @@ class PlotTs():
         if self.dates is None:
             return
 
+        # check if there is any finite value in the plot_values
+        plot_values = np.array(self.plot_values, dtype=np.float64)
+        if np.sum(np.isfinite(plot_values)) == 0:
+            return
+
         parms = self.parms['time series plot']
         marker_size = parms['marker size']
         marker_color = parms['marker color']
@@ -199,6 +204,8 @@ class PlotTs():
         self.ui.canvas.draw_idle()
         self.fit_plot_list = []
         if self.plot_values is None:
+            return
+        if self.dates is None:
             return
         if self.fit_models is []:
             return

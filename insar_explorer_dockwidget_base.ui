@@ -92,13 +92,13 @@
          <widget class="QScrollArea" name="scrollArea">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>1</horstretch>
+            <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="maximumSize">
            <size>
-            <width>400</width>
+            <width>240</width>
             <height>16777215</height>
            </size>
           </property>
@@ -113,22 +113,22 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>244</width>
-             <height>536</height>
+             <width>238</width>
+             <height>505</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
              <widget class="QTabWidget" name="tabWidget">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
               <property name="maximumSize">
                <size>
-                <width>220</width>
+                <width>200</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -467,9 +467,9 @@
                      <bool>false</bool>
                     </property>
                     <property name="title">
-                     <string>Colormap</string>
+                     <string>Symbology</string>
                     </property>
-                    <layout class="QVBoxLayout" name="verticalLayout_16">
+                    <layout class="QVBoxLayout" name="verticalLayout_16" stretch="0,0">
                      <property name="spacing">
                       <number>0</number>
                      </property>
@@ -502,6 +502,9 @@
                            </property>
                            <property name="autoFillBackground">
                             <bool>false</bool>
+                           </property>
+                           <property name="editable">
+                            <bool>true</bool>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -536,15 +539,43 @@
                               <normaloff>:/colormaps/icons/colormaps/turbo.png</normaloff>:/colormaps/icons/colormaps/turbo.png</iconset>
                             </property>
                            </item>
+                           <item>
+                            <property name="text">
+                             <string>Gray</string>
+                            </property>
+                            <property name="icon">
+                             <iconset>
+                              <normaloff>:/colormaps/icons/colormaps/gray.png</normaloff>:/colormaps/icons/colormaps/gray.png</iconset>
+                            </property>
+                           </item>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QCheckBox" name="cb_colormap_reverse">
+                          <widget class="QPushButton" name="pb_colormap_reverse">
+                           <property name="maximumSize">
+                            <size>
+                             <width>30</width>
+                             <height>30</height>
+                            </size>
+                           </property>
                            <property name="toolTip">
                             <string>Reverse colormap</string>
                            </property>
                            <property name="text">
-                            <string>Reverse</string>
+                            <string/>
+                           </property>
+                           <property name="icon">
+                            <iconset>
+                             <normaloff>:/icons/icons/reverse.svg</normaloff>:/icons/icons/reverse.svg</iconset>
+                           </property>
+                           <property name="iconSize">
+                            <size>
+                             <width>20</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="checkable">
+                            <bool>true</bool>
                            </property>
                           </widget>
                          </item>
@@ -571,7 +602,7 @@
                             <string>Number of classes</string>
                            </property>
                            <property name="minimum">
-                            <number>2</number>
+                            <number>1</number>
                            </property>
                            <property name="value">
                             <number>10</number>
@@ -580,52 +611,6 @@
                          </item>
                         </layout>
                        </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_10">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>150</width>
-                      <height>0</height>
-                     </size>
-                    </property>
-                    <property name="autoFillBackground">
-                     <bool>false</bool>
-                    </property>
-                    <property name="title">
-                     <string>Symbol</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="verticalLayout_17">
-                     <property name="spacing">
-                      <number>0</number>
-                     </property>
-                     <property name="leftMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="topMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="rightMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="bottomMargin">
-                      <number>0</number>
-                     </property>
-                     <item>
-                      <layout class="QVBoxLayout" name="verticalLayout_14">
-                       <property name="spacing">
-                        <number>0</number>
-                       </property>
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout_4">
                          <item>
@@ -659,38 +644,38 @@
                          </item>
                         </layout>
                        </item>
+                      </layout>
+                     </item>
+                     <item>
+                      <layout class="QHBoxLayout" name="horizontalLayout_3">
                        <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_3">
-                         <item>
-                          <widget class="QLabel" name="label_4">
-                           <property name="text">
-                            <string>Opacity:</string>
-                           </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <widget class="QSpinBox" name="sb_symbol_opacity">
-                           <property name="sizePolicy">
-                            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                             <horstretch>0</horstretch>
-                             <verstretch>0</verstretch>
-                            </sizepolicy>
-                           </property>
-                           <property name="toolTip">
-                            <string>Symbol opacity</string>
-                           </property>
-                           <property name="maximum">
-                            <number>100</number>
-                           </property>
-                           <property name="singleStep">
-                            <number>10</number>
-                           </property>
-                           <property name="value">
-                            <number>100</number>
-                           </property>
-                          </widget>
-                         </item>
-                        </layout>
+                        <widget class="QLabel" name="label_4">
+                         <property name="text">
+                          <string>Opacity:</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="sb_symbol_opacity">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="toolTip">
+                          <string>Symbol opacity</string>
+                         </property>
+                         <property name="maximum">
+                          <number>100</number>
+                         </property>
+                         <property name="singleStep">
+                          <number>10</number>
+                         </property>
+                         <property name="value">
+                          <number>100</number>
+                         </property>
+                        </widget>
                        </item>
                       </layout>
                      </item>
@@ -735,16 +720,9 @@
                      </property>
                      <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_7">
-                       <item>
-                        <widget class="QCheckBox" name="cb_symbology_live">
-                         <property name="toolTip">
-                          <string>Apply on the fly</string>
-                         </property>
-                         <property name="text">
-                          <string>Live</string>
-                         </property>
-                        </widget>
-                       </item>
+                       <property name="spacing">
+                        <number>5</number>
+                       </property>
                        <item>
                         <spacer name="horizontalSpacer_9">
                          <property name="orientation">
@@ -757,6 +735,35 @@
                           </size>
                          </property>
                         </spacer>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pb_symbology_live">
+                         <property name="maximumSize">
+                          <size>
+                           <width>30</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Apply on the fly</string>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                         <property name="icon">
+                          <iconset>
+                           <normaloff>:/icons/icons/apply_symbology_on-the-fly.svg</normaloff>:/icons/icons/apply_symbology_on-the-fly.svg</iconset>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>true</bool>
+                         </property>
+                        </widget>
                        </item>
                        <item>
                         <widget class="QPushButton" name="pb_symbology">
@@ -786,7 +793,7 @@
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/symbology.png</normaloff>:/icons/icons/symbology.png</iconset>
+                           <normaloff>:/icons/icons/apply_symbology.svg</normaloff>:/icons/icons/apply_symbology.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -1011,58 +1018,6 @@
                          </property>
                         </spacer>
                        </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_4">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>0</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>150</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="toolTip">
-                     <string>Plot fit residual</string>
-                    </property>
-                    <property name="title">
-                     <string>Reeset reference</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="verticalLayout_9">
-                     <property name="spacing">
-                      <number>0</number>
-                     </property>
-                     <property name="leftMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="topMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="rightMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="bottomMargin">
-                      <number>0</number>
-                     </property>
-                     <item>
-                      <layout class="QHBoxLayout" name="horizontalLayout_13">
-                       <property name="spacing">
-                        <number>5</number>
-                       </property>
                        <item>
                         <widget class="QPushButton" name="pb_reset_reference">
                          <property name="sizePolicy">
@@ -1100,22 +1055,6 @@
                           </size>
                          </property>
                         </widget>
-                       </item>
-                       <item>
-                        <spacer name="horizontalSpacer_3">
-                         <property name="toolTip">
-                          <string>Plot fit residual</string>
-                         </property>
-                         <property name="orientation">
-                          <enum>Qt::Horizontal</enum>
-                         </property>
-                         <property name="sizeHint" stdset="0">
-                          <size>
-                           <width>40</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                        </spacer>
                        </item>
                       </layout>
                      </item>
@@ -1197,7 +1136,7 @@
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/plot_ts_duplicate_gray.png</normaloff>:/icons/icons/plot_ts_duplicate_gray.png</iconset>
+                           <normaloff>:/icons/icons/replica.svg</normaloff>:/icons/icons/replica.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -1396,8 +1335,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_poly1_gray.png</normaloff>
-                             <normalon>:/icons/icons/plot_fit_poly1_blue.png</normalon>:/icons/icons/plot_fit_poly1_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_poly1.svg</normaloff>:/icons/icons/fit_poly1.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1441,8 +1379,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_poly2_gray.png</normaloff>
-                             <normalon>:/icons/icons/plot_fit_poly2_blue.png</normalon>:/icons/icons/plot_fit_poly2_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_poly2.svg</normaloff>:/icons/icons/fit_poly2.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1489,8 +1426,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_poly3_gray.png</normaloff>
-                             <normalon>:/icons/icons/plot_fit_poly3_blue.png</normalon>:/icons/icons/plot_fit_poly3_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_poly3.svg</normaloff>:/icons/icons/fit_poly3.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1537,8 +1473,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_exp_gray.png</normaloff>
-                             <disabledon>:/icons/icons/plot_fit_exp_blue.png</disabledon>:/icons/icons/plot_fit_exp_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_exponential.svg</normaloff>:/icons/icons/fit_exponential.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1605,7 +1540,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_seasonal_gray.png</normaloff>:/icons/icons/plot_fit_seasonal_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit__add_seasonal.svg</normaloff>:/icons/icons/fit__add_seasonal.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -2151,7 +2086,7 @@
                   </property>
                   <property name="maximumSize">
                    <size>
-                    <width>300</width>
+                    <width>200</width>
                     <height>16777215</height>
                    </size>
                   </property>
