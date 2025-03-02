@@ -2,6 +2,7 @@
 
 v0.9.0b
 - Enhance display of icons to differentiate between checkable and non-checkable buttons
+- Add about dialog
 - New icon designs for the plugin
 - New icon for symbology and add icon for live symbology 
 - Add gray to the list of colormaps
