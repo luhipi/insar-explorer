@@ -13,4 +13,6 @@ Data preparation
 
 .. include:: data_preparation/stamps.rst
 
+.. include:: data_preparation/sarrcape.rst
+
 .. include:: data_preparation/egms.rst

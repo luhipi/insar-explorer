@@ -9,6 +9,7 @@ Description
     `Mintpy <https://github.com/insarlab/MintPy>`_,
     `MiaplPy <https://github.com/insarlab/MiaplPy>`_,
     `GMTSAR <https://topex.ucsd.edu/gmtsar/>`_,
+    `SARscape <https://www.sarmap.ch/index.php/software/sarscape/>`_,
     and `EGMS <https://egms.land.copernicus.eu/>`_
     .
     The plugin is also available on the QGIS plugins web portal at `this link <https://plugins.qgis.org/plugins/insar_explorer-dev/>`_.
