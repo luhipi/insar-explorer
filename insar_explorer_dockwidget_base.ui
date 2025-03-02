@@ -92,13 +92,13 @@
          <widget class="QScrollArea" name="scrollArea">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>1</horstretch>
+            <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="maximumSize">
            <size>
-            <width>200</width>
+            <width>240</width>
             <height>16777215</height>
            </size>
           </property>
@@ -113,7 +113,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>244</width>
+             <width>238</width>
              <height>505</height>
             </rect>
            </property>
@@ -121,14 +121,14 @@
             <item>
              <widget class="QTabWidget" name="tabWidget">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
               <property name="maximumSize">
                <size>
-                <width>220</width>
+                <width>200</width>
                 <height>16777215</height>
                </size>
               </property>
