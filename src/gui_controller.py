@@ -8,6 +8,7 @@ from . import map_click_handler as cph
 from . import setup_frames
 from .map_setting import InsarMap
 from .layer_utils import vector_layer as vector_layer_utils
+from .about import about as insar_explorer_about
 from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
 
 
@@ -85,6 +86,17 @@ class GuiController(QObject):
         # self.ui.pb_remove_layers.clicked.connect(self.removeSelectedLayers)
         self.connectTimeseriesSignals()
         self.connectMapSignals()
+
+        self.connectAboutSignals()
+
+    def connectAboutSignals(self):
+        self.ui.label_about.setOpenExternalLinks(False)
+        self.ui.label_about.linkActivated.connect(self.aboutLabelClicked)
+
+    def aboutLabelClicked(self):
+        from .ui_windows.message_box import MessageBox
+        text = insar_explorer_about
+        MessageBox(text)
 
     def connectTimeseriesSignals(self):
         self.ui.pb_choose_point.clicked.connect(self.activatePointSelection)
