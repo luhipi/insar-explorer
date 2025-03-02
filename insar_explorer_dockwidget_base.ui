@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>693</width>
-    <height>581</height>
+    <height>578</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -113,8 +113,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>238</width>
-             <height>505</height>
+             <width>224</width>
+             <height>502</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout">
@@ -286,7 +286,7 @@
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/synchronise_gray.png</normaloff>:/icons/icons/synchronise_gray.png</iconset>
+                           <normaloff>:/icons/icons/synched.svg</normaloff>:/icons/icons/synched.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -1007,7 +1007,7 @@
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/select_point.png</normaloff>:/icons/icons/select_point.png</iconset>
+                           <normaloff>:/icons/icons/select_point.svg</normaloff>:/icons/icons/select_point.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -1063,7 +1063,7 @@
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/reference_point.png</normaloff>:/icons/icons/reference_point.png</iconset>
+                           <normaloff>:/icons/icons/select_select_reference.svg</normaloff>:/icons/icons/select_select_reference.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -1123,7 +1123,7 @@
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/reset_reference_point.png</normaloff>:/icons/icons/reset_reference_point.png</iconset>
+                           <normaloff>:/icons/icons/select_reset_reference.svg</normaloff>:/icons/icons/select_reset_reference.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -1884,7 +1884,7 @@
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/hold_on_gray.png</normaloff>:/icons/icons/hold_on_gray.png</iconset>
+                           <normaloff>:/icons/icons/plot_hold_on.svg</normaloff>:/icons/icons/plot_hold_on.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -2230,7 +2230,7 @@
                        </property>
                        <property name="icon">
                         <iconset>
-                         <normaloff>:/icons/icons/setting_gray.png</normaloff>:/icons/icons/setting_gray.png</iconset>
+                         <normaloff>:/icons/icons/setting.svg</normaloff>:/icons/icons/setting.svg</iconset>
                        </property>
                        <property name="iconSize">
                         <size>
@@ -2290,7 +2290,7 @@
                        </property>
                        <property name="icon">
                         <iconset>
-                         <normaloff>:/icons/icons/screenshot.png</normaloff>:/icons/icons/screenshot.png</iconset>
+                         <normaloff>:/icons/icons/screenshot.svg</normaloff>:/icons/icons/screenshot.svg</iconset>
                        </property>
                        <property name="iconSize">
                         <size>
