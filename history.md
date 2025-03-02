@@ -1,6 +1,7 @@
 ### History
 
 v0.9.0b
+- New icon designs for the plugin
 - New icon for symbology and add icon for live symbology 
 - Add gray to the list of colormaps
 - Handle NULL values in time series data
