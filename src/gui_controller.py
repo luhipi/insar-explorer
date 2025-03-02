@@ -55,7 +55,7 @@ class GuiController(QObject):
 
         for field, type_name in zip(field_list, field_types):
             self.ui.cb_select_field.addItem(field)
-            if type_name not in ['Real', 'Integer', 'Integer64']:
+            if type_name not in ['Real', 'Float32', 'Integer', 'Integer64']:
                 index = self.ui.cb_select_field.count() - 1
                 self.ui.cb_select_field.model().item(index).setEnabled(False)
 
