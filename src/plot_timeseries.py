@@ -205,6 +205,8 @@ class PlotTs():
         self.fit_plot_list = []
         if self.plot_values is None:
             return
+        if self.dates is None:
+            return
         if self.fit_models is []:
             return
 
