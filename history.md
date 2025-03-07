@@ -1,6 +1,7 @@
 ### History
 
 v0.9.0b
+- Add a menubar for selecting data range
 - Enhance display of icons to differentiate between checkable and non-checkable buttons
 - Add about dialog
 - New icon designs for the plugin
