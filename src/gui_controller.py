@@ -1,7 +1,7 @@
 import os
 
 from qgis.gui import QgsMapToolEmitPoint
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QMenu
 from PyQt5.QtCore import QObject, QTimer, QVariant
 
 from . import map_click_handler as cph
@@ -27,6 +27,9 @@ class GuiController(QObject):
         # make point selection active by default
         self.ui.pb_choose_point.setChecked(True)
         self.activatePointSelection(True)
+
+        # add data range menu
+        self.setDataRangeMenu()
 
         self.iface.currentLayerChanged.connect(self.onLayerChanged)
 
@@ -124,17 +127,22 @@ class GuiController(QObject):
         self.ui.sb_symbol_lower_range.valueChanged.connect(self.setSymbologyLowerRange)
         self.ui.sb_symbol_upper_range.valueChanged.connect(self.setSymbologyUpperRange)
         self.ui.cb_symbol_range_sync.clicked.connect(self.setSymbologyLowerRange)
-        # get range from data
-        self.ui.pb_range_from_data.clicked.connect(self.setSymbologyRangeFromData)
-        self.ui.pb_range_from_data_1std.clicked.connect(self.setSymbologyRangeFromData)
-        self.ui.pb_range_from_data_3std.clicked.connect(self.setSymbologyRangeFromData)
-        #
         self.ui.sb_symbol_classes.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_size.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_opacity.valueChanged.connect(self.applyLiveSymbology)
         self.ui.pb_symbology_live.toggled.connect(self.applyLiveSymbology)
         self.ui.cmb_colormap.currentIndexChanged.connect(self.applyLiveSymbology)
         self.ui.pb_colormap_reverse.toggled.connect(self.applyLiveSymbology)
+
+    def setDataRangeMenu(self):
+        """creat a menu for setting data range"""
+        menu = QMenu(self.ui)
+        menu.addAction("Range from data", self.setSymbologyRangeFromData)
+        menu.addAction("1xStd", self.setSymbologyRangeFromData)
+        menu.addAction("2xStd", self.setSymbologyRangeFromData)
+        menu.addAction("3xStd", self.setSymbologyRangeFromData)
+        self.ui.pb_range_from_data.setMenu(menu)
+
 
     def settingsWidgetPopup(self):
         json_file = "config/config.json"
@@ -167,17 +175,23 @@ class GuiController(QObject):
 
     def setSymbologyRangeFromData(self):
         button = self.sender()
-        if button == self.ui.pb_range_from_data:
+        if button.text() == "Range from data":
             message = self.insar_map.setSymbologyRangeFromData()
-        elif button == self.ui.pb_range_from_data_1std:
+        elif button.text() == "1xStd":
             message = self.insar_map.setSymbologyRangeFromData(n_std=1)
-        elif button == self.ui.pb_range_from_data_3std:
+        elif button.text() == "2xStd":
+            message = self.insar_map.setSymbologyRangeFromData(n_std=2)
+        elif button.text() == "3xStd":
             message = self.insar_map.setSymbologyRangeFromData(n_std=3)
 
         self.ui.lb_msg_bar.setText(message)
-        self.ui.cb_symbol_range_sync.setChecked(False)
-        self.ui.sb_symbol_lower_range.setValue(self.insar_map.min_value)
-        self.ui.sb_symbol_upper_range.setValue(self.insar_map.max_value)
+        min_value = self.insar_map.min_value
+        max_value = self.insar_map.max_value
+        if self.ui.cb_symbol_range_sync.isChecked():
+            max_value = max(abs(min_value), abs(max_value))
+            min_value = -max_value
+        self.ui.sb_symbol_lower_range.setValue(min_value)
+        self.ui.sb_symbol_upper_range.setValue(max_value)
 
     def applyLiveSymbology(self):
         if self.ui.pb_symbology_live.isChecked():
