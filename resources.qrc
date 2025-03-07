@@ -30,5 +30,6 @@
     <file>icons/fit_exponential.svg</file>
     <file>icons/fit__add_seasonal.svg</file>
     <file>icons/replica.svg</file>
+    <file>icons/data_range.svg</file>
   </qresource>
 </RCC>
