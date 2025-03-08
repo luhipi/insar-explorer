@@ -107,7 +107,7 @@ def extractDateValueAttributes(attributes: dict) -> list:
 
 
 def getVectorFields(layer):
-    """ get field names from vector layer"""
+    """ get field names and types from vector layer"""
     fields = [field.name() for field in layer.fields()]
-    field_types = [field.typeName() for field in layer.fields()]
+    field_types = [field.type() for field in layer.fields()]
     return fields, field_types
