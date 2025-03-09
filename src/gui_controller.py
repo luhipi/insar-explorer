@@ -107,8 +107,8 @@ class GuiController(QObject):
         self.ui.pb_reset_reference.clicked.connect(self.resetReferencePoint)
         # TS fit handler
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
-        self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
-        self.ui.pb_plot_residuals.toggled.connect(self.timeseriesPlotResiduals)
+        self.ui.pb_ts_fit_seasonal.clicked.connect(self.seasonalFitClicked)
+        self.ui.pb_plot_residuals.toggled.connect(self.residualPlotClicked)
         # Plot setting
         self.ui.gb_y_axis.buttonClicked.connect(self.plotYAxis)
         self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
@@ -209,7 +209,16 @@ class GuiController(QObject):
         message = self.insar_map.setSymbology()
         self.ui.lb_msg_bar.setText(message)
 
+    def seasonalFitClicked(self, status):
+        if status and self.ui.pb_ts_nofit.isChecked():
+            self.ui.pb_ts_fit_poly1.setChecked(True)
+        self.timeseriesPlotFit()
+
     def timeseriesPlotFit(self):
+        if self.ui.pb_ts_nofit.isChecked():
+            self.ui.pb_ts_fit_seasonal.setChecked(False)
+            self.ui.pb_plot_residuals.setChecked(False)
+
         selected_buttons = [button for button in self.ui.gb_ts_fit.buttons() if
                             button.isChecked()]
         check_box_lookup = {self.ui.pb_ts_nofit: [],
@@ -228,6 +237,13 @@ class GuiController(QObject):
         self.timeseriesPlotResiduals()
 
         self.choose_point_click_handler.plot_ts.fitModel()
+
+    def residualPlotClicked(self):
+        # disable hold on when residuals are plotted
+        self.ui.cb_hold_on_plot.setChecked(False)
+        if self.ui.pb_plot_residuals.isChecked() and self.ui.pb_ts_nofit.isChecked():
+            self.ui.pb_ts_fit_poly1.setChecked(True)
+        self.timeseriesPlotFit()
 
     def timeseriesPlotResiduals(self):
         self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.pb_plot_residuals.isChecked()
