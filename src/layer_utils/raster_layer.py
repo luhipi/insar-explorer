@@ -3,7 +3,7 @@ from datetime import datetime
 import numpy as np
 from osgeo import gdal
 
-from . import gmtsar_layer as gmtsar_layer_utils
+from . import grd_layer as grd_layer_utils
 
 
 def createVrtFromFiles(*, raster_file_paths, band_names=None, out_file="") -> gdal.Dataset:
@@ -45,7 +45,7 @@ class RasterTimeseries:
         file_path = layer.source()
         directory = os.path.dirname(file_path)
 
-        raster_file_paths, band_names = gmtsar_layer_utils.getGmtsarGrdInfo(directory)
+        raster_file_paths, band_names = grd_layer_utils.getGrdInfo(directory)
         dataset = createVrtFromFiles(raster_file_paths=raster_file_paths,
                                      band_names=band_names, out_file="")
 

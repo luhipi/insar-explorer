@@ -4,16 +4,15 @@ from osgeo import gdal
 from qgis.core import QgsMapLayer
 
 
-def checkGmtsarLayer(layer):
+def checkGrdLayer(layer):
     if layer is None:
-        message = ('<span style="color:red;">No layer selected: Please select a valid layer. Please select a valid '
-                   'layer created by GMTSAR.</span>')
+        message = '<span style="color:red;">No layer selected: Please select a raster layer.</span>'
         return False, message
     elif not layer.isValid():
-        message = '<span style="color:red;">Invalid Layer: Please select a valid layer created by GMTSAR.</span>'
+        message = '<span style="color:red;">Invalid Layer: Please select a valid raster layer.</span>'
         return False, message
     elif (layer.type() == QgsMapLayer.VectorLayer):
-        message = ('<span style="color:red;">This is a vector layers. Please select a raster layer created by GMTSAR.'
+        message = ('<span style="color:red;">This is a vector layers. Please select a raster layer.'
                    '</span>')
         return False, message
 
@@ -28,14 +27,14 @@ def checkGmtsarLayer(layer):
     if driver in ['netCDF', 'GMT']:  # for GMTSAR and MintPy files converted to grd
         return True, ""
     else:
-        message = '<span style="color:red;">Invalid Layer: The file is not a GMTSAR file.</span>'
+        message = '<span style="color:red;">Invalid Layer: The file is not a GMT grd file.</span>'
         return False, message
 
 
-def checkGmtsarLayerTimeseries(layer):
+def checkGrdTimeseries(layer):
     """ check layer is a valid vector with velocity """
     message = ""
-    status, message = checkGmtsarLayer(layer)
+    status, message = checkGrdLayer(layer)
     if status is False:
         return status, message
 
@@ -57,9 +56,9 @@ def checkGmtsarLayerTimeseries(layer):
     return status, message
 
 
-def getGmtsarGrdInfo(directory) -> (list, list):
+def getGrdInfo(directory) -> (list, list):
     """
-    Get the list of GMTSAR time series grd files and their dates
+    Get the list of grd time series files and their dates
     """
     pattern = re.compile(r'^\d{8}_.*\.grd')
 

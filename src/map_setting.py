@@ -6,7 +6,7 @@ from qgis.core import QgsRasterShader, QgsColorRampShader, QgsSingleBandPseudoCo
 
 from . import color_maps
 from .layer_utils import vector_layer as vector_layer_utils
-from .layer_utils import gmtsar_layer as gmtsar_layer_utils
+from .layer_utils import grd_layer as grd_layer_utils
 from .get_version import qgisVresion
 
 
@@ -47,7 +47,7 @@ class InsarMap:
             layer = self.iface.activeLayer()
 
         status_vector, message = vector_layer_utils.checkVectorLayer(layer)
-        status_raster, message = gmtsar_layer_utils.checkGmtsarLayer(layer)
+        status_raster, message = grd_layer_utils.checkGrdLayer(layer)
         if status_vector:
             self.data_type = "vector"
             self.getDataRangeFromVectorLayer(layer, n_std)
@@ -113,7 +113,7 @@ class InsarMap:
             layer = self.iface.activeLayer()
 
         status_vector, message = vector_layer_utils.checkVectorLayer(layer)
-        status_raster, message = gmtsar_layer_utils.checkGmtsarLayer(layer)
+        status_raster, message = grd_layer_utils.checkGrdLayer(layer)
         if status_vector is False and status_raster is False:
             message = '<span style="color:red;">Could not set the symbology. Check layer validity.</span>'
             return message

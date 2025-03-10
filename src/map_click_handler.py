@@ -7,7 +7,7 @@ from PyQt5.QtGui import QCursor
 
 from . import plot_timeseries as pts
 from .layer_utils import vector_layer as vector_layer_utils
-from .layer_utils import gmtsar_layer as gmtsar_layer_utils
+from .layer_utils import grd_layer as grd_layer_utils
 from .layer_utils import raster_layer as raster_layer_utils
 
 
@@ -194,7 +194,7 @@ class TSClickHandler(MapClickHandler):
         if not layer:
             layer = self.iface.activeLayer()
         status_vector, message = vector_layer_utils.checkVectorLayer(layer)
-        status_raster, message = gmtsar_layer_utils.checkGmtsarLayer(layer)
+        status_raster, message = grd_layer_utils.checkGrdLayer(layer)
         if status_vector:
             self.choosePointClickedVector(point=point, layer=layer, ref=ref)
         elif status_raster:
@@ -222,7 +222,7 @@ class TSClickHandler(MapClickHandler):
             self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
 
     def choosePointClickedRaster(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
-        status, message = gmtsar_layer_utils.checkGmtsarLayerTimeseries(layer)
+        status, message = grd_layer_utils.checkGrdTimeseries(layer)
         if status is False:
             self.ui.lb_msg_bar.setText(message)
             return
