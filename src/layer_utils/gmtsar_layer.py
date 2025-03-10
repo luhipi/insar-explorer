@@ -25,7 +25,7 @@ def checkGmtsarLayer(layer):
         return False, message
 
     driver = dataset.GetDriver().ShortName
-    if driver == 'netCDF':  # for GMTSAR
+    if driver in ['netCDF', 'GMT']:  # for GMTSAR and MintPy files converted to grd
         return True, ""
     else:
         message = '<span style="color:red;">Invalid Layer: The file is not a GMTSAR file.</span>'
