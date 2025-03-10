@@ -2,6 +2,7 @@ import numpy as np
 from qgis.PyQt.QtGui import QColor
 from qgis.core import QgsGraduatedSymbolRenderer, QgsRendererRange, QgsSymbol
 from qgis.core import QgsRasterShader, QgsColorRampShader, QgsSingleBandPseudoColorRenderer
+from osgeo import gdal
 
 
 from . import color_maps
@@ -99,10 +100,32 @@ class InsarMap:
             if self.data_mean is None or self.data_stdv is None:
                 self.data_mean = layer.dataProvider().bandStatistics(1).mean
                 self.data_stdv = layer.dataProvider().bandStatistics(1).stdDev
+            if not np.isfinite(self.data_mean) or not np.isfinite(self.data_stdv):  # if mean/stdv is nan load the data as array
+                self.data_mean, self.data_stdv = self.getDataRangeFromGdal(layer)
+
             self.min_value = self.data_mean - n_std * self.data_stdv
             self.max_value = self.data_mean + n_std * self.data_stdv
 
         return ""
+
+    def getDataRangeFromGdal(self, layer):
+        file_path = layer.dataProvider().dataSourceUri()
+        dataset = gdal.Open(file_path)
+        if not dataset:
+            return float('nan'), float('nan')
+
+        band = dataset.GetRasterBand(1)
+        if not band:
+            return float('nan'), float('nan')
+
+        stats = band.GetStatistics(True, True)
+        if not stats:
+            return float('nan'), float('nan')
+
+        data_mean = stats[2]  # Mean value
+        data_stdv = stats[3]  # Standard deviation
+
+        return data_mean, data_stdv
 
     def setSymbology(self, layer=None, color_ramp_name=None):
 
