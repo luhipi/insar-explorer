@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'InsarExplorer'
-copyright = u'2013, Mahmud Haghighi'
+copyright = u'2024-2025, Mahmud Haghighi'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
