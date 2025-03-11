@@ -40,7 +40,7 @@ def checkGrdTimeseries(layer):
 
     file_path = layer.source()
     directory = os.path.dirname(file_path)
-    pattern = re.compile(r'^\d{8}_.*\.grd')
+    pattern = re.compile(r'^\d{8}_.*\.grd|timeseries-\d{8}.*\.grd')
 
     grd_files = [f for f in os.listdir(directory) if pattern.match(f)]
 
@@ -60,7 +60,7 @@ def getGrdInfo(directory) -> (list, list):
     """
     Get the list of grd time series files and their dates
     """
-    pattern = re.compile(r'^\d{8}_.*\.grd')
+    pattern = re.compile(r'^\d{8}_.*\.grd|timeseries-\d{8}.*\.grd')
 
     grd_files = sorted([f for f in os.listdir(directory) if pattern.match(f)])
     if not grd_files:
@@ -69,12 +69,13 @@ def getGrdInfo(directory) -> (list, list):
     # full paths
     grd_file_paths = [os.path.join(directory, f) for f in grd_files]
 
-    date_pattern = re.compile(r'^\d{8}')
+    date_pattern = re.compile(r'^\d{8}|timeseries-\d{8}')
     band_names = []
     for grd_file in grd_file_paths:
         match = date_pattern.match(os.path.basename(grd_file))
         if match:
             date_str = match.group(0)
+            date_str = removeTimeseriesPrefix(date_str)
             band_name = f'D{date_str}'
             band_names.append(band_name)
 
@@ -82,3 +83,7 @@ def getGrdInfo(directory) -> (list, list):
         raise ValueError("Number of .grd files and band names do not match.")
 
     return grd_file_paths, band_names
+
+def removeTimeseriesPrefix(filename):
+    pattern = re.compile(r'^timeseries-')
+    return re.sub(pattern, '', filename)
