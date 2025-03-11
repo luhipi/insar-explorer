@@ -235,7 +235,7 @@
                           <string>Min symbology value</string>
                          </property>
                          <property name="decimals">
-                          <number>1</number>
+                          <number>3</number>
                          </property>
                          <property name="minimum">
                           <double>-1000000000.000000000000000</double>
@@ -317,7 +317,7 @@
                           <string>Max symbology value</string>
                          </property>
                          <property name="decimals">
-                          <number>1</number>
+                          <number>3</number>
                          </property>
                          <property name="minimum">
                           <double>-1000000000.000000000000000</double>

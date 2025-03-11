@@ -16,8 +16,8 @@
             },
             "ylabel": {
                 "type": "string",
-                "value": "Deformation [mm]",
-                "default": "Deformation [mm]",
+                "value": "Deformation",
+                "default": "Deformation",
                 "advanced": true
             },
             "font size": {
@@ -203,8 +203,8 @@
             },
             "ylabel": {
                 "type": "string",
-                "value": "Residual [mm]",
-                "default": "Residual [mm]",
+                "value": "Residual",
+                "default": "Residual",
                 "advanced": true
             },
             "marker": {

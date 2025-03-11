@@ -1,7 +1,10 @@
 ### History
 
 v0.9.0b
+- Allow 3 decimal point precision for data range to allow flexibility in visualization of data in different units
 - Add a menubar for selecting data range
+- Support MintPy time series data created via save_gmt command
+- Removed default ylabe units from time series plot to avoid confusion for data from different sources
 - Enhance display of icons to differentiate between checkable and non-checkable buttons
 - Add about dialog
 - New icon designs for the plugin
