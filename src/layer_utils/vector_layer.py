@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 import numpy as np
-from qgis.core import QgsMapLayer, QgsFeature, QgsVectorLayer
+from qgis.core import QgsMapLayer, QgsFeature
 from qgis.PyQt.QtCore import QVariant
 
 

@@ -100,7 +100,8 @@ class InsarMap:
             if self.data_mean is None or self.data_stdv is None:
                 self.data_mean = layer.dataProvider().bandStatistics(1).mean
                 self.data_stdv = layer.dataProvider().bandStatistics(1).stdDev
-            if not np.isfinite(self.data_mean) or not np.isfinite(self.data_stdv):  # if mean/stdv is nan load the data as array
+            # if mean/stdv is nan load the data as array
+            if not np.isfinite(self.data_mean) or not np.isfinite(self.data_stdv):
                 self.data_mean, self.data_stdv = self.getDataRangeFromGdal(layer)
 
             self.min_value = self.data_mean - n_std * self.data_stdv

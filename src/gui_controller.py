@@ -143,7 +143,6 @@ class GuiController(QObject):
         menu.addAction("3xStd", self.setSymbologyRangeFromData)
         self.ui.pb_range_from_data.setMenu(menu)
 
-
     def settingsWidgetPopup(self):
         json_file = "config/config.json"
         block_key = "timeseries settings"
@@ -262,10 +261,6 @@ class GuiController(QObject):
             self.choose_point_click_handler.plot_ts.plot_y_axis = "adaptive"
 
         self.choose_point_click_handler.plot_ts.plotTs()
-
-
-
-
 
     def timeseriesReplica(self):
         if self.ui.pb_ts_replica.isChecked():
