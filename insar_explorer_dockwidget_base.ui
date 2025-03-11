@@ -238,7 +238,7 @@
                           <string>Min symbology value</string>
                          </property>
                          <property name="decimals">
-                          <number>3</number>
+                          <number>1</number>
                          </property>
                          <property name="minimum">
                           <double>-1000000000.000000000000000</double>
@@ -320,7 +320,7 @@
                           <string>Max symbology value</string>
                          </property>
                          <property name="decimals">
-                          <number>3</number>
+                          <number>1</number>
                          </property>
                          <property name="minimum">
                           <double>-1000000000.000000000000000</double>
@@ -2362,11 +2362,11 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="gb_y_axis"/>
   <buttongroup name="gb_ts_fit">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
+  <buttongroup name="gb_y_axis"/>
  </buttongroups>
 </ui>
