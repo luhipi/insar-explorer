@@ -210,6 +210,9 @@
                        <property name="acceptDrops">
                         <bool>false</bool>
                        </property>
+                       <property name="toolTip">
+                        <string>Select field</string>
+                       </property>
                        <property name="autoFillBackground">
                         <bool>false</bool>
                        </property>
@@ -1192,7 +1195,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Plot fit residual</string>
+                          <string>Replica distance (wavelength/2)</string>
                          </property>
                          <property name="minimum">
                           <number>1</number>
@@ -1208,7 +1211,7 @@
                        <item>
                         <widget class="QLabel" name="label">
                          <property name="toolTip">
-                          <string>Plot fit residual</string>
+                          <string/>
                          </property>
                          <property name="text">
                           <string>mm</string>
@@ -1673,7 +1676,7 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>plot residual</string>
+                            <string>plot fit residuals</string>
                            </property>
                            <property name="toolTipDuration">
                             <number>-1</number>
@@ -1872,7 +1875,7 @@
                      <string>Plot fit residual</string>
                     </property>
                     <property name="title">
-                     <string>Y-axis setting</string>
+                     <string>Y-axis</string>
                     </property>
                     <property name="flat">
                      <bool>true</bool>
