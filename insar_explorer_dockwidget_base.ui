@@ -235,7 +235,7 @@
                           <string>Min symbology value</string>
                          </property>
                          <property name="decimals">
-                          <number>1</number>
+                          <number>3</number>
                          </property>
                          <property name="minimum">
                           <double>-1000000000.000000000000000</double>
@@ -317,7 +317,7 @@
                           <string>Max symbology value</string>
                          </property>
                          <property name="decimals">
-                          <number>1</number>
+                          <number>3</number>
                          </property>
                          <property name="minimum">
                           <double>-1000000000.000000000000000</double>
@@ -350,15 +350,25 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>40</width>
-                           <height>40</height>
+                           <width>30</width>
+                           <height>30</height>
                           </size>
                          </property>
                          <property name="toolTip">
                           <string>Min/Max from data</string>
                          </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+</string>
+                         </property>
                          <property name="text">
-                          <string>data</string>
+                          <string/>
+                         </property>
+                         <property name="icon">
+                          <iconset>
+                           <normaloff>:/icons/icons/data_range.svg</normaloff>:/icons/icons/data_range.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -375,88 +385,8 @@
                          <property name="autoExclusive">
                           <bool>false</bool>
                          </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pb_range_from_data_1std">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="minimumSize">
-                          <size>
-                           <width>0</width>
-                           <height>0</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>40</width>
-                           <height>40</height>
-                          </size>
-                         </property>
-                         <property name="toolTip">
-                          <string>mean±1xStd</string>
-                         </property>
-                         <property name="text">
-                          <string>1xStd</string>
-                         </property>
-                         <property name="iconSize">
-                          <size>
-                           <width>20</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                         <property name="checkable">
-                          <bool>false</bool>
-                         </property>
-                         <property name="checked">
-                          <bool>false</bool>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pb_range_from_data_3std">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="minimumSize">
-                          <size>
-                           <width>0</width>
-                           <height>0</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>40</width>
-                           <height>40</height>
-                          </size>
-                         </property>
-                         <property name="toolTip">
-                          <string>mean±3xStd</string>
-                         </property>
-                         <property name="text">
-                          <string>3xStd</string>
-                         </property>
-                         <property name="iconSize">
-                          <size>
-                           <width>20</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                         <property name="checkable">
-                          <bool>false</bool>
-                         </property>
-                         <property name="checked">
-                          <bool>false</bool>
-                         </property>
-                         <property name="autoExclusive">
-                          <bool>false</bool>
+                         <property name="flat">
+                          <bool>true</bool>
                          </property>
                         </widget>
                        </item>

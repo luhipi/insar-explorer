@@ -2,11 +2,12 @@ import numpy as np
 from qgis.PyQt.QtGui import QColor
 from qgis.core import QgsGraduatedSymbolRenderer, QgsRendererRange, QgsSymbol
 from qgis.core import QgsRasterShader, QgsColorRampShader, QgsSingleBandPseudoColorRenderer
+from osgeo import gdal
 
 
 from . import color_maps
 from .layer_utils import vector_layer as vector_layer_utils
-from .layer_utils import gmtsar_layer as gmtsar_layer_utils
+from .layer_utils import grd_layer as grd_layer_utils
 from .get_version import qgisVresion
 
 
@@ -47,7 +48,7 @@ class InsarMap:
             layer = self.iface.activeLayer()
 
         status_vector, message = vector_layer_utils.checkVectorLayer(layer)
-        status_raster, message = gmtsar_layer_utils.checkGmtsarLayer(layer)
+        status_raster, message = grd_layer_utils.checkGrdLayer(layer)
         if status_vector:
             self.data_type = "vector"
             self.getDataRangeFromVectorLayer(layer, n_std)
@@ -99,10 +100,32 @@ class InsarMap:
             if self.data_mean is None or self.data_stdv is None:
                 self.data_mean = layer.dataProvider().bandStatistics(1).mean
                 self.data_stdv = layer.dataProvider().bandStatistics(1).stdDev
+            if not np.isfinite(self.data_mean) or not np.isfinite(self.data_stdv):  # if mean/stdv is nan load the data as array
+                self.data_mean, self.data_stdv = self.getDataRangeFromGdal(layer)
+
             self.min_value = self.data_mean - n_std * self.data_stdv
             self.max_value = self.data_mean + n_std * self.data_stdv
 
         return ""
+
+    def getDataRangeFromGdal(self, layer):
+        file_path = layer.dataProvider().dataSourceUri()
+        dataset = gdal.Open(file_path)
+        if not dataset:
+            return float('nan'), float('nan')
+
+        band = dataset.GetRasterBand(1)
+        if not band:
+            return float('nan'), float('nan')
+
+        stats = band.GetStatistics(True, True)
+        if not stats:
+            return float('nan'), float('nan')
+
+        data_mean = stats[2]  # Mean value
+        data_stdv = stats[3]  # Standard deviation
+
+        return data_mean, data_stdv
 
     def setSymbology(self, layer=None, color_ramp_name=None):
 
@@ -113,7 +136,7 @@ class InsarMap:
             layer = self.iface.activeLayer()
 
         status_vector, message = vector_layer_utils.checkVectorLayer(layer)
-        status_raster, message = gmtsar_layer_utils.checkGmtsarLayer(layer)
+        status_raster, message = grd_layer_utils.checkGrdLayer(layer)
         if status_vector is False and status_raster is False:
             message = '<span style="color:red;">Could not set the symbology. Check layer validity.</span>'
             return message
