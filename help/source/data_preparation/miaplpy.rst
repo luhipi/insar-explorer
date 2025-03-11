@@ -1,6 +1,4 @@
 **MiaplPy**
 ^^^^^^^^^^^
 
-  Use the ``save_qgis`` script to export the time series data to a shapefile. For example:
-
-  ``$ mintpy save_qgis timeseries_ERA5_ramp_demErr.h5 -g inputs/geometrygeo.h5``
+  To visualize `MiaplPy <https://github.com/insarlab/MiaplPy>`_ results in InSAR Explorer, use the method described for `Mintpy <#data-preparation-mintpy>`_.

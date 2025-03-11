@@ -1,7 +1,7 @@
 **GMTSAR**
 ^^^^^^^^^^
 
-  GMTSAR provides time series data in raster `grd` format. This data can be processed in InSAR Explorer using one of two methods:
+  `GMTSAR <https://topex.ucsd.edu/gmtsar/>`_ provides time series data in raster `grd` format. This data can be processed in InSAR Explorer using one of two methods:
 
   **Method 1: Use the grd Files Directly**
 
