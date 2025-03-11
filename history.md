@@ -1,9 +1,9 @@
 ### History
 
-v0.9.0b
-- Allow 3 decimal point precision for data range to allow flexibility in visualization of data in different units
+v1.0.0
+- Update documentation for SARscape and MintPy support.
 - Add a menubar for selecting data range
-- Support MintPy time series data created via save_gmt command
+- Support MintPy time series data created via save_explorer command
 - Removed default ylabe units from time series plot to avoid confusion for data from different sources
 - Enhance display of icons to differentiate between checkable and non-checkable buttons
 - Add about dialog

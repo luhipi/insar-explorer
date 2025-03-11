@@ -84,6 +84,7 @@ def getGrdInfo(directory) -> (list, list):
 
     return grd_file_paths, band_names
 
+
 def removeTimeseriesPrefix(filename):
     pattern = re.compile(r'^timeseries-')
     return re.sub(pattern, '', filename)
