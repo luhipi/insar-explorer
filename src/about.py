@@ -5,7 +5,7 @@ about = """
                 <span style="margin-left: 10em;">InSAR Explorer is developed by Mahmud Haghighi at the
                 Institute of Photogrammetry and GeoInformation, Leibniz University Hannover.&nbsp;
                  It is designed for interactive visualization and analysis of InSAR time series results.
-                 If you use InSAR Explorer in your research, please cite the 
+                 If you use InSAR Explorer in your research, please cite the
                  <a href="https://doi.org/10.5281/zenodo.14052813"> InSAR Explorer on Zenodo repository</a></span>
                 </span>
         </p>
