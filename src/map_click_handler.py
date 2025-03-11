@@ -247,6 +247,9 @@ class TSClickHandler(MapClickHandler):
         self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
 
     def resetReferencePoint(self):
+        # handle when reference reset before any ts points selected
+        if self.plot_ts.ts_values == 0:
+            self.plot_ts.dates = None
         self.ref_values = 0
         self.clearReferenceFeatureHighlight()
         self.plot_ts.plotTs(ref_values=self.ref_values)
