@@ -7,8 +7,6 @@
 
     **Method 1: Convert HDF5 to GMT grd (recommended)**
 
-    *Note:* `save_explorer.py` script is currently available in the `insar-explorer` branch of this `clone of MintPy repository <https://github.com/mahmud1/MintPy/tree/insar-explorer>`_.
-
     1. Convert the velocity and time series to GMT `grd` format using the `save_explorer.py` script. For example:
 
     .. code-block:: shell
