@@ -40,7 +40,7 @@ def checkGrdTimeseries(layer):
 
     file_path = layer.source()
     directory = os.path.dirname(file_path)
-    pattern = re.compile(r'^\d{8}_.*\.grd|timeseries-\d{8}.*\.grd')
+    pattern = re.compile(r'^\d{8}_.*\.grd$|timeseries-\d{8}.*\.grd$')
 
     grd_files = [f for f in os.listdir(directory) if pattern.match(f)]
 
@@ -60,7 +60,7 @@ def getGrdInfo(directory) -> (list, list):
     """
     Get the list of grd time series files and their dates
     """
-    pattern = re.compile(r'^\d{8}_.*\.grd|timeseries-\d{8}.*\.grd')
+    pattern = re.compile(r'^\d{8}_.*\.grd$|timeseries-\d{8}.*\.grd$')
 
     grd_files = sorted([f for f in os.listdir(directory) if pattern.match(f)])
     if not grd_files:
