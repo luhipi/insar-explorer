@@ -1,7 +1,7 @@
 ### History
 
 v1.0.0
-- 
+- Sync colorbar icon with reverse button
 - Disable log
 - Update documentation for SARscape and MintPy support.
 - Add a menubar for selecting data range

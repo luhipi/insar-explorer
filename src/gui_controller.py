@@ -1,8 +1,9 @@
 import os
 
 from qgis.gui import QgsMapToolEmitPoint
-from PyQt5.QtWidgets import QFileDialog, QMenu
+from PyQt5.QtWidgets import QFileDialog, QMenu, QComboBox
 from PyQt5.QtCore import QObject, QTimer, QVariant
+from PyQt5.QtGui import QIcon, QTransform
 
 from . import map_click_handler as cph
 from . import setup_frames
@@ -134,7 +135,7 @@ class GuiController(QObject):
         self.ui.sb_symbol_opacity.valueChanged.connect(self.applyLiveSymbology)
         self.ui.pb_symbology_live.toggled.connect(self.applyLiveSymbology)
         self.ui.cmb_colormap.currentIndexChanged.connect(self.applyLiveSymbology)
-        self.ui.pb_colormap_reverse.toggled.connect(self.applyLiveSymbology)
+        self.ui.pb_colormap_reverse.toggled.connect(self.colormapReverseClicked)
 
     def setDataRangeMenu(self):
         """creat a menu for setting data range"""
@@ -206,9 +207,22 @@ class GuiController(QObject):
         self.insar_map.alpha = float(self.ui.sb_symbol_opacity.value()) / 100
         self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
         self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
-        self.insar_map.color_ramp_reverse_flag = self.ui.pb_colormap_reverse.isChecked()
         message = self.insar_map.setSymbology()
         self.ui.lb_msg_bar.setText(message)
+
+    def colormapReverseClicked(self):
+        self.flipComboBoxIcons(self.ui.cmb_colormap)
+        self.insar_map.color_ramp_reverse_flag = self.ui.pb_colormap_reverse.isChecked()
+        self.applyLiveSymbology()
+
+    def flipComboBoxIcons(self, combo_box: QComboBox):
+        for index in range(combo_box.count()):
+            icon = combo_box.itemIcon(index)
+            if not icon.isNull():
+                pixmap = icon.pixmap(icon.availableSizes()[0])
+                transform = QTransform().scale(-1, 1)  # fip horizontally
+                flipped_pixmap = pixmap.transformed(transform)
+                combo_box.setItemIcon(index, QIcon(flipped_pixmap))
 
     def seasonalFitClicked(self, status):
         if status and self.ui.pb_ts_nofit.isChecked():
