@@ -2270,7 +2270,7 @@
                 <item>
                  <widget class="QPlainTextEdit" name="te_info">
                   <property name="enabled">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                   <property name="maximumSize">
                    <size>
