@@ -1,6 +1,8 @@
 ### History
 
 v1.0.0
+- 
+- Disable log
 - Update documentation for SARscape and MintPy support.
 - Add a menubar for selecting data range
 - Support MintPy time series data created via save_explorer command
