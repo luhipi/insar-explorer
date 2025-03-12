@@ -393,6 +393,19 @@
                          </property>
                         </widget>
                        </item>
+                       <item>
+                        <spacer name="horizontalSpacer_12">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>40</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
                       </layout>
                      </item>
                     </layout>
@@ -2362,11 +2375,11 @@
  <resources/>
  <connections/>
  <buttongroups>
+  <buttongroup name="gb_y_axis"/>
   <buttongroup name="gb_ts_fit">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
-  <buttongroup name="gb_y_axis"/>
  </buttongroups>
 </ui>
