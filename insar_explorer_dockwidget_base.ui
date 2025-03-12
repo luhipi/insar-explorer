@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>693</width>
-    <height>520</height>
+    <height>578</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,18 +19,24 @@
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
        <widget class="QLabel" name="lb_msg_bar">
+        <property name="toolTip">
+         <string>Plot fit residual</string>
+        </property>
         <property name="text">
          <string/>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_8">
+       <widget class="QLabel" name="label_about">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Plot fit residual</string>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;https://luhipi.github.io/insar-explorer&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0068da;&quot;&gt;About InSAR Explorer&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -50,6 +56,9 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
+      <property name="toolTip">
+       <string>Plot fit residual</string>
+      </property>
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
@@ -59,6 +68,9 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Plot fit residual</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <property name="spacing">
@@ -80,15 +92,18 @@
          <widget class="QScrollArea" name="scrollArea">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>1</horstretch>
+            <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="maximumSize">
            <size>
-            <width>400</width>
+            <width>240</width>
             <height>16777215</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>Plot fit residual</string>
           </property>
           <property name="widgetResizable">
            <bool>true</bool>
@@ -98,27 +113,30 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>244</width>
-             <height>524</height>
+             <width>224</width>
+             <height>502</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
              <widget class="QTabWidget" name="tabWidget">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
               <property name="maximumSize">
                <size>
-                <width>220</width>
+                <width>200</width>
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Plot fit residual</string>
+              </property>
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
@@ -160,6 +178,9 @@
                     <property name="title">
                      <string>Value</string>
                     </property>
+                    <property name="flat">
+                     <bool>true</bool>
+                    </property>
                     <layout class="QVBoxLayout" name="verticalLayout_10">
                      <property name="spacing">
                       <number>-1</number>
@@ -179,6 +200,23 @@
                      <item>
                       <widget class="QComboBox" name="cb_select_field">
                        <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                       <property name="font">
+                        <font>
+                         <strikeout>false</strikeout>
+                        </font>
+                       </property>
+                       <property name="acceptDrops">
+                        <bool>false</bool>
+                       </property>
+                       <property name="toolTip">
+                        <string>Select field</string>
+                       </property>
+                       <property name="autoFillBackground">
+                        <bool>false</bool>
+                       </property>
+                       <property name="editable">
                         <bool>true</bool>
                        </property>
                       </widget>
@@ -236,12 +274,22 @@
                          <property name="toolTip">
                           <string>Synchronize range</string>
                          </property>
+                         <property name="autoFillBackground">
+                          <bool>false</bool>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
+                         </property>
                          <property name="text">
                           <string/>
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/synchronise_gray.png</normaloff>:/icons/icons/synchronise_gray.png</iconset>
+                           <normaloff>:/icons/icons/synched.svg</normaloff>:/icons/icons/synched.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -253,6 +301,9 @@
                           <bool>true</bool>
                          </property>
                          <property name="checked">
+                          <bool>true</bool>
+                         </property>
+                         <property name="flat">
                           <bool>true</bool>
                          </property>
                         </widget>
@@ -302,15 +353,25 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>40</width>
-                           <height>40</height>
+                           <width>30</width>
+                           <height>30</height>
                           </size>
                          </property>
                          <property name="toolTip">
                           <string>Min/Max from data</string>
                          </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+</string>
+                         </property>
                          <property name="text">
-                          <string>data</string>
+                          <string/>
+                         </property>
+                         <property name="icon">
+                          <iconset>
+                           <normaloff>:/icons/icons/data_range.svg</normaloff>:/icons/icons/data_range.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -327,90 +388,23 @@
                          <property name="autoExclusive">
                           <bool>false</bool>
                          </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pb_range_from_data_1std">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="minimumSize">
-                          <size>
-                           <width>0</width>
-                           <height>0</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>40</width>
-                           <height>40</height>
-                          </size>
-                         </property>
-                         <property name="toolTip">
-                          <string>mean±1xStd</string>
-                         </property>
-                         <property name="text">
-                          <string>1xStd</string>
-                         </property>
-                         <property name="iconSize">
-                          <size>
-                           <width>20</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                         <property name="checkable">
-                          <bool>false</bool>
-                         </property>
-                         <property name="checked">
-                          <bool>false</bool>
+                         <property name="flat">
+                          <bool>true</bool>
                          </property>
                         </widget>
                        </item>
                        <item>
-                        <widget class="QPushButton" name="pb_range_from_data_3std">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
+                        <spacer name="horizontalSpacer_12">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
                          </property>
-                         <property name="minimumSize">
-                          <size>
-                           <width>0</width>
-                           <height>0</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
+                         <property name="sizeHint" stdset="0">
                           <size>
                            <width>40</width>
-                           <height>40</height>
-                          </size>
-                         </property>
-                         <property name="toolTip">
-                          <string>mean±3xStd</string>
-                         </property>
-                         <property name="text">
-                          <string>3xStd</string>
-                         </property>
-                         <property name="iconSize">
-                          <size>
-                           <width>20</width>
                            <height>20</height>
                           </size>
                          </property>
-                         <property name="checkable">
-                          <bool>false</bool>
-                         </property>
-                         <property name="checked">
-                          <bool>false</bool>
-                         </property>
-                         <property name="autoExclusive">
-                          <bool>false</bool>
-                         </property>
-                        </widget>
+                        </spacer>
                        </item>
                       </layout>
                      </item>
@@ -435,9 +429,12 @@
                      <bool>false</bool>
                     </property>
                     <property name="title">
-                     <string>Colormap</string>
+                     <string>Symbology</string>
                     </property>
-                    <layout class="QVBoxLayout" name="verticalLayout_16">
+                    <property name="flat">
+                     <bool>true</bool>
+                    </property>
+                    <layout class="QVBoxLayout" name="verticalLayout_16" stretch="0,0">
                      <property name="spacing">
                       <number>0</number>
                      </property>
@@ -470,6 +467,9 @@
                            </property>
                            <property name="autoFillBackground">
                             <bool>false</bool>
+                           </property>
+                           <property name="editable">
+                            <bool>true</bool>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -504,15 +504,55 @@
                               <normaloff>:/colormaps/icons/colormaps/turbo.png</normaloff>:/colormaps/icons/colormaps/turbo.png</iconset>
                             </property>
                            </item>
+                           <item>
+                            <property name="text">
+                             <string>Gray</string>
+                            </property>
+                            <property name="icon">
+                             <iconset>
+                              <normaloff>:/colormaps/icons/colormaps/gray.png</normaloff>:/colormaps/icons/colormaps/gray.png</iconset>
+                            </property>
+                           </item>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QCheckBox" name="cb_colormap_reverse">
+                          <widget class="QPushButton" name="pb_colormap_reverse">
+                           <property name="maximumSize">
+                            <size>
+                             <width>30</width>
+                             <height>30</height>
+                            </size>
+                           </property>
                            <property name="toolTip">
                             <string>Reverse colormap</string>
                            </property>
+                           <property name="autoFillBackground">
+                            <bool>false</bool>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+</string>
+                           </property>
                            <property name="text">
-                            <string>Reverse</string>
+                            <string/>
+                           </property>
+                           <property name="icon">
+                            <iconset>
+                             <normaloff>:/icons/icons/reverse.svg</normaloff>:/icons/icons/reverse.svg</iconset>
+                           </property>
+                           <property name="iconSize">
+                            <size>
+                             <width>20</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="checkable">
+                            <bool>true</bool>
+                           </property>
+                           <property name="flat">
+                            <bool>true</bool>
                            </property>
                           </widget>
                          </item>
@@ -539,7 +579,7 @@
                             <string>Number of classes</string>
                            </property>
                            <property name="minimum">
-                            <number>2</number>
+                            <number>1</number>
                            </property>
                            <property name="value">
                             <number>10</number>
@@ -548,52 +588,6 @@
                          </item>
                         </layout>
                        </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_10">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>150</width>
-                      <height>0</height>
-                     </size>
-                    </property>
-                    <property name="autoFillBackground">
-                     <bool>false</bool>
-                    </property>
-                    <property name="title">
-                     <string>Symbol</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="verticalLayout_17">
-                     <property name="spacing">
-                      <number>0</number>
-                     </property>
-                     <property name="leftMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="topMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="rightMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="bottomMargin">
-                      <number>0</number>
-                     </property>
-                     <item>
-                      <layout class="QVBoxLayout" name="verticalLayout_14">
-                       <property name="spacing">
-                        <number>0</number>
-                       </property>
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout_4">
                          <item>
@@ -627,38 +621,38 @@
                          </item>
                         </layout>
                        </item>
+                      </layout>
+                     </item>
+                     <item>
+                      <layout class="QHBoxLayout" name="horizontalLayout_3">
                        <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_3">
-                         <item>
-                          <widget class="QLabel" name="label_4">
-                           <property name="text">
-                            <string>Opacity:</string>
-                           </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <widget class="QSpinBox" name="sb_symbol_opacity">
-                           <property name="sizePolicy">
-                            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                             <horstretch>0</horstretch>
-                             <verstretch>0</verstretch>
-                            </sizepolicy>
-                           </property>
-                           <property name="toolTip">
-                            <string>Symbol opacity</string>
-                           </property>
-                           <property name="maximum">
-                            <number>100</number>
-                           </property>
-                           <property name="singleStep">
-                            <number>10</number>
-                           </property>
-                           <property name="value">
-                            <number>100</number>
-                           </property>
-                          </widget>
-                         </item>
-                        </layout>
+                        <widget class="QLabel" name="label_4">
+                         <property name="text">
+                          <string>Opacity:</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="sb_symbol_opacity">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="toolTip">
+                          <string>Symbol opacity</string>
+                         </property>
+                         <property name="maximum">
+                          <number>100</number>
+                         </property>
+                         <property name="singleStep">
+                          <number>10</number>
+                         </property>
+                         <property name="value">
+                          <number>100</number>
+                         </property>
+                        </widget>
                        </item>
                       </layout>
                      </item>
@@ -685,6 +679,9 @@
                     <property name="title">
                      <string>Apply</string>
                     </property>
+                    <property name="flat">
+                     <bool>true</bool>
+                    </property>
                     <layout class="QVBoxLayout" name="verticalLayout_18">
                      <property name="spacing">
                       <number>0</number>
@@ -703,16 +700,9 @@
                      </property>
                      <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_7">
-                       <item>
-                        <widget class="QCheckBox" name="cb_symbology_live">
-                         <property name="toolTip">
-                          <string>Apply on the fly</string>
-                         </property>
-                         <property name="text">
-                          <string>Live</string>
-                         </property>
-                        </widget>
-                       </item>
+                       <property name="spacing">
+                        <number>5</number>
+                       </property>
                        <item>
                         <spacer name="horizontalSpacer_9">
                          <property name="orientation">
@@ -725,6 +715,53 @@
                           </size>
                          </property>
                         </spacer>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pb_symbology_live">
+                         <property name="maximumSize">
+                          <size>
+                           <width>30</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Apply on the fly</string>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>false</bool>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+</string>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                         <property name="icon">
+                          <iconset>
+                           <normaloff>:/icons/icons/apply_symbology_on-the-fly.svg</normaloff>:/icons/icons/apply_symbology_on-the-fly.svg</iconset>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>true</bool>
+                         </property>
+                         <property name="autoDefault">
+                          <bool>false</bool>
+                         </property>
+                         <property name="default">
+                          <bool>false</bool>
+                         </property>
+                         <property name="flat">
+                          <bool>true</bool>
+                         </property>
+                        </widget>
                        </item>
                        <item>
                         <widget class="QPushButton" name="pb_symbology">
@@ -754,7 +791,7 @@
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/symbology.png</normaloff>:/icons/icons/symbology.png</iconset>
+                           <normaloff>:/icons/icons/apply_symbology.svg</normaloff>:/icons/icons/apply_symbology.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -793,6 +830,9 @@
                <layout class="QGridLayout" name="gridLayout_8">
                 <item row="0" column="2">
                  <spacer name="horizontalSpacer_6">
+                  <property name="toolTip">
+                   <string>Plot fit residual</string>
+                  </property>
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
                   </property>
@@ -806,6 +846,9 @@
                 </item>
                 <item row="2" column="1">
                  <spacer name="verticalSpacer_2">
+                  <property name="toolTip">
+                   <string>Plot fit residual</string>
+                  </property>
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
                   </property>
@@ -839,6 +882,9 @@
                       <height>0</height>
                      </size>
                     </property>
+                    <property name="toolTip">
+                     <string>Plot fit residual</string>
+                    </property>
                     <property name="autoFillBackground">
                      <bool>false</bool>
                     </property>
@@ -846,7 +892,7 @@
                      <string>Select point</string>
                     </property>
                     <property name="flat">
-                     <bool>false</bool>
+                     <bool>true</bool>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_8">
                      <property name="spacing">
@@ -890,14 +936,24 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Choose time series point</string>
+                          <string>Select point</string>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>false</bool>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
                          </property>
                          <property name="text">
                           <string/>
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/select_point.png</normaloff>:/icons/icons/select_point.png</iconset>
+                           <normaloff>:/icons/icons/select_point.svg</normaloff>:/icons/icons/select_point.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -906,6 +962,9 @@
                           </size>
                          </property>
                          <property name="checkable">
+                          <bool>true</bool>
+                         </property>
+                         <property name="flat">
                           <bool>true</bool>
                          </property>
                         </widget>
@@ -934,14 +993,23 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Set reference point</string>
+                          <string>Select reference point</string>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>false</bool>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+</string>
                          </property>
                          <property name="text">
                           <string/>
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/reference_point.png</normaloff>:/icons/icons/reference_point.png</iconset>
+                           <normaloff>:/icons/icons/select_select_reference.svg</normaloff>:/icons/icons/select_select_reference.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -950,6 +1018,9 @@
                           </size>
                          </property>
                          <property name="checkable">
+                          <bool>true</bool>
+                         </property>
+                         <property name="flat">
                           <bool>true</bool>
                          </property>
                         </widget>
@@ -1044,6 +1115,9 @@
                        </item>
                        <item>
                         <spacer name="horizontalSpacer">
+                         <property name="toolTip">
+                          <string>Plot fit residual</string>
+                         </property>
                          <property name="orientation">
                           <enum>Qt::Horizontal</enum>
                          </property>
@@ -1055,55 +1129,6 @@
                          </property>
                         </spacer>
                        </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_4">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>0</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>150</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="title">
-                     <string>Reeset reference</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="verticalLayout_9">
-                     <property name="spacing">
-                      <number>0</number>
-                     </property>
-                     <property name="leftMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="topMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="rightMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="bottomMargin">
-                      <number>0</number>
-                     </property>
-                     <item>
-                      <layout class="QHBoxLayout" name="horizontalLayout_13">
-                       <property name="spacing">
-                        <number>5</number>
-                       </property>
                        <item>
                         <widget class="QPushButton" name="pb_reset_reference">
                          <property name="sizePolicy">
@@ -1132,7 +1157,7 @@
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/reset_reference_point.png</normaloff>:/icons/icons/reset_reference_point.png</iconset>
+                           <normaloff>:/icons/icons/select_reset_reference.svg</normaloff>:/icons/icons/select_reset_reference.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -1141,19 +1166,6 @@
                           </size>
                          </property>
                         </widget>
-                       </item>
-                       <item>
-                        <spacer name="horizontalSpacer_3">
-                         <property name="orientation">
-                          <enum>Qt::Horizontal</enum>
-                         </property>
-                         <property name="sizeHint" stdset="0">
-                          <size>
-                           <width>40</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                        </spacer>
                        </item>
                       </layout>
                      </item>
@@ -1180,8 +1192,14 @@
                       <height>16777215</height>
                      </size>
                     </property>
+                    <property name="toolTip">
+                     <string>Plot fit residual</string>
+                    </property>
                     <property name="title">
                      <string>Replica</string>
+                    </property>
+                    <property name="flat">
+                     <bool>true</bool>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_11">
                      <property name="spacing">
@@ -1222,17 +1240,26 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Plot replicas</string>
+                          <string>Plot replica</string>
                          </property>
                          <property name="toolTipDuration">
                           <number>-1</number>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>false</bool>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+</string>
                          </property>
                          <property name="text">
                           <string/>
                          </property>
                          <property name="icon">
                           <iconset>
-                           <normaloff>:/icons/icons/plot_ts_duplicate_gray.png</normaloff>:/icons/icons/plot_ts_duplicate_gray.png</iconset>
+                           <normaloff>:/icons/icons/replica.svg</normaloff>:/icons/icons/replica.svg</iconset>
                          </property>
                          <property name="iconSize">
                           <size>
@@ -1241,6 +1268,9 @@
                           </size>
                          </property>
                          <property name="checkable">
+                          <bool>true</bool>
+                         </property>
+                         <property name="flat">
                           <bool>true</bool>
                          </property>
                         </widget>
@@ -1266,7 +1296,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Replica shift</string>
+                          <string>Replica distance (wavelength/2)</string>
                          </property>
                          <property name="minimum">
                           <number>1</number>
@@ -1281,6 +1311,9 @@
                        </item>
                        <item>
                         <widget class="QLabel" name="label">
+                         <property name="toolTip">
+                          <string/>
+                         </property>
                          <property name="text">
                           <string>mm</string>
                          </property>
@@ -1288,6 +1321,9 @@
                        </item>
                        <item>
                         <spacer name="horizontalSpacer_4">
+                         <property name="toolTip">
+                          <string>Plot fit residual</string>
+                         </property>
                          <property name="orientation">
                           <enum>Qt::Horizontal</enum>
                          </property>
@@ -1318,8 +1354,14 @@
                       <height>16777215</height>
                      </size>
                     </property>
+                    <property name="toolTip">
+                     <string>Plot fit residual</string>
+                    </property>
                     <property name="title">
                      <string>Fit model</string>
+                    </property>
+                    <property name="flat">
+                     <bool>true</bool>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_12">
                      <property name="spacing">
@@ -1365,10 +1407,19 @@
                             <bool>false</bool>
                            </property>
                            <property name="toolTip">
-                            <string>No fit</string>
+                            <string>No fit plot</string>
                            </property>
                            <property name="toolTipDuration">
                             <number>-1</number>
+                           </property>
+                           <property name="autoFillBackground">
+                            <bool>false</bool>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+</string>
                            </property>
                            <property name="text">
                             <string/>
@@ -1387,6 +1438,9 @@
                             <bool>true</bool>
                            </property>
                            <property name="checked">
+                            <bool>true</bool>
+                           </property>
+                           <property name="flat">
                             <bool>true</bool>
                            </property>
                            <attribute name="buttonGroup">
@@ -1412,18 +1466,27 @@
                             <bool>false</bool>
                            </property>
                            <property name="toolTip">
-                            <string>Fit 1st order polynomial</string>
+                            <string>first order fit</string>
                            </property>
                            <property name="toolTipDuration">
                             <number>-1</number>
+                           </property>
+                           <property name="autoFillBackground">
+                            <bool>false</bool>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
                            </property>
                            <property name="text">
                             <string/>
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_poly1_gray.png</normaloff>
-                             <normalon>:/icons/icons/plot_fit_poly1_blue.png</normalon>:/icons/icons/plot_fit_poly1_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_poly1.svg</normaloff>:/icons/icons/fit_poly1.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1436,6 +1499,9 @@
                            </property>
                            <property name="checked">
                             <bool>false</bool>
+                           </property>
+                           <property name="flat">
+                            <bool>true</bool>
                            </property>
                            <attribute name="buttonGroup">
                             <string notr="true">gb_ts_fit</string>
@@ -1457,18 +1523,27 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>Fit 2nd order polynomial</string>
+                            <string>second order fit</string>
                            </property>
                            <property name="toolTipDuration">
                             <number>-1</number>
+                           </property>
+                           <property name="autoFillBackground">
+                            <bool>false</bool>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
                            </property>
                            <property name="text">
                             <string/>
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_poly2_gray.png</normaloff>
-                             <normalon>:/icons/icons/plot_fit_poly2_blue.png</normalon>:/icons/icons/plot_fit_poly2_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_poly2.svg</normaloff>:/icons/icons/fit_poly2.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1482,31 +1557,14 @@
                            <property name="checked">
                             <bool>false</bool>
                            </property>
+                           <property name="flat">
+                            <bool>true</bool>
+                           </property>
                            <attribute name="buttonGroup">
                             <string notr="true">gb_ts_fit</string>
                            </attribute>
                           </widget>
                          </item>
-                         <item>
-                          <spacer name="horizontalSpacer_2">
-                           <property name="orientation">
-                            <enum>Qt::Horizontal</enum>
-                           </property>
-                           <property name="sizeHint" stdset="0">
-                            <size>
-                             <width>40</width>
-                             <height>20</height>
-                            </size>
-                           </property>
-                          </spacer>
-                         </item>
-                        </layout>
-                       </item>
-                       <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_15">
-                         <property name="spacing">
-                          <number>5</number>
-                         </property>
                          <item>
                           <widget class="QPushButton" name="pb_ts_fit_poly3">
                            <property name="enabled">
@@ -1525,18 +1583,27 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>Fit 3rd order polynomial</string>
+                            <string>third order fit</string>
                            </property>
                            <property name="toolTipDuration">
                             <number>-1</number>
+                           </property>
+                           <property name="autoFillBackground">
+                            <bool>false</bool>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
                            </property>
                            <property name="text">
                             <string/>
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_poly3_gray.png</normaloff>
-                             <normalon>:/icons/icons/plot_fit_poly3_blue.png</normalon>:/icons/icons/plot_fit_poly3_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_poly3.svg</normaloff>:/icons/icons/fit_poly3.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1549,6 +1616,9 @@
                            </property>
                            <property name="checked">
                             <bool>false</bool>
+                           </property>
+                           <property name="flat">
+                            <bool>true</bool>
                            </property>
                            <attribute name="buttonGroup">
                             <string notr="true">gb_ts_fit</string>
@@ -1573,18 +1643,27 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>Fit exponential</string>
+                            <string>exponential fit</string>
                            </property>
                            <property name="toolTipDuration">
                             <number>-1</number>
+                           </property>
+                           <property name="autoFillBackground">
+                            <bool>false</bool>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
                            </property>
                            <property name="text">
                             <string/>
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_exp_gray.png</normaloff>
-                             <disabledon>:/icons/icons/plot_fit_exp_blue.png</disabledon>:/icons/icons/plot_fit_exp_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit_exponential.svg</normaloff>:/icons/icons/fit_exponential.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1595,11 +1674,37 @@
                            <property name="checkable">
                             <bool>true</bool>
                            </property>
+                           <property name="flat">
+                            <bool>true</bool>
+                           </property>
                            <attribute name="buttonGroup">
                             <string notr="true">gb_ts_fit</string>
                            </attribute>
                           </widget>
                          </item>
+                         <item>
+                          <spacer name="horizontalSpacer_2">
+                           <property name="toolTip">
+                            <string>Plot fit residual</string>
+                           </property>
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>40</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
+                       </item>
+                       <item>
+                        <layout class="QHBoxLayout" name="horizontalLayout_15">
+                         <property name="spacing">
+                          <number>5</number>
+                         </property>
                          <item>
                           <widget class="QPushButton" name="pb_ts_fit_seasonal">
                            <property name="enabled">
@@ -1618,17 +1723,27 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>Fit seasonal</string>
+                            <string>add seasonal component to fit</string>
                            </property>
                            <property name="toolTipDuration">
                             <number>-1</number>
+                           </property>
+                           <property name="autoFillBackground">
+                            <bool>false</bool>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
                            </property>
                            <property name="text">
                             <string/>
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/plot_fit_seasonal_gray.png</normaloff>:/icons/icons/plot_fit_seasonal_gray.png</iconset>
+                             <normaloff>:/icons/icons/fit__add_seasonal.svg</normaloff>:/icons/icons/fit__add_seasonal.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1639,10 +1754,73 @@
                            <property name="checkable">
                             <bool>true</bool>
                            </property>
+                           <property name="flat">
+                            <bool>true</bool>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QPushButton" name="pb_plot_residuals">
+                           <property name="enabled">
+                            <bool>true</bool>
+                           </property>
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>30</width>
+                             <height>30</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>plot fit residuals</string>
+                           </property>
+                           <property name="toolTipDuration">
+                            <number>-1</number>
+                           </property>
+                           <property name="autoFillBackground">
+                            <bool>false</bool>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                           <property name="icon">
+                            <iconset>
+                             <normaloff>:/icons/icons/residual.svg</normaloff>:/icons/icons/residual.svg</iconset>
+                           </property>
+                           <property name="iconSize">
+                            <size>
+                             <width>20</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="checkable">
+                            <bool>true</bool>
+                           </property>
+                           <property name="checked">
+                            <bool>false</bool>
+                           </property>
+                           <property name="flat">
+                            <bool>true</bool>
+                           </property>
                           </widget>
                          </item>
                          <item>
                           <spacer name="horizontalSpacer_5">
+                           <property name="toolTip">
+                            <string>Plot fit residual</string>
+                           </property>
                            <property name="orientation">
                             <enum>Qt::Horizontal</enum>
                            </property>
@@ -1676,10 +1854,13 @@
                      </size>
                     </property>
                     <property name="toolTip">
-                     <string>no fit</string>
+                     <string>Plot fit residual</string>
                     </property>
                     <property name="title">
-                     <string>Residual</string>
+                     <string>Other options</string>
+                    </property>
+                    <property name="flat">
+                     <bool>true</bool>
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_6">
                      <property name="spacing">
@@ -1698,19 +1879,81 @@
                       <number>0</number>
                      </property>
                      <item>
-                      <widget class="QCheckBox" name="cb_plot_residuals">
-                       <property name="font">
-                        <font>
-                         <pointsize>13</pointsize>
-                        </font>
-                       </property>
-                       <property name="toolTip">
-                        <string>Plos fit residual</string>
-                       </property>
-                       <property name="text">
-                        <string>Plot Residuals</string>
-                       </property>
-                      </widget>
+                      <layout class="QHBoxLayout" name="horizontalLayout_17">
+                       <item>
+                        <widget class="QPushButton" name="cb_hold_on_plot">
+                         <property name="enabled">
+                          <bool>true</bool>
+                         </property>
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>30</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Hold on plot</string>
+                         </property>
+                         <property name="toolTipDuration">
+                          <number>-1</number>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>false</bool>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                         <property name="icon">
+                          <iconset>
+                           <normaloff>:/icons/icons/plot_hold_on.svg</normaloff>:/icons/icons/plot_hold_on.svg</iconset>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>true</bool>
+                         </property>
+                         <property name="checked">
+                          <bool>false</bool>
+                         </property>
+                         <property name="flat">
+                          <bool>true</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_11">
+                         <property name="toolTip">
+                          <string>Plot fit residual</string>
+                         </property>
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>40</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
                      </item>
                     </layout>
                    </widget>
@@ -1730,13 +1973,13 @@
                      </size>
                     </property>
                     <property name="toolTip">
-                     <string>Y-axis settings</string>
+                     <string>Plot fit residual</string>
                     </property>
                     <property name="title">
-                     <string>Y-axis setting</string>
+                     <string>Y-axis</string>
                     </property>
                     <property name="flat">
-                     <bool>false</bool>
+                     <bool>true</bool>
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_12">
                      <property name="spacing">
@@ -1777,10 +2020,20 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Y axis from data</string>
+                          <string>Y-axis from data</string>
                          </property>
                          <property name="toolTipDuration">
                           <number>-1</number>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>false</bool>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -1799,6 +2052,9 @@
                           <bool>true</bool>
                          </property>
                          <property name="checked">
+                          <bool>true</bool>
+                         </property>
+                         <property name="flat">
                           <bool>true</bool>
                          </property>
                          <attribute name="buttonGroup">
@@ -1824,10 +2080,20 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Symmetric Y axis</string>
+                          <string>Symmetric Y-axis</string>
                          </property>
                          <property name="toolTipDuration">
                           <number>-1</number>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>false</bool>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -1847,6 +2113,9 @@
                          </property>
                          <property name="checked">
                           <bool>false</bool>
+                         </property>
+                         <property name="flat">
+                          <bool>true</bool>
                          </property>
                          <attribute name="buttonGroup">
                           <string notr="true">gb_y_axis</string>
@@ -1871,10 +2140,20 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Adaptice Y axis</string>
+                          <string>Adaptive Y-axis</string>
                          </property>
                          <property name="toolTipDuration">
                           <number>-1</number>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>false</bool>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -1895,6 +2174,9 @@
                          <property name="checked">
                           <bool>false</bool>
                          </property>
+                         <property name="flat">
+                          <bool>true</bool>
+                         </property>
                          <attribute name="buttonGroup">
                           <string notr="true">gb_y_axis</string>
                          </attribute>
@@ -1902,6 +2184,9 @@
                        </item>
                        <item>
                         <spacer name="horizontalSpacer_10">
+                         <property name="toolTip">
+                          <string>Plot fit residual</string>
+                         </property>
                          <property name="orientation">
                           <enum>Qt::Horizontal</enum>
                          </property>
@@ -1933,10 +2218,13 @@
                      </size>
                     </property>
                     <property name="toolTip">
-                     <string>no fit</string>
+                     <string>Plot fit residual</string>
                     </property>
                     <property name="title">
                      <string>Settings and Export</string>
+                    </property>
+                    <property name="flat">
+                     <bool>true</bool>
                     </property>
                     <layout class="QGridLayout" name="gridLayout_7">
                      <property name="leftMargin">
@@ -1965,12 +2253,18 @@
                          <height>30</height>
                         </size>
                        </property>
+                       <property name="toolTip">
+                        <string>Settings</string>
+                       </property>
+                       <property name="autoFillBackground">
+                        <bool>false</bool>
+                       </property>
                        <property name="text">
                         <string/>
                        </property>
                        <property name="icon">
                         <iconset>
-                         <normaloff>:/icons/icons/setting_gray.png</normaloff>:/icons/icons/setting_gray.png</iconset>
+                         <normaloff>:/icons/icons/setting.svg</normaloff>:/icons/icons/setting.svg</iconset>
                        </property>
                        <property name="iconSize">
                         <size>
@@ -1978,10 +2272,22 @@
                          <height>20</height>
                         </size>
                        </property>
+                       <property name="autoDefault">
+                        <bool>false</bool>
+                       </property>
+                       <property name="default">
+                        <bool>false</bool>
+                       </property>
+                       <property name="flat">
+                        <bool>false</bool>
+                       </property>
                       </widget>
                      </item>
                      <item row="0" column="3">
                       <spacer name="horizontalSpacer_7">
+                       <property name="toolTip">
+                        <string>Plot fit residual</string>
+                       </property>
                        <property name="orientation">
                         <enum>Qt::Horizontal</enum>
                        </property>
@@ -2008,7 +2314,7 @@
                         </size>
                        </property>
                        <property name="toolTip">
-                        <string>Export as image</string>
+                        <string>Export plot</string>
                        </property>
                        <property name="toolTipDuration">
                         <number>-1</number>
@@ -2018,7 +2324,7 @@
                        </property>
                        <property name="icon">
                         <iconset>
-                         <normaloff>:/icons/icons/screenshot.png</normaloff>:/icons/icons/screenshot.png</iconset>
+                         <normaloff>:/icons/icons/screenshot.svg</normaloff>:/icons/icons/screenshot.svg</iconset>
                        </property>
                        <property name="iconSize">
                         <size>
@@ -2041,6 +2347,9 @@
                 </item>
                 <item row="1" column="1">
                  <spacer name="verticalSpacer_4">
+                  <property name="toolTip">
+                   <string>Plot fit residual</string>
+                  </property>
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
                   </property>
@@ -2062,11 +2371,11 @@
                 <item>
                  <widget class="QPlainTextEdit" name="te_info">
                   <property name="enabled">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                   <property name="maximumSize">
                    <size>
-                    <width>300</width>
+                    <width>200</width>
                     <height>16777215</height>
                    </size>
                   </property>
@@ -2088,6 +2397,9 @@
             </item>
             <item>
              <spacer name="verticalSpacer">
+              <property name="toolTip">
+               <string>Plot fit residual</string>
+              </property>
               <property name="orientation">
                <enum>Qt::Vertical</enum>
               </property>
@@ -2115,6 +2427,9 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="toolTip">
+        <string>Plot fit residual</string>
+       </property>
        <layout class="QVBoxLayout" name="verticalLayout_7">
         <property name="spacing">
          <number>-1</number>
@@ -2126,6 +2441,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Plot fit residual</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::StyledPanel</enum>

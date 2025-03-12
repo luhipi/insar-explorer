@@ -10,7 +10,7 @@ import numpy as np
 
 from . import plot_timeseries as pts
 from .layer_utils import vector_layer as vector_layer_utils
-from .layer_utils import gmtsar_layer as gmtsar_layer_utils
+from .layer_utils import grd_layer as grd_layer_utils
 from .layer_utils import raster_layer as raster_layer_utils
 
 
@@ -75,14 +75,14 @@ class MapClickHandler:
         closest_feature = None
         if closest_feature_id:
             closest_feature = layer.getFeature(closest_feature_id)
-            attributes_text = "\n".join(
-                [f"{field.name()}: {value}" for field, value in zip(layer.fields(), closest_feature.attributes())]
-            )
-            point = closest_feature.geometry().asPoint()
-            if point:
-                x, y = point.x(), point.y()
-                coordinates_text = f"Coordinates: ({x:.5f}, {y:.5f})\n"
-            self.ui.te_info.setPlainText(f"Selected feature:\n{coordinates_text+attributes_text}")
+            # attributes_text = "\n".join(
+            #     [f"{field.name()}: {value}" for field, value in zip(layer.fields(), closest_feature.attributes())]
+            # )
+            # point = closest_feature.geometry().asPoint()
+            # if point:
+            #     x, y = point.x(), point.y()
+            #     coordinates_text = f"Coordinates: ({x:.5f}, {y:.5f})\n"
+            # self.ui.te_info.setPlainText(f"Selected feature:\n{coordinates_text+attributes_text}")
             if not ref:
                 self.highlightSelectedFeatures(closest_feature.geometry())
             else:
@@ -202,7 +202,7 @@ class TSClickHandler(MapClickHandler):
         if not layer:
             layer = self.iface.activeLayer()
         status_vector, message = vector_layer_utils.checkVectorLayer(layer)
-        status_raster, message = gmtsar_layer_utils.checkGmtsarLayer(layer)
+        status_raster, message = grd_layer_utils.checkGrdLayer(layer)
         if status_vector:
             self.choosePointClickedVector(point=point, layer=layer, ref=ref)
         elif status_raster:
@@ -230,7 +230,7 @@ class TSClickHandler(MapClickHandler):
             self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
 
     def choosePointClickedRaster(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
-        status, message = gmtsar_layer_utils.checkGmtsarLayerTimeseries(layer)
+        status, message = grd_layer_utils.checkGrdTimeseries(layer)
         if status is False:
             self.ui.lb_msg_bar.setText(message)
             return
@@ -312,7 +312,7 @@ class PolygonClickHandler(MapClickHandler):
             layer = self.iface.activeLayer()
 
         status_vector, message = vector_layer_utils.checkVectorLayer(layer)
-        status_raster, message = gmtsar_layer_utils.checkGmtsarLayer(layer)
+        status_raster, message = grd_layer_utils.checkGrdLayer(layer)
 
         if status_vector:
             self.choosePolygonDrawnVector(layer=layer, polygon=polygon, ref=ref)

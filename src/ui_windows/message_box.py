@@ -7,7 +7,8 @@ class MessageBox:
         self.title = title
         self.wgt = QMessageBox()
         self.wgt.setWindowTitle(self.title)
-        self.wgt.setText(self.message)
+        # self.wgt.setText(self.message)
+        self.wgt.setText(f"<html><body>{self.message}</body></html>")
         self.addButtons()
         self.setStyle()
         self.wgt.exec_()

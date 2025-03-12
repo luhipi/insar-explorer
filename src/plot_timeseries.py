@@ -33,6 +33,7 @@ class PlotTs():
         self.ax_residuals = None
         self.plot_residuals_flag = False
         self.plot_residuals_list = []
+        self.hold_on_flag = False
         self.parms = {}
         self.updateSettings()
 
@@ -105,7 +106,8 @@ class PlotTs():
         self.parms['residual plot'] = parms
 
     def clear(self):
-        self.ui.figure.clear()
+        if not self.hold_on_flag:
+            self.ui.figure.clear()
         self.ui.canvas.draw()
 
     def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
@@ -140,7 +142,8 @@ class PlotTs():
         return error_values
 
     def initializeAxes(self):
-        self.ui.figure.clear()
+        if not self.hold_on_flag:
+            self.ui.figure.clear()
         self.updateSettings()
         if self.plot_residuals_flag:
             self.ax = self.ui.figure.add_subplot(211)
@@ -156,6 +159,11 @@ class PlotTs():
 
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
         if self.dates is None:
+            return
+
+        # check if there is any finite value in the plot_values
+        plot_values = np.array(self.plot_values, dtype=np.float64)
+        if np.sum(np.isfinite(plot_values)) == 0:
             return
 
         parms = self.parms['time series plot']
@@ -221,6 +229,8 @@ class PlotTs():
         self.ui.canvas.draw_idle()
         self.fit_plot_list = []
         if self.plot_values is None:
+            return
+        if self.dates is None:
             return
         if self.fit_models is []:
             return

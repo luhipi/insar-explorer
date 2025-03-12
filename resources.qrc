@@ -6,38 +6,32 @@
     <file>icons/colormaps/turbo.png</file>
     <file>icons/colormaps/roma.png</file>
     <file>icons/colormaps/vik.png</file>
+    <file>icons/colormaps/gray.png</file>
   </qresource>
   <qresource prefix="icons">
-    <file>icons/setting_gray.png</file>
     <file>icons/polygon_selection.png</file>
     <file>icons/polygon_reference_selection.png</file>
     <file>icons/x.svg</file>
+    <file>icons/residual.svg</file>
+    <file>icons/setting.svg</file>
     <file>icons/y_axis_symmetric.svg</file>
     <file>icons/y_axis_from_data.svg</file>
     <file>icons/y_axis_adaptive.svg</file>
-    <file>icons/synchronise_gray.png</file>
-    <file>icons/screenshot.png</file>
-    <file>icons/plot_fit_exp_amber.png</file>
-    <file>icons/symbology.png</file>
-    <file>icons/select_point.png</file>
-    <file>icons/reset_reference_point.png</file>
-    <file>icons/reference_point.png</file>
-    <file>icons/plot_ts_duplicate_amber.png</file>
-    <file>icons/plot_ts_duplicate_gray.png</file>
-    <file>icons/plot_ts_duplicate_blue.png</file>
-    <file>icons/plot_fit_exp_blue.png</file>
-    <file>icons/plot_fit_exp_gray.png</file>
-    <file>icons/plot_fit_poly1_amber.png</file>
-    <file>icons/plot_fit_poly1_blue.png</file>
-    <file>icons/plot_fit_poly1_gray.png</file>
-    <file>icons/plot_fit_poly2_amber.png</file>
-    <file>icons/plot_fit_poly2_blue.png</file>
-    <file>icons/plot_fit_poly2_gray.png</file>
-    <file>icons/plot_fit_poly3_amber.png</file>
-    <file>icons/plot_fit_poly3_blue.png</file>
-    <file>icons/plot_fit_poly3_gray.png</file>
-    <file>icons/plot_fit_seasonal_amber.png</file>
-    <file>icons/plot_fit_seasonal_blue.png</file>
-    <file>icons/plot_fit_seasonal_gray.png</file>
+    <file>icons/plot_hold_on.svg</file>
+    <file>icons/screenshot.svg</file>
+    <file>icons/apply_symbology_on-the-fly.svg</file>
+    <file>icons/select_point.svg</file>
+    <file>icons/select_reset_reference.svg</file>
+    <file>icons/apply_symbology.svg</file>
+    <file>icons/select_select_reference.svg</file>
+    <file>icons/synched.svg</file>
+    <file>icons/reverse.svg</file>
+    <file>icons/fit_poly3.svg</file>
+    <file>icons/fit_poly2.svg</file>
+    <file>icons/fit_poly1.svg</file>
+    <file>icons/fit_exponential.svg</file>
+    <file>icons/fit__add_seasonal.svg</file>
+    <file>icons/replica.svg</file>
+    <file>icons/data_range.svg</file>
   </qresource>
 </RCC>

@@ -1,9 +1,27 @@
 ### History
 
-v0.9.0b
+next version
 - Add support for polygon selection
-- handle NULL values in time series data
+
+v1.0.0
+- Sync colorbar icon with reverse button
+- Disable log
+- Update documentation for SARscape and MintPy support.
+- Add a menubar for selecting data range
+- Support MintPy time series data created via save_explorer command
+- Removed default ylabe units from time series plot to avoid confusion for data from different sources
+- Enhance display of icons to differentiate between checkable and non-checkable buttons
+- Add about dialog
+- New icon designs for the plugin
+- New icon for symbology and add icon for live symbology 
+- Add gray to the list of colormaps
+- Handle NULL values in time series data
 - Add different options to control y-axis limits
+- Make field selector editable to improve user experience
+- Ignore non-numerical fields in the field selector
+- A hold-on button to keep the plot after selecting a new point
+- Keep the time series plot when layer changed
+- New icon for residual plot button
 
 v0.8.0
 - Allow D_YYYYMMDD time series date format

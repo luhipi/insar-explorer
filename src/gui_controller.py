@@ -1,13 +1,15 @@
 import os
 
 from qgis.gui import QgsMapToolEmitPoint
-from PyQt5.QtWidgets import QFileDialog
-from PyQt5.QtCore import QObject, QTimer
+from PyQt5.QtWidgets import QFileDialog, QMenu, QComboBox
+from PyQt5.QtCore import QObject, QTimer, QVariant
+from PyQt5.QtGui import QIcon, QTransform
 
 from . import map_click_handler as cph
 from . import setup_frames
 from .map_setting import InsarMap
 from .layer_utils import vector_layer as vector_layer_utils
+from .about import about as insar_explorer_about
 from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 
@@ -31,6 +33,9 @@ class GuiController(QObject):
         # make point selection active by default
         self.ui.pb_choose_point.setChecked(True)
         self.activatePointSelection(True)
+
+        # add data range menu
+        self.setDataRangeMenu()
 
         self.iface.currentLayerChanged.connect(self.onLayerChanged)
 
@@ -56,17 +61,24 @@ class GuiController(QObject):
         if not layer:
             return
         status, message = vector_layer_utils.checkVectorLayer(layer)
+        self.ui.cb_select_field.clear()
         if status is False:
-            self.ui.cb_select_field.clear()
             self.ui.cb_select_field.setEnabled(False)
+            self.ui.sb_symbol_size.setEnabled(False)
             return
         else:
             self.ui.cb_select_field.setEnabled(True)
+            self.ui.sb_symbol_size.setEnabled(True)
 
-        field_list = vector_layer_utils.getVectorFields(layer)
+        field_list, field_types = vector_layer_utils.getVectorFields(layer)
         velocity_field, message = vector_layer_utils.getVectorVelocityFieldName(layer)
-        self.ui.cb_select_field.clear()
-        self.ui.cb_select_field.addItems(field_list)
+
+        for field, field_type in zip(field_list, field_types):
+            self.ui.cb_select_field.addItem(field)
+            if field_type not in [QVariant.Double, QVariant.Int, QVariant.LongLong]:
+                index = self.ui.cb_select_field.count() - 1
+                self.ui.cb_select_field.model().item(index).setEnabled(False)
+
         if velocity_field:
             self.ui.cb_select_field.setCurrentText(velocity_field)
 
@@ -132,6 +144,17 @@ class GuiController(QObject):
         self.connectTimeseriesSignals()
         self.connectMapSignals()
 
+        self.connectAboutSignals()
+
+    def connectAboutSignals(self):
+        self.ui.label_about.setOpenExternalLinks(False)
+        self.ui.label_about.linkActivated.connect(self.aboutLabelClicked)
+
+    def aboutLabelClicked(self):
+        from .ui_windows.message_box import MessageBox
+        text = insar_explorer_about
+        MessageBox(text)
+
     def connectTimeseriesSignals(self):
         self.ui.pb_choose_point.clicked.connect(self.activatePointSelection)
         self.ui.pb_set_reference.clicked.connect(self.activateReferencePointSelection)
@@ -140,10 +163,11 @@ class GuiController(QObject):
         self.ui.pb_set_reference_polygon.clicked.connect(self.activateReferencePolygonSelection)
         # TS fit handler
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
-        self.ui.pb_ts_fit_seasonal.clicked.connect(self.timeseriesPlotFit)
-        self.ui.cb_plot_residuals.toggled.connect(self.timeseriesPlotResiduals)
-        # TS settings
+        self.ui.pb_ts_fit_seasonal.clicked.connect(self.seasonalFitClicked)
+        self.ui.pb_plot_residuals.toggled.connect(self.residualPlotClicked)
+        # Plot setting
         self.ui.gb_y_axis.buttonClicked.connect(self.plotYAxis)
+        self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
         # TS save
         self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
         # Replica
@@ -161,17 +185,21 @@ class GuiController(QObject):
         self.ui.sb_symbol_lower_range.valueChanged.connect(self.setSymbologyLowerRange)
         self.ui.sb_symbol_upper_range.valueChanged.connect(self.setSymbologyUpperRange)
         self.ui.cb_symbol_range_sync.clicked.connect(self.setSymbologyLowerRange)
-        # get range from data
-        self.ui.pb_range_from_data.clicked.connect(self.setSymbologyRangeFromData)
-        self.ui.pb_range_from_data_1std.clicked.connect(self.setSymbologyRangeFromData)
-        self.ui.pb_range_from_data_3std.clicked.connect(self.setSymbologyRangeFromData)
-        #
         self.ui.sb_symbol_classes.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_size.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_opacity.valueChanged.connect(self.applyLiveSymbology)
-        self.ui.cb_symbology_live.toggled.connect(self.applyLiveSymbology)
+        self.ui.pb_symbology_live.toggled.connect(self.applyLiveSymbology)
         self.ui.cmb_colormap.currentIndexChanged.connect(self.applyLiveSymbology)
-        self.ui.cb_colormap_reverse.toggled.connect(self.applyLiveSymbology)
+        self.ui.pb_colormap_reverse.toggled.connect(self.colormapReverseClicked)
+
+    def setDataRangeMenu(self):
+        """creat a menu for setting data range"""
+        menu = QMenu(self.ui)
+        menu.addAction("Range from data", self.setSymbologyRangeFromData)
+        menu.addAction("1xStd", self.setSymbologyRangeFromData)
+        menu.addAction("2xStd", self.setSymbologyRangeFromData)
+        menu.addAction("3xStd", self.setSymbologyRangeFromData)
+        self.ui.pb_range_from_data.setMenu(menu)
 
     def settingsWidgetPopup(self):
         json_file = "config/config.json"
@@ -204,20 +232,26 @@ class GuiController(QObject):
 
     def setSymbologyRangeFromData(self):
         button = self.sender()
-        if button == self.ui.pb_range_from_data:
+        if button.text() == "Range from data":
             message = self.insar_map.setSymbologyRangeFromData()
-        elif button == self.ui.pb_range_from_data_1std:
+        elif button.text() == "1xStd":
             message = self.insar_map.setSymbologyRangeFromData(n_std=1)
-        elif button == self.ui.pb_range_from_data_3std:
+        elif button.text() == "2xStd":
+            message = self.insar_map.setSymbologyRangeFromData(n_std=2)
+        elif button.text() == "3xStd":
             message = self.insar_map.setSymbologyRangeFromData(n_std=3)
 
         self.ui.lb_msg_bar.setText(message)
-        self.ui.cb_symbol_range_sync.setChecked(False)
-        self.ui.sb_symbol_lower_range.setValue(self.insar_map.min_value)
-        self.ui.sb_symbol_upper_range.setValue(self.insar_map.max_value)
+        min_value = self.insar_map.min_value
+        max_value = self.insar_map.max_value
+        if self.ui.cb_symbol_range_sync.isChecked():
+            max_value = max(abs(min_value), abs(max_value))
+            min_value = -max_value
+        self.ui.sb_symbol_lower_range.setValue(min_value)
+        self.ui.sb_symbol_upper_range.setValue(max_value)
 
     def applyLiveSymbology(self):
-        if self.ui.cb_symbology_live.isChecked():
+        if self.ui.pb_symbology_live.isChecked():
             QTimer.singleShot(0, self.applySymbology)
 
     def applySymbology(self):
@@ -228,11 +262,33 @@ class GuiController(QObject):
         self.insar_map.alpha = float(self.ui.sb_symbol_opacity.value()) / 100
         self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
         self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
-        self.insar_map.color_ramp_reverse_flag = self.ui.cb_colormap_reverse.isChecked()
         message = self.insar_map.setSymbology()
         self.ui.lb_msg_bar.setText(message)
 
+    def colormapReverseClicked(self):
+        self.flipComboBoxIcons(self.ui.cmb_colormap)
+        self.insar_map.color_ramp_reverse_flag = self.ui.pb_colormap_reverse.isChecked()
+        self.applyLiveSymbology()
+
+    def flipComboBoxIcons(self, combo_box: QComboBox):
+        for index in range(combo_box.count()):
+            icon = combo_box.itemIcon(index)
+            if not icon.isNull():
+                pixmap = icon.pixmap(icon.availableSizes()[0])
+                transform = QTransform().scale(-1, 1)  # fip horizontally
+                flipped_pixmap = pixmap.transformed(transform)
+                combo_box.setItemIcon(index, QIcon(flipped_pixmap))
+
+    def seasonalFitClicked(self, status):
+        if status and self.ui.pb_ts_nofit.isChecked():
+            self.ui.pb_ts_fit_poly1.setChecked(True)
+        self.timeseriesPlotFit()
+
     def timeseriesPlotFit(self):
+        if self.ui.pb_ts_nofit.isChecked():
+            self.ui.pb_ts_fit_seasonal.setChecked(False)
+            self.ui.pb_plot_residuals.setChecked(False)
+
         selected_buttons = [button for button in self.ui.gb_ts_fit.buttons() if
                             button.isChecked()]
         check_box_lookup = {self.ui.pb_ts_nofit: [],
@@ -252,10 +308,20 @@ class GuiController(QObject):
 
         self.choose_point_click_handler.plot_ts.fitModel()
 
+    def residualPlotClicked(self):
+        # disable hold on when residuals are plotted
+        self.ui.cb_hold_on_plot.setChecked(False)
+        if self.ui.pb_plot_residuals.isChecked() and self.ui.pb_ts_nofit.isChecked():
+            self.ui.pb_ts_fit_poly1.setChecked(True)
+        self.timeseriesPlotFit()
+
     def timeseriesPlotResiduals(self):
-        self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.cb_plot_residuals.isChecked()
+        self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.pb_plot_residuals.isChecked()
                                                                        and not self.ui.pb_ts_nofit.isChecked())
         self.choose_point_click_handler.plot_ts.plotTs()
+
+    def holdOnPlot(self):
+        self.choose_point_click_handler.plot_ts.hold_on_flag = self.ui.cb_hold_on_plot.isChecked()
 
     def plotYAxis(self):
         if self.ui.cb_y_from_data.isChecked():
@@ -266,10 +332,6 @@ class GuiController(QObject):
             self.choose_point_click_handler.plot_ts.plot_y_axis = "adaptive"
 
         self.choose_point_click_handler.plot_ts.plotTs()
-
-
-
-
 
     def timeseriesReplica(self):
         if self.ui.pb_ts_replica.isChecked():
