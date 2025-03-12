@@ -49,9 +49,11 @@ class GuiController(QObject):
         self.ui.cb_select_field.clear()
         if status is False:
             self.ui.cb_select_field.setEnabled(False)
+            self.ui.sb_symbol_size.setEnabled(False)
             return
         else:
             self.ui.cb_select_field.setEnabled(True)
+            self.ui.sb_symbol_size.setEnabled(True)
 
         field_list, field_types = vector_layer_utils.getVectorFields(layer)
         velocity_field, message = vector_layer_utils.getVectorVelocityFieldName(layer)
