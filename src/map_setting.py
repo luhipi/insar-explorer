@@ -188,6 +188,8 @@ class InsarMap:
         shader.setRasterShaderFunction(color_ramp_shader)
 
         renderer = QgsSingleBandPseudoColorRenderer(layer.dataProvider(), 1, shader)
+        renderer.setClassificationMin(self.min_value)
+        renderer.setClassificationMax(self.max_value)
         layer.setRenderer(renderer)
         layer.triggerRepaint()
         self.iface.mapCanvas().refresh()
