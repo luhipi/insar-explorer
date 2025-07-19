@@ -224,7 +224,7 @@
                      <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_9">
                        <property name="spacing">
-                        <number>0</number>
+                        <number>1</number>
                        </property>
                        <item>
                         <widget class="QDoubleSpinBox" name="sb_symbol_lower_range">
@@ -336,7 +336,119 @@
                       </layout>
                      </item>
                      <item>
+                      <layout class="QHBoxLayout" name="horizontalLayout_13">
+                       <property name="spacing">
+                        <number>1</number>
+                       </property>
+                       <item>
+                        <widget class="QLabel" name="label_7">
+                         <property name="text">
+                          <string>Offset:</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QDoubleSpinBox" name="sb_symbol_value_offset">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="toolTip">
+                          <string>Offset the values</string>
+                         </property>
+                         <property name="decimals">
+                          <number>2</number>
+                         </property>
+                         <property name="minimum">
+                          <double>-1000000000.000000000000000</double>
+                         </property>
+                         <property name="maximum">
+                          <double>1000000000.000000000000000</double>
+                         </property>
+                         <property name="value">
+                          <double>0.000000000000000</double>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_13">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>40</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="cb_symbol_value_offset_sync_with_ref">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>30</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Synchronize with the reference point</string>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>false</bool>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                         <property name="icon">
+                          <iconset>
+                           <normaloff>:/icons/icons/sync_offset_with_reference.svg</normaloff>:/icons/icons/sync_offset_with_reference.svg</iconset>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>20</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="checkable">
+                          <bool>true</bool>
+                         </property>
+                         <property name="checked">
+                          <bool>false</bool>
+                         </property>
+                         <property name="flat">
+                          <bool>true</bool>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </item>
+                     <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_8">
+                       <property name="spacing">
+                        <number>1</number>
+                       </property>
                        <item>
                         <widget class="QPushButton" name="pb_range_from_data">
                          <property name="sizePolicy">
@@ -434,9 +546,9 @@
                     <property name="flat">
                      <bool>true</bool>
                     </property>
-                    <layout class="QVBoxLayout" name="verticalLayout_16" stretch="0,0">
+                    <layout class="QVBoxLayout" name="verticalLayout_16" stretch="0">
                      <property name="spacing">
-                      <number>0</number>
+                      <number>-1</number>
                      </property>
                      <property name="leftMargin">
                       <number>0</number>
@@ -453,12 +565,12 @@
                      <item>
                       <layout class="QVBoxLayout" name="verticalLayout_15">
                        <property name="spacing">
-                        <number>0</number>
+                        <number>1</number>
                        </property>
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout">
                          <property name="spacing">
-                          <number>5</number>
+                          <number>1</number>
                          </property>
                          <item>
                           <widget class="QComboBox" name="cmb_colormap">
@@ -560,6 +672,9 @@
                        </item>
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout_5">
+                         <property name="spacing">
+                          <number>1</number>
+                         </property>
                          <item>
                           <widget class="QLabel" name="label_6">
                            <property name="text">
@@ -590,6 +705,9 @@
                        </item>
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout_4">
+                         <property name="spacing">
+                          <number>1</number>
+                         </property>
                          <item>
                           <widget class="QLabel" name="label_3">
                            <property name="text">
@@ -621,38 +739,41 @@
                          </item>
                         </layout>
                        </item>
-                      </layout>
-                     </item>
-                     <item>
-                      <layout class="QHBoxLayout" name="horizontalLayout_3">
                        <item>
-                        <widget class="QLabel" name="label_4">
-                         <property name="text">
-                          <string>Opacity:</string>
+                        <layout class="QHBoxLayout" name="horizontalLayout_3">
+                         <property name="spacing">
+                          <number>1</number>
                          </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QSpinBox" name="sb_symbol_opacity">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="toolTip">
-                          <string>Symbol opacity</string>
-                         </property>
-                         <property name="maximum">
-                          <number>100</number>
-                         </property>
-                         <property name="singleStep">
-                          <number>10</number>
-                         </property>
-                         <property name="value">
-                          <number>100</number>
-                         </property>
-                        </widget>
+                         <item>
+                          <widget class="QLabel" name="label_4">
+                           <property name="text">
+                            <string>Opacity:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QSpinBox" name="sb_symbol_opacity">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="toolTip">
+                            <string>Symbol opacity</string>
+                           </property>
+                           <property name="maximum">
+                            <number>100</number>
+                           </property>
+                           <property name="singleStep">
+                            <number>10</number>
+                           </property>
+                           <property name="value">
+                            <number>100</number>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
                        </item>
                       </layout>
                      </item>
@@ -684,7 +805,7 @@
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_18">
                      <property name="spacing">
-                      <number>0</number>
+                      <number>-1</number>
                      </property>
                      <property name="leftMargin">
                       <number>0</number>
@@ -701,7 +822,7 @@
                      <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_7">
                        <property name="spacing">
-                        <number>5</number>
+                        <number>1</number>
                        </property>
                        <item>
                         <spacer name="horizontalSpacer_9">
@@ -863,7 +984,7 @@
                 <item row="0" column="0">
                  <layout class="QVBoxLayout" name="verticalLayout_5">
                   <property name="spacing">
-                   <number>0</number>
+                   <number>-1</number>
                   </property>
                   <property name="bottomMargin">
                    <number>0</number>
@@ -896,7 +1017,7 @@
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_8">
                      <property name="spacing">
-                      <number>0</number>
+                      <number>-1</number>
                      </property>
                      <property name="leftMargin">
                       <number>0</number>
@@ -1115,7 +1236,7 @@
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_11">
                      <property name="spacing">
-                      <number>0</number>
+                      <number>-1</number>
                      </property>
                      <property name="leftMargin">
                       <number>0</number>
@@ -1277,7 +1398,7 @@
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_12">
                      <property name="spacing">
-                      <number>0</number>
+                      <number>-1</number>
                      </property>
                      <property name="leftMargin">
                       <number>0</number>
@@ -1776,7 +1897,7 @@
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_6">
                      <property name="spacing">
-                      <number>0</number>
+                      <number>-1</number>
                      </property>
                      <property name="leftMargin">
                       <number>0</number>
@@ -1895,7 +2016,7 @@
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_12">
                      <property name="spacing">
-                      <number>0</number>
+                      <number>-1</number>
                      </property>
                      <property name="leftMargin">
                       <number>0</number>
@@ -2151,10 +2272,7 @@
                      <property name="bottomMargin">
                       <number>0</number>
                      </property>
-                     <property name="horizontalSpacing">
-                      <number>5</number>
-                     </property>
-                     <property name="verticalSpacing">
+                     <property name="spacing">
                       <number>0</number>
                      </property>
                      <item row="0" column="1">
@@ -2375,11 +2493,11 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="gb_y_axis"/>
   <buttongroup name="gb_ts_fit">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
+  <buttongroup name="gb_y_axis"/>
  </buttongroups>
 </ui>
