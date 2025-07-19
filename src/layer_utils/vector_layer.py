@@ -106,6 +106,24 @@ def extractDateValueAttributes(attributes: dict) -> list:
     return np.array(date_value_list, dtype=object)
 
 
+def getFeatureFieldValue(attributes: dict, field_name: str) -> list:
+    """
+    Get values of a specific field from the attributes dictionary.
+    :param attributes: Dictionary of feature attributes
+    :param field_name: Name of the field to extract values from
+    :return: List of values for the specified field
+    """
+    if field_name not in attributes:
+        return []
+
+    value = attributes[field_name]
+    if isinstance(value, QVariant):
+        if value.isNull():
+            value = np.nan
+
+    return value
+
+
 def getVectorFields(layer):
     """ get field names and types from vector layer"""
     fields = [field.name() for field in layer.fields()]
