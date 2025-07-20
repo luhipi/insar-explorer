@@ -180,7 +180,7 @@ class InsarMap:
         color_ramp_items = []
         for i in range(self.num_classes):
             value = self.min_value + i * interval
-            adjusted_value = value + self.offset_value  # simulate offset for symbology
+            adjusted_value = value + self.offset_value
 
             color_ratio = float(i) / (self.num_classes - 1)
             color = color_ramp.getColor(color_ratio)
