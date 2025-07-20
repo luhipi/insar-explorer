@@ -1,7 +1,11 @@
 ### History
 
 next version
+
 - Add support for polygon selection
+- Change the reference point for the map on the fly.
+- Enhance labeling of the map plot
+
 
 v1.0.0
 - Sync colorbar icon with reverse button
