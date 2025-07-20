@@ -102,9 +102,7 @@ class GuiController(QObject):
                                                       self.ui.pb_set_reference.isChecked()))
 
         if self.ui.pb_set_reference.isChecked():
-            if self.ui.cb_symbol_value_offset_sync_with_ref.isChecked():
-                self.insar_map.offset_value =self.choose_point_click_handler.map_reference_clicked_value
-                self.ui.sb_symbol_value_offset.setValue(self.choose_point_click_handler.map_reference_clicked_value)
+            self.syncOffsetWithReference()
 
     def removeClickTool(self):
         self.iface.mapCanvas().unsetMapTool(self.click_tool)
@@ -144,6 +142,15 @@ class GuiController(QObject):
     def polygonDrawnCallback(self, polygon):
         self.choose_point_click_handler.choosePolygonDrawn(polygon=polygon,
                                                            ref=self.ui.pb_set_reference_polygon.isChecked())
+        self.syncOffsetWithReference()
+
+
+    def syncOffsetWithReference(self):
+        """Sync offset value with reference point or polygon."""
+        if self.ui.cb_symbol_value_offset_sync_with_ref.isChecked():
+            value = self.choose_point_click_handler.map_reference_clicked_value
+            self.insar_map.offset_value = value
+            self.ui.sb_symbol_value_offset.setValue(value)
 
     def connectUiSignals(self):
         self.ui.visibilityChanged.connect(self.handleUiClose)
