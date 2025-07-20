@@ -106,7 +106,7 @@ def extractDateValueAttributes(attributes: dict) -> list:
     return np.array(date_value_list, dtype=object)
 
 
-def getFeatureFieldValue(attributes: dict, field_name: str) -> list:
+def getFeatureFieldValue(attributes: dict, field_name: str) -> float:
     """
     Get values of a specific field from the attributes dictionary.
     :param attributes: Dictionary of feature attributes
@@ -114,7 +114,7 @@ def getFeatureFieldValue(attributes: dict, field_name: str) -> list:
     :return: List of values for the specified field
     """
     if field_name not in attributes:
-        return []
+        return None
 
     value = attributes[field_name]
     if isinstance(value, QVariant):
