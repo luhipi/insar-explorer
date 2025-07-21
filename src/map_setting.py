@@ -26,6 +26,7 @@ class InsarMap:
         self.symbol_size = 1
         self.min_value = -5
         self.max_value = 5
+        self.offset_value = 0
         self.data_min = None
         self.data_max = None
         self.data_mean = None
@@ -179,17 +180,33 @@ class InsarMap:
         color_ramp_items = []
         for i in range(self.num_classes):
             value = self.min_value + i * interval
+            adjusted_value = value + self.offset_value
+
             color_ratio = float(i) / (self.num_classes - 1)
             color = color_ramp.getColor(color_ratio)
             color.setAlphaF(self.alpha)
-            color_ramp_items.append(QgsColorRampShader.ColorRampItem(value, color))
+
+            label = f"{value:>{max_length}.2f}  -  {value + interval:<{max_length}.2f}"
+            # if i == 0:
+            #     label = f"{value:6.1f}"
+            # elif i == self.num_classes - 1:
+            #     label = f"{value + interval:6.1f}"
+            # else:
+            #     label = ""
+
+            if i == self.num_classes - 1:
+                color_ramp_items.append(QgsColorRampShader.ColorRampItem(float('inf'), color, label))
+            else:
+                color_ramp_items.append(QgsColorRampShader.ColorRampItem(adjusted_value, color, label))
 
         color_ramp_shader.setColorRampItemList(color_ramp_items)
+        color_ramp_shader.setColorRampType(QgsColorRampShader.Discrete)
         shader.setRasterShaderFunction(color_ramp_shader)
 
         renderer = QgsSingleBandPseudoColorRenderer(layer.dataProvider(), 1, shader)
-        renderer.setClassificationMin(self.min_value)
-        renderer.setClassificationMax(self.max_value)
+        # renderer.setClassificationMin(self.min_value + self.offset_value)
+        # renderer.setClassificationMax(self.max_value + self.offset_value)
+
         layer.setRenderer(renderer)
         layer.triggerRepaint()
         self.iface.mapCanvas().refresh()
@@ -200,7 +217,7 @@ class InsarMap:
         for i in range(self.num_classes):
             lower = self.min_value + i * interval
             upper = lower + interval
-            label = f"{lower:>{max_length}.2f}\t-\t{upper:<{max_length}.2f}"
+            label = f"{lower:>{max_length}.2f}  -  {upper:<{max_length}.2f}"
 
             symbol = QgsSymbol.defaultSymbol(layer.geometryType())
 
@@ -219,6 +236,9 @@ class InsarMap:
                 lower = float('-inf')
             if i == self.num_classes - 1:
                 upper = float('inf')
+
+            lower += self.offset_value
+            upper += self.offset_value
 
             range_item = QgsRendererRange(lower, upper, symbol, label)
             ranges.append(range_item)

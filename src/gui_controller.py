@@ -73,14 +73,22 @@ class GuiController(QObject):
 
     def selectVectorFieldChanged(self):
         self.insar_map.selected_field_name = self.ui.cb_select_field.currentText()
+        self.choose_point_click_handler.selected_field_name = self.insar_map.selected_field_name
         self.insar_map.reset()
         self.applyLiveSymbology()
 
     def initializeClickTool(self):
         if not self.click_tool:
             self.click_tool = QgsMapToolEmitPoint(self.iface.mapCanvas())
-            self.click_tool.canvasClicked.connect(lambda point: self.choose_point_click_handler.choosePointClicked(
-                                                  point=point, layer=None, ref=self.ui.pb_set_reference.isChecked()))
+            self.click_tool.canvasClicked.connect(lambda point: self.onMapClicked(point=point))
+
+    def onMapClicked(self, point):
+        self.choose_point_click_handler.choosePointClicked(point=point, layer=None, ref=self.ui.pb_set_reference.isChecked())
+
+        if self.ui.pb_set_reference.isChecked():
+            if self.ui.cb_symbol_value_offset_sync_with_ref.isChecked():
+                self.insar_map.offset_value =self.choose_point_click_handler.map_reference_clicked_value
+                self.ui.sb_symbol_value_offset.setValue(self.choose_point_click_handler.map_reference_clicked_value)
 
     def removeClickTool(self):
         self.iface.mapCanvas().unsetMapTool(self.click_tool)
@@ -130,6 +138,7 @@ class GuiController(QObject):
         self.ui.sb_symbol_lower_range.valueChanged.connect(self.setSymbologyLowerRange)
         self.ui.sb_symbol_upper_range.valueChanged.connect(self.setSymbologyUpperRange)
         self.ui.cb_symbol_range_sync.clicked.connect(self.setSymbologyLowerRange)
+        self.ui.sb_symbol_value_offset.valueChanged.connect(self.setSymbologyOffset)
         self.ui.sb_symbol_classes.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_size.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_opacity.valueChanged.connect(self.applyLiveSymbology)
@@ -175,6 +184,10 @@ class GuiController(QObject):
         self.ui.sb_symbol_upper_range.blockSignals(False)
         self.applyLiveSymbology()
 
+    def setSymbologyOffset(self):
+        self.insar_map.offset_value = self.ui.sb_symbol_value_offset.value()
+        self.applyLiveSymbology()
+
     def setSymbologyRangeFromData(self):
         button = self.sender()
         if button.text() == "Range from data":
@@ -197,7 +210,10 @@ class GuiController(QObject):
 
     def applyLiveSymbology(self):
         if self.ui.pb_symbology_live.isChecked():
-            QTimer.singleShot(0, self.applySymbology)
+            self.applySymbology()
+
+    def applySymbologyNow(self):
+        QTimer.singleShot(0, self.applySymbology)
 
     def applySymbology(self):
         self.insar_map.selected_field_name = self.ui.cb_select_field.currentText()
@@ -314,6 +330,9 @@ class GuiController(QObject):
     def resetReferencePoint(self):
         self.choose_point_click_handler.resetReferencePoint()
         self.activateReferencePointSelection(status=False)
+        if self.ui.cb_symbol_value_offset_sync_with_ref.isChecked():
+            self.ui.sb_symbol_value_offset.setValue(0)
+            self.applySymbologyNow()
 
     def addSelectedLayers(self):
         """

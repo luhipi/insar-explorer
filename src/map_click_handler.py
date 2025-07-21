@@ -181,6 +181,8 @@ class TSClickHandler(MapClickHandler):
         self.ts_values = 0
         self.ref_values = 0
         self.raster_layer = raster_layer_utils.RasterTimeseries()
+        self.selected_field_name = None
+        self.map_reference_clicked_value = 0
 
     def reset(self):
         self.clearFeatureHighlight()
@@ -217,6 +219,8 @@ class TSClickHandler(MapClickHandler):
                 self.ts_values = date_values[:, 1]
             else:
                 self.ref_values = date_values[:, 1]
+                if self.selected_field_name:
+                    self.map_reference_clicked_value  = vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name)
 
             dates = date_values[:, 0]
             self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
@@ -242,6 +246,7 @@ class TSClickHandler(MapClickHandler):
             self.ts_values = date_values[:, 1]
         else:
             self.ref_values = date_values[:, 1]
+            self.map_reference_clicked_value = self.raster_layer.getClickedPixelValue(layer, point=point)
 
         dates = date_values[:, 0]
         self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
