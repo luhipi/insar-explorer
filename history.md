@@ -1,5 +1,9 @@
 ### History
 
+---
+
+- enhance curve fitting by a prior normalizing of dates.
+
 v1.0.0
 - Sync colorbar icon with reverse button
 - Disable log
