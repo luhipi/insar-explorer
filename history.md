@@ -1,8 +1,9 @@
 ### History
 
----
-
-- enhance curve fitting by a prior normalizing of dates.
+v1.1.0dev
+- Change the reference point for the map on the fly.
+- Enhance labeling of the map plot
+- Enhance curve fitting by a prior normalizing of dates.
 
 v1.0.0
 - Sync colorbar icon with reverse button
