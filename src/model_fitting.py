@@ -20,7 +20,6 @@ def modelAnnual(x, a, b):
 
 
 def modelExponential(x, a, b, c):
-    x = normalize(x)  # normalize ordinal dates to avoid overflow
     return a + b * np.exp(c * x)
 
 
@@ -36,8 +35,11 @@ def fitExponential(x, y):
     return popt, pcov, model
 
 
-def normalize(x):
-    return (x - x.min()) / (x.max() - x.min())
+def normalize(x, ref=None):
+    if ref is None:
+        return (x - x.min()) / (x.max() - x.min())
+    else:
+        return (x - ref.min()) / (ref.max() - ref.min())
 
 
 def ordinalTodates(ordinals):
@@ -57,9 +59,13 @@ class FittingModels:
         return np.array([x.toordinal() for x in self.x])
 
     def fit(self, model=None, seasonal=False):
-        x = self.ordinal_dates
-        y = self.y
+        # normalize dates for better curve fitting and avoid overflow
+        # Caution: a uniform reference should be used for date normalization
+        # Caution: seasonal signal should not be normalized
         mask = self.mask
+        x = self.ordinal_dates
+        x_norm = normalize(x, ref=x[mask])
+        y = self.y
 
         if model is None:
             model = self.model
@@ -67,14 +73,15 @@ class FittingModels:
                            "poly-3": modelPoly3, "exp": modelExponential}
         fit_model = fit_models_dict[model]
         if fit_model == modelExponential:
-            popt, pcov, fit_model = fitExponential(x[mask], y[mask])
+            popt, pcov, fit_model = fitExponential(x_norm[mask], y[mask])
         else:
-            popt, pcov = curve_fit(fit_model, x[mask], y[mask])
+            popt, pcov = curve_fit(fit_model, x_norm[mask], y[mask])
 
         model_x_linspace = np.linspace(min(x), max(x), 100)
         model_x = ordinalTodates(model_x_linspace)
-        model_y = fit_model(model_x_linspace, *popt)
-        fit_y = fit_model(x, *popt)
+        model_x_linspace_norm = normalize(model_x_linspace, ref=x[mask])
+        model_y = fit_model(model_x_linspace_norm, *popt)
+        fit_y = fit_model(x_norm, *popt)
 
         if seasonal:
             residual = y - fit_y
