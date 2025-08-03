@@ -1,6 +1,8 @@
 ### History
 
 v1.1.0dev
+- Enhance Checkable Buttons and Button Groups with green and Blue Color Tones.
+- Improve ui element labels and tooltips.
 - Change the reference point for the map on the fly.
 - Enhance labeling of the map plot
 - Enhance curve fitting by a prior normalizing of dates.
