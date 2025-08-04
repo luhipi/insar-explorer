@@ -37,6 +37,41 @@ class RasterTimeseries:
     def reset(self):
         self.time_series_data = None
 
+
+    def getClickedPixelValue(self, layer, point):
+        """
+        Get the pixel value of the clicked point from the raster layer.
+        :param layer: The raster layer
+        :param point: The clicked point (QgsPointXY)
+        :return: Pixel value at the clicked point or None if not found
+        """
+        file_path = layer.source()
+
+        dataset = createVrtFromFiles(raster_file_paths=file_path, out_file="")
+
+        if not dataset:
+            return None
+
+        transform = dataset.GetGeoTransform()
+        inv_transform = gdal.InvGeoTransform(transform)
+
+        x, y = point.x(), point.y()
+        px, py = gdal.ApplyGeoTransform(inv_transform, x, y)
+        px, py = int(px), int(py)
+
+        band = dataset.GetRasterBand(1)
+        x_size = band.XSize
+        y_size = band.YSize
+        if not (0 <= px < x_size and 0 <= py < y_size):
+            return None
+
+        pixel_value = band.ReadAsArray(px, py, 1, 1)
+        if pixel_value is not None:
+            return pixel_value[0, 0]
+
+        return None
+
+
     def getRasterTimeseriesAttributes(self, layer, point):
         """
         Get the timeseries values of the clicked point from the GMTSAR grd files.
