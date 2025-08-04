@@ -1,6 +1,7 @@
 ### History
 
 v1.1.0dev
+- Add citation information.
 - Change the reference point for the map on the fly.
 - Enhance labeling of the map plot
 - Enhance curve fitting by a prior normalizing of dates.
