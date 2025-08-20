@@ -1,7 +1,8 @@
 ### History
 
 v1.1.0dev
-- Add support for polygon selection
+- Check the selected layer and deactivate plugin if the layer is not compatible with InSAR Explorer.
+- Add support for polygon selection for vector data.
 - Change the reference point for the map on the fly.
 - Enhance labeling of the map plot
 - Enhance curve fitting by a prior normalizing of dates.
