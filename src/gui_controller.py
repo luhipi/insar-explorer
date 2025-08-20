@@ -38,6 +38,7 @@ class GuiController(QObject):
         self.setDataRangeMenu()
 
         self.iface.currentLayerChanged.connect(self.onLayerChanged)
+        self.onLayerChanged()
 
         self.setVectorFields()
 
@@ -49,12 +50,36 @@ class GuiController(QObject):
         elif self.selection_type == "reference polygon":
             self.initializePolygonDrawingTool(reference=True)
 
-    def onLayerChanged(self, layer):
+    def onLayerChanged(self, layer=None):
         """Reset the click handler and the map when the active layer changes."""
+        if layer is None:
+            layer = self.iface.activeLayer()
         if layer:
             self.choose_point_click_handler.reset()
             self.insar_map.reset()
             self.setVectorFields()
+
+            layer_type = layer.type()
+            is_local_raster = (hasattr(layer, "dataProvider") and getattr(layer.dataProvider(), "name", lambda: "")()
+                               in ["gdal"]) #  "ogr"
+
+            if layer_type == layer.VectorLayer:
+                self.ui.pb_choose_polygon.setEnabled(True)
+                self.ui.pb_set_reference_polygon.setEnabled(True)
+            elif layer_type == layer.RasterLayer:
+                self.ui.tab_config_panel.setEnabled(False)
+                self.ui.pb_choose_polygon.setEnabled(False)
+                self.ui.pb_set_reference_polygon.setEnabled(False)
+
+            if layer_type == layer.RasterLayer and not is_local_raster:
+                self.ui.tab_config_panel.setEnabled(False)
+                self.ui.pb_choose_point.setChecked(False)
+                message = "Unsupported layer selected. Please choose a layer compatible with InSAR Explorer."
+            else:
+                self.ui.tab_config_panel.setEnabled(True)
+                self.ui.pb_choose_point.setChecked(True)
+                message = ""
+            self.ui.lb_msg_bar.setText(message)
 
     def setVectorFields(self):
         layer = self.iface.activeLayer()

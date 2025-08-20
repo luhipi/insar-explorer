@@ -119,7 +119,7 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
-             <widget class="QTabWidget" name="tabWidget">
+             <widget class="QTabWidget" name="tab_config_panel">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -136,9 +136,9 @@
                <string>Plot fit residual</string>
               </property>
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
-              <widget class="QWidget" name="tab_2">
+              <widget class="QWidget" name="tab_map">
                <attribute name="title">
                 <string>Map</string>
                </attribute>
@@ -887,7 +887,7 @@
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="tabWidgetPage1_3">
+              <widget class="QWidget" name="tab_timeseries">
                <attribute name="title">
                 <string>Time series</string>
                </attribute>
