@@ -14,7 +14,7 @@ from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
 
 
 class GuiController(QObject):
-    msg_signal = pyqtSignal(str)
+    msg_signal = pyqtSignal(str, str, int)
     def __init__(self, plugin):
         super().__init__()
         self.iface = plugin.iface
@@ -84,7 +84,7 @@ class GuiController(QObject):
             self.click_tool.canvasClicked.connect(lambda point: self.onMapClicked(point=point))
 
     def onMapClicked(self, point):
-        self.msg_signal.emit("")
+        self.msg_signal.emit("", 'i', 0)
         self.choose_point_click_handler.choosePointClicked(point=point, layer=None, ref=self.ui.pb_set_reference.isChecked())
 
         if self.ui.pb_set_reference.isChecked():
@@ -106,13 +106,45 @@ class GuiController(QObject):
         self.connectAboutSignals()
         self.msg_signal.connect(self.setMessageBar)
 
-    def setMessageBar(self, message):
+    def setMessageBar(self, message, v, t):
+
         width = self.ui.lb_msg_bar.width()
         font_metrics = self.ui.lb_msg_bar.fontMetrics()
         avg_char_width = max(1, font_metrics.horizontalAdvance(str(message)) // max(1, len(str(message))))
         buffer = 50
         num_chars = max(20, (width - buffer) // avg_char_width)
-        self.ui.lb_msg_bar.setText(str(message)[:num_chars])
+
+        info = "ℹ "  # U+2139
+        warning = "⚠ "  # U+26A0
+        error = "❌ "  # U+274C
+        tip = "💡 "  # U+1F4A1
+
+        if v == 'w':
+            self.ui.lb_msg_bar.setStyleSheet("color: black; background-color: #FFF3E0;")
+            message = warning + str(message)
+        elif v == 'e':
+            self.ui.lb_msg_bar.setStyleSheet("color: black; background-color: #FFEBEE;")
+            message = error + str(message)
+        elif v == 'i':
+            self.ui.lb_msg_bar.setStyleSheet("color: black; background-color: transparent;")
+            message = info + str(message)
+        elif v == 't':
+            self.ui.lb_msg_bar.setStyleSheet("color: black; background-color: transparent;")
+            message = tip + str(message)
+        else:
+            self.ui.lb_msg_bar.setStyleSheet("color: black; background-color: transparent;")
+            message = str(message)
+
+        self.ui.lb_msg_bar.setText(message[:num_chars])
+
+        if t > 0:
+            # reset timer
+            if not hasattr(self, '_msg_timer'):
+                self._msg_timer = QTimer(self.ui)
+                self._msg_timer.setSingleShot(True)
+                self._msg_timer.timeout.connect(lambda: self.setMessageBar("", "", 0))
+            self._msg_timer.stop()
+            self._msg_timer.start(t)
 
     def connectAboutSignals(self):
         self.ui.label_about.setOpenExternalLinks(False)
@@ -210,7 +242,7 @@ class GuiController(QObject):
         elif button.text() == "3xStd":
             message = self.insar_map.setSymbologyRangeFromData(n_std=3)
 
-        self.msg_signal.emit(message)
+        self.msg_signal.emit(message, 'i', 5000)
         min_value = self.insar_map.min_value
         max_value = self.insar_map.max_value
         if self.ui.cb_symbol_range_sync.isChecked():
@@ -235,7 +267,7 @@ class GuiController(QObject):
         self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
         self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
         message = self.insar_map.setSymbology()
-        self.msg_signal.emit(message)
+        self.msg_signal.emit(message, 'i', 5000)
 
     def colormapReverseClicked(self):
         self.flipComboBoxIcons(self.ui.cmb_colormap)
@@ -326,6 +358,7 @@ class GuiController(QObject):
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
+            self.msg_signal.emit("Click on the map to select a point and plot its time series.", 't', 5000)
         else:
             self.removeClickTool()
 
@@ -334,6 +367,7 @@ class GuiController(QObject):
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
+            self.msg_signal.emit("Click on the map to select the reference point for the time series.", 't', 5000)
         else:
             self.ui.pb_set_reference.setChecked(False)
             self.removeClickTool()
@@ -344,6 +378,7 @@ class GuiController(QObject):
         if self.ui.cb_symbol_value_offset_sync_with_ref.isChecked():
             self.ui.sb_symbol_value_offset.setValue(0)
             self.applySymbologyNow()
+        self.msg_signal.emit("Reference point has been reset.", 'i', 5000)
 
     def addSelectedLayers(self):
         """

@@ -20,7 +20,7 @@
       <item>
        <widget class="QLabel" name="lb_msg_bar">
         <property name="toolTip">
-         <string>Plot fit residual</string>
+         <string/>
         </property>
         <property name="text">
          <string/>

@@ -40,16 +40,16 @@ class MapClickHandler:
 
         status, message = vector_layer_utils.checkVectorLayer(layer)
         if status is False:
-            self.msg_signal.emit(message)
+            self.msg_signal.emit(message, 'i', 5000)
             return
 
         closest_feature_id = self.findFeatureAtPoint(layer, point, self.iface.mapCanvas(),
                                                      only_the_closest_one=True, only_ids=True)
 
         if closest_feature_id:
-            self.msg_signal.emit("")
+            self.msg_signal.emit("", "", 0)
         else:
-            self.msg_signal.emit("Identify Result: No nearby point found. Select another point.")
+            self.msg_signal.emit("Identify Result: No nearby point found. Select another point.", "w", 0)
 
         return closest_feature_id
 
@@ -210,7 +210,7 @@ class TSClickHandler(MapClickHandler):
 
         status, message = vector_layer_utils.checkVectorLayerTimeseries(layer)
         if status is False:
-            self.msg_signal.emit(message)
+            self.msg_signal.emit(message, 'i', 5000)
             return
 
         if feature:
@@ -229,7 +229,7 @@ class TSClickHandler(MapClickHandler):
     def choosePointClickedRaster(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         status, message = grd_layer_utils.checkGrdTimeseries(layer)
         if status is False:
-            self.msg_signal.emit(message)
+            self.msg_signal.emit(message, 'i', 5000)
             return
 
         date_values = self.raster_layer.getRasterTimeseriesAttributes(layer, point=point)
