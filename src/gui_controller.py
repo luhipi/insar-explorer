@@ -106,7 +106,12 @@ class GuiController(QObject):
         self.msg_signal.connect(self.setMessageBar)
 
     def setMessageBar(self, message):
-        self.ui.lb_msg_bar.setText(message)
+        width = self.ui.lb_msg_bar.width()
+        font_metrics = self.ui.lb_msg_bar.fontMetrics()
+        avg_char_width = max(1, font_metrics.horizontalAdvance(str(message)) // max(1, len(str(message))))
+        buffer = 50
+        num_chars = max(20, (width - buffer) // avg_char_width)
+        self.ui.lb_msg_bar.setText(str(message)[:num_chars])
 
     def connectAboutSignals(self):
         self.ui.label_about.setOpenExternalLinks(False)
