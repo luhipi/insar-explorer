@@ -29,6 +29,7 @@ class MapClickHandler:
         self.iface = plugin.iface
         self.highlight = None
         self.reference_highlight = None
+        self.map_reference_clicked_value = 0
 
     def identifyClickedFeatureID(self, point: QgsPointXY, layer: QgsMapLayer = None) -> int:
         """
@@ -186,7 +187,6 @@ class TSClickHandler(MapClickHandler):
         self.ref_values = 0
         self.raster_layer = raster_layer_utils.RasterTimeseries()
         self.selected_field_name = None
-        self.map_reference_clicked_value = 0
 
     def reset(self):
         self.clearFeatureHighlight()
@@ -352,6 +352,10 @@ class PolygonClickHandler(MapClickHandler):
                 self.ts_values = values
             else:
                 self.ref_values = values
+
+                if self.selected_field_name:
+                    clicked_values  = vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name)
+                    self.map_reference_clicked_value = np.mean(clicked_values)
 
             self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values, plot_error=True)
 
