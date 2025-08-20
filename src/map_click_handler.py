@@ -357,7 +357,7 @@ class PolygonClickHandler(MapClickHandler):
                     clicked_values  = vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name)
                     self.map_reference_clicked_value = np.mean(clicked_values)
 
-            self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values, plot_error=True)
+            self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values, plot_multiple=True)
 
 
 class ClickHandler(TSClickHandler, PolygonClickHandler):
