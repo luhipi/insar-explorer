@@ -2,7 +2,7 @@ import os
 
 from qgis.gui import QgsMapToolEmitPoint
 from PyQt5.QtWidgets import QFileDialog, QMenu, QComboBox
-from PyQt5.QtCore import QObject, QTimer, QVariant
+from PyQt5.QtCore import QObject, QTimer, QVariant, pyqtSignal
 from PyQt5.QtGui import QIcon, QTransform
 
 from . import map_click_handler as cph
@@ -14,11 +14,12 @@ from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
 
 
 class GuiController(QObject):
+    msg_signal = pyqtSignal(str)
     def __init__(self, plugin):
         super().__init__()
         self.iface = plugin.iface
         self.ui = plugin.dockwidget
-        self.choose_point_click_handler = cph.TSClickHandler(plugin)
+        self.choose_point_click_handler = cph.TSClickHandler(plugin, msg_signal=self.msg_signal)
         self.click_tool = None  # plugin.click_tool
         self.initializeClickTool()
         setup_frames.setupTsFrame(self.ui)
@@ -102,6 +103,10 @@ class GuiController(QObject):
         self.connectMapSignals()
 
         self.connectAboutSignals()
+        self.msg_signal.connect(self.setMessageBar)
+
+    def setMessageBar(self, message):
+        self.ui.lb_msg_bar.setText(message)
 
     def connectAboutSignals(self):
         self.ui.label_about.setOpenExternalLinks(False)
@@ -199,7 +204,7 @@ class GuiController(QObject):
         elif button.text() == "3xStd":
             message = self.insar_map.setSymbologyRangeFromData(n_std=3)
 
-        self.ui.lb_msg_bar.setText(message)
+        self.msg_signal.emit(message)
         min_value = self.insar_map.min_value
         max_value = self.insar_map.max_value
         if self.ui.cb_symbol_range_sync.isChecked():
@@ -224,7 +229,7 @@ class GuiController(QObject):
         self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
         self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
         message = self.insar_map.setSymbology()
-        self.ui.lb_msg_bar.setText(message)
+        self.msg_signal.emit(message)
 
     def colormapReverseClicked(self):
         self.flipComboBoxIcons(self.ui.cmb_colormap)

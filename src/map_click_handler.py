@@ -21,9 +21,10 @@ class MapClickHandler:
         highlight: The QgsHighlight object used to highlight selected features.
 
     """
-    def __init__(self, plugin):
+    def __init__(self, plugin, msg_signal=None):
         self.ui = plugin.dockwidget
         self.iface = plugin.iface
+        self.msg_signal = msg_signal
         self.highlight = None
         self.reference_highlight = None
 
@@ -39,16 +40,16 @@ class MapClickHandler:
 
         status, message = vector_layer_utils.checkVectorLayer(layer)
         if status is False:
-            self.ui.lb_msg_bar.setText(message)
+            self.msg_signal.emit(message)
             return
 
         closest_feature_id = self.findFeatureAtPoint(layer, point, self.iface.mapCanvas(),
                                                      only_the_closest_one=True, only_ids=True)
 
         if closest_feature_id:
-            self.ui.lb_msg_bar.setText("")
+            self.msg_signal.emit("")
         else:
-            self.ui.lb_msg_bar.setText("Identify Result: No nearby point found. Select another point.")
+            self.msg_signal.emit("Identify Result: No nearby point found. Select another point.")
 
         return closest_feature_id
 
@@ -175,8 +176,8 @@ class MapClickHandler:
 
 
 class TSClickHandler(MapClickHandler):
-    def __init__(self, plugin):
-        super().__init__(plugin)
+    def __init__(self, plugin, msg_signal=None):
+        super().__init__(plugin, msg_signal=msg_signal)
         self.plot_ts = pts.PlotTs(self.ui)
         self.ts_values = 0
         self.ref_values = 0
@@ -209,7 +210,7 @@ class TSClickHandler(MapClickHandler):
 
         status, message = vector_layer_utils.checkVectorLayerTimeseries(layer)
         if status is False:
-            self.ui.lb_msg_bar.setText(message)
+            self.msg_signal.emit(message)
             return
 
         if feature:
@@ -228,7 +229,7 @@ class TSClickHandler(MapClickHandler):
     def choosePointClickedRaster(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         status, message = grd_layer_utils.checkGrdTimeseries(layer)
         if status is False:
-            self.ui.lb_msg_bar.setText(message)
+            self.msg_signal.emit(message)
             return
 
         date_values = self.raster_layer.getRasterTimeseriesAttributes(layer, point=point)
