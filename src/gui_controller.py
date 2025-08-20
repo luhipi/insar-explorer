@@ -84,6 +84,7 @@ class GuiController(QObject):
             self.click_tool.canvasClicked.connect(lambda point: self.onMapClicked(point=point))
 
     def onMapClicked(self, point):
+        self.msg_signal.emit("")
         self.choose_point_click_handler.choosePointClicked(point=point, layer=None, ref=self.ui.pb_set_reference.isChecked())
 
         if self.ui.pb_set_reference.isChecked():
