@@ -200,7 +200,7 @@ class GuiController(QObject):
         warning = "🟡️ "
         error = "🟠 "
         tip = "💡 "
-        done = "✔️️ "
+        done = "🟢 "
 
         if message == "":
             v = ''
