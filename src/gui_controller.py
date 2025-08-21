@@ -11,6 +11,7 @@ from .map_setting import InsarMap
 from .layer_utils import vector_layer as vector_layer_utils
 from .about import about as insar_explorer_about
 from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
+from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 
 
 class GuiController(QObject):
@@ -18,9 +19,13 @@ class GuiController(QObject):
         super().__init__()
         self.iface = plugin.iface
         self.ui = plugin.dockwidget
-        self.choose_point_click_handler = cph.TSClickHandler(plugin)
+        self.choose_point_click_handler = cph.ClickHandler(plugin)
+        # self.choose_polygon_click_handler = cph.ClickHandler(plugin)
         self.click_tool = None  # plugin.click_tool
-        self.initializeClickTool()
+        self.drawing_tool = None  # for polygon drawing
+        self.drawing_tool_reference = None  # for reference polygon drawing
+        self.selection_type = "point"  # "point" or "polygon" or "reference polygon"
+        self.initializeSelection()
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
         self.last_saved_ts_path = "ts_plot.png"
@@ -33,14 +38,48 @@ class GuiController(QObject):
         self.setDataRangeMenu()
 
         self.iface.currentLayerChanged.connect(self.onLayerChanged)
+        self.onLayerChanged()
 
         self.setVectorFields()
 
-    def onLayerChanged(self, layer):
+    def initializeSelection(self):
+        if self.selection_type == "point":
+            self.initializeClickTool()
+        elif self.selection_type == "polygon":
+            self.initializePolygonDrawingTool()
+        elif self.selection_type == "reference polygon":
+            self.initializePolygonDrawingTool(reference=True)
+
+    def onLayerChanged(self, layer=None):
+        """Reset the click handler and the map when the active layer changes."""
+        if layer is None:
+            layer = self.iface.activeLayer()
         if layer:
             self.choose_point_click_handler.reset()
             self.insar_map.reset()
             self.setVectorFields()
+
+            layer_type = layer.type()
+            is_local_raster = (hasattr(layer, "dataProvider") and getattr(layer.dataProvider(), "name", lambda: "")()
+                               in ["gdal"]) #  "ogr"
+
+            if layer_type == layer.VectorLayer:
+                self.ui.pb_choose_polygon.setEnabled(True)
+                self.ui.pb_set_reference_polygon.setEnabled(True)
+            elif layer_type == layer.RasterLayer:
+                self.ui.tab_config_panel.setEnabled(False)
+                self.ui.pb_choose_polygon.setEnabled(False)
+                self.ui.pb_set_reference_polygon.setEnabled(False)
+
+            if layer_type == layer.RasterLayer and not is_local_raster:
+                self.ui.tab_config_panel.setEnabled(False)
+                self.ui.pb_choose_point.setChecked(False)
+                message = "Unsupported layer selected. Please choose a layer compatible with InSAR Explorer."
+            else:
+                self.ui.tab_config_panel.setEnabled(True)
+                self.ui.pb_choose_point.setChecked(True)
+                message = ""
+            self.ui.lb_msg_bar.setText(message)
 
     def setVectorFields(self):
         layer = self.iface.activeLayer()
@@ -83,16 +122,60 @@ class GuiController(QObject):
             self.click_tool.canvasClicked.connect(lambda point: self.onMapClicked(point=point))
 
     def onMapClicked(self, point):
-        self.choose_point_click_handler.choosePointClicked(point=point, layer=None, ref=self.ui.pb_set_reference.isChecked())
+        self.choose_point_click_handler.choosePointClicked(point=point, layer=None, ref=self.ui.pb_set_reference.isChecked(),
+                                                  start_callback=self.removePolygonDrawingTool(
+                                                      self.ui.pb_set_reference.isChecked()))
 
         if self.ui.pb_set_reference.isChecked():
-            if self.ui.cb_symbol_value_offset_sync_with_ref.isChecked():
-                self.insar_map.offset_value =self.choose_point_click_handler.map_reference_clicked_value
-                self.ui.sb_symbol_value_offset.setValue(self.choose_point_click_handler.map_reference_clicked_value)
+            self.syncOffsetWithReference()
 
     def removeClickTool(self):
         self.iface.mapCanvas().unsetMapTool(self.click_tool)
         self.click_tool = None
+
+    def initializePolygonDrawingTool(self, reference=False):
+        if not reference:
+            if not self.drawing_tool:
+                self.drawing_tool = (
+                    PolygonDrawingTool(self.iface.mapCanvas(), callback=self.polygonDrawnCallback,
+                                       start_callback=self.choose_point_click_handler.clearFeatureHighlight))
+            # FIXME: when push button is reactivated, current polygon is removed
+            self.iface.mapCanvas().setMapTool(self.drawing_tool)
+        else:
+            if not self.drawing_tool_reference:
+                self.drawing_tool_reference = (
+                    PolygonDrawingTool(self.iface.mapCanvas(), callback=self.polygonDrawnCallback,
+                                       start_callback=self.choose_point_click_handler.clearReferenceFeatureHighlight))
+                self.drawing_tool_reference.polygon_marker.setStyle(color=(255, 100, 100, 80))
+            self.iface.mapCanvas().setMapTool(self.drawing_tool_reference)
+
+    def deactivatePolygonDrawingTool(self, reference=False):
+        if not reference and self.drawing_tool:
+            self.iface.mapCanvas().unsetMapTool(self.drawing_tool)
+        elif reference and self.drawing_tool_reference:
+            self.iface.mapCanvas().unsetMapTool(self.drawing_tool_reference)
+
+    def removePolygonDrawingTool(self, reference=False):
+        self.deactivatePolygonDrawingTool(reference=reference)
+        if not reference and self.drawing_tool:
+            self.drawing_tool.clear()
+            self.drawing_tool = None
+        elif reference and self.drawing_tool_reference:
+            self.drawing_tool_reference.clear()
+            self.drawing_tool_reference = None
+
+    def polygonDrawnCallback(self, polygon):
+        self.choose_point_click_handler.choosePolygonDrawn(polygon=polygon,
+                                                           ref=self.ui.pb_set_reference_polygon.isChecked())
+        self.syncOffsetWithReference()
+
+
+    def syncOffsetWithReference(self):
+        """Sync offset value with reference point or polygon."""
+        if self.ui.cb_symbol_value_offset_sync_with_ref.isChecked():
+            value = self.choose_point_click_handler.map_reference_clicked_value
+            self.insar_map.offset_value = value
+            self.ui.sb_symbol_value_offset.setValue(value)
 
     def connectUiSignals(self):
         self.ui.visibilityChanged.connect(self.handleUiClose)
@@ -116,6 +199,8 @@ class GuiController(QObject):
         self.ui.pb_choose_point.clicked.connect(self.activatePointSelection)
         self.ui.pb_set_reference.clicked.connect(self.activateReferencePointSelection)
         self.ui.pb_reset_reference.clicked.connect(self.resetReferencePoint)
+        self.ui.pb_choose_polygon.clicked.connect(self.activatePolygonSelection)
+        self.ui.pb_set_reference_polygon.clicked.connect(self.activateReferencePolygonSelection)
         # TS fit handler
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.seasonalFitClicked)
@@ -131,6 +216,8 @@ class GuiController(QObject):
 
         # Setting popup
         self.ui.pb_ts_settings.clicked.connect(self.settingsWidgetPopup)
+        # map
+        self.connectMapSignals()
 
     def connectMapSignals(self):
         self.ui.cb_select_field.currentTextChanged.connect(self.selectVectorFieldChanged)
@@ -307,11 +394,16 @@ class GuiController(QObject):
             self.choose_point_click_handler.clearFeatureHighlight()
             self.choose_point_click_handler.clearReferenceFeatureHighlight()
             self.removeClickTool()
+            self.removePolygonDrawingTool(reference=False)
+            self.removePolygonDrawingTool(reference=True)
             self.ui.pb_choose_point.setChecked(False)
             self.ui.pb_set_reference.setChecked(False)
+            self.ui.pb_choose_polygon.setChecked(False)
 
     def activatePointSelection(self, status):
         self.ui.pb_set_reference.setChecked(False)
+        self.ui.pb_choose_polygon.setChecked(False)
+        self.ui.pb_set_reference_polygon.setChecked(False)
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
@@ -320,6 +412,8 @@ class GuiController(QObject):
 
     def activateReferencePointSelection(self, status):
         self.ui.pb_choose_point.setChecked(False)
+        self.ui.pb_choose_polygon.setChecked(False)
+        self.ui.pb_set_reference_polygon.setChecked(False)
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
@@ -327,12 +421,34 @@ class GuiController(QObject):
             self.ui.pb_set_reference.setChecked(False)
             self.removeClickTool()
 
+    def activatePolygonSelection(self, status):
+        self.ui.pb_choose_point.setChecked(False)
+        self.ui.pb_set_reference.setChecked(False)
+        self.ui.pb_set_reference_polygon.setChecked(False)
+        if status:
+            self.initializePolygonDrawingTool()
+        else:
+            self.deactivatePolygonDrawingTool(reference=False)
+
+    def activateReferencePolygonSelection(self, status):
+        self.ui.pb_choose_point.setChecked(False)
+        self.ui.pb_set_reference.setChecked(False)
+        self.ui.pb_choose_polygon.setChecked(False)
+        if status:
+            self.initializePolygonDrawingTool(reference=True)
+        else:
+            self.deactivatePolygonDrawingTool(reference=True)
+
     def resetReferencePoint(self):
         self.choose_point_click_handler.resetReferencePoint()
         self.activateReferencePointSelection(status=False)
+
         if self.ui.cb_symbol_value_offset_sync_with_ref.isChecked():
             self.ui.sb_symbol_value_offset.setValue(0)
             self.applySymbologyNow()
+
+        self.removePolygonDrawingTool(reference=True)  # remove reference polygon
+        self.deactivatePolygonDrawingTool(reference=False)  # deactivate polygon
 
     def addSelectedLayers(self):
         """

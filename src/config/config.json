@@ -91,6 +91,51 @@
                 ],
                 "advanced": true
             },
+            "series fill color": {
+                "type": "color",
+                "value": "#1f77b4",
+                "default": "#1f77b4",
+                "advanced": true
+            },
+            "series fill alpha": {
+                "type": "float",
+                "value": 0.2,
+                "default": 0.2,
+                "range": [
+                    0,
+                    1
+                ],
+                "advanced": true
+            },
+            "series line style": {
+                "type": "dropdown",
+                "value": "-",
+                "options": [
+                    "",
+                    "-",
+                    "--",
+                    "-.",
+                    ":"
+                ],
+                "default": "",
+                "advanced": true
+            },
+            "series line color": {
+                "type": "color",
+                "value": "gray",
+                "default": "gray",
+                "advanced": true
+            },
+            "series line width": {
+                "type": "float",
+                "value": 0.2,
+                "default": 0.2,
+                "range": [
+                    0,
+                    100
+                ],
+                "advanced": true
+            },
             "ymax": {
                 "type": "float",
                 "value": 60.0,

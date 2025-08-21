@@ -9,6 +9,8 @@
     <file>icons/colormaps/gray.png</file>
   </qresource>
   <qresource prefix="icons">
+    <file>icons/polygon_selection.png</file>
+    <file>icons/polygon_reference_selection.png</file>
     <file>icons/x.svg</file>
     <file>icons/residual.svg</file>
     <file>icons/setting.svg</file>

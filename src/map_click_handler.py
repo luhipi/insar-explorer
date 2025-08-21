@@ -1,9 +1,12 @@
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtCore import Qt
-from qgis.core import (QgsPointXY, QgsGeometry, QgsMapLayer, QgsRectangle, QgsFeatureRequest, QgsSettings, Qgis,
-                       )
+from qgis.core import QgsPointXY, QgsGeometry, QgsMapLayer, QgsRectangle, QgsFeatureRequest, QgsSettings, Qgis
 from qgis.gui import QgsHighlight
+from qgis.core import QgsProject, QgsCoordinateTransform
 from PyQt5.QtGui import QCursor
+
+import numpy as np
+
 
 from . import plot_timeseries as pts
 from .layer_utils import vector_layer as vector_layer_utils
@@ -26,6 +29,7 @@ class MapClickHandler:
         self.iface = plugin.iface
         self.highlight = None
         self.reference_highlight = None
+        self.map_reference_clicked_value = 0
 
     def identifyClickedFeatureID(self, point: QgsPointXY, layer: QgsMapLayer = None) -> int:
         """
@@ -175,6 +179,7 @@ class MapClickHandler:
 
 
 class TSClickHandler(MapClickHandler):
+    # TODO: separate PointClickHandler from TSClickHandler
     def __init__(self, plugin):
         super().__init__(plugin)
         self.plot_ts = pts.PlotTs(self.ui)
@@ -182,7 +187,6 @@ class TSClickHandler(MapClickHandler):
         self.ref_values = 0
         self.raster_layer = raster_layer_utils.RasterTimeseries()
         self.selected_field_name = None
-        self.map_reference_clicked_value = 0
 
     def reset(self):
         self.clearFeatureHighlight()
@@ -192,7 +196,11 @@ class TSClickHandler(MapClickHandler):
         self.ref_values = 0
         self.raster_layer.reset()
 
-    def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
+        self.plot_ts.clear()
+
+    def choosePointClicked(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False, start_callback=None):
+        if start_callback:  # use start_callback to remove previous polygon from map
+            start_callback()
         if not layer:
             layer = self.iface.activeLayer()
         status_vector, message = vector_layer_utils.checkVectorLayer(layer)
@@ -255,3 +263,104 @@ class TSClickHandler(MapClickHandler):
         self.ref_values = 0
         self.clearReferenceFeatureHighlight()
         self.plot_ts.plotTs(ref_values=self.ref_values)
+
+
+class PolygonClickHandler(MapClickHandler):
+    def __init__(self, plugin):
+        super().__init__(plugin)
+        self.polygon = None
+        self.ts_values = None
+        self.ref_values = None
+
+    def identifyFeaturesInPolygon(self, layer: QgsMapLayer, polygon: QgsGeometry, ref=False) -> list:
+        if not layer:
+            layer = self.iface.activeLayer()
+
+        # reproject the polygon to the layer's CRS
+        layer_crs = layer.crs()
+        project_crs = self.iface.mapCanvas().mapSettings().destinationCrs()
+        transform = QgsCoordinateTransform(project_crs, layer_crs, QgsProject.instance())
+        polygon.transform(transform)
+
+        # Check whether layer is a vector layer
+        status, message = vector_layer_utils.checkVectorLayer(layer)
+        if status is False:
+            self.ui.lb_msg_bar.setText(message)
+            return []
+
+        # Check whether polygon geometry is valid
+        if not polygon or not polygon.isGeosValid():
+            self.ui.lb_msg_bar.setText("Invalid polygon geometry.")
+            return []
+
+        # Prepare a feature request that uses the bounding box of the polygon
+        request = QgsFeatureRequest().setFilterRect(polygon.boundingBox())
+
+        # Identify features intersecting the polygon
+        features = []
+        for feature in layer.getFeatures(request):
+            if feature.geometry().intersects(polygon):
+                features.append(feature)
+
+        if features:
+            self.ui.lb_msg_bar.setText(f"{len(features)} features identified.")
+        else:
+            self.ui.lb_msg_bar.setText("No features found within the polygon.")
+
+        if len(features) == 0:
+            return None
+
+        return features
+
+    def choosePolygonDrawn(self, *, polygon: QgsGeometry, layer: QgsMapLayer = None, ref=False):
+        if not layer:
+            layer = self.iface.activeLayer()
+
+        status_vector, message = vector_layer_utils.checkVectorLayer(layer)
+        status_raster, message = grd_layer_utils.checkGrdLayer(layer)
+
+        if status_vector:
+            self.choosePolygonDrawnVector(layer=layer, polygon=polygon, ref=ref)
+        elif status_raster:
+            pass
+            # self.choosePolygonDrawnRaster(layer=layer, ref=ref)
+        else:
+            return
+
+    def choosePolygonDrawnVector(self, *, layer: QgsMapLayer = None, polygon=None, ref=False):
+        if not layer:
+            layer = self.iface.activeLayer()
+
+        status, message = vector_layer_utils.checkVectorLayerTimeseries(layer)
+        if status is False:
+            self.ui.lb_msg_bar.setText(message)
+            return
+
+        features = self.identifyFeaturesInPolygon(layer=layer, polygon=polygon, ref=ref)
+
+        if features:
+            date_values = []
+            for feature in features:
+                attributes = vector_layer_utils.getFeatureAttributes(feature)
+                date_values.append(vector_layer_utils.extractDateValueAttributes(attributes))
+
+            dates = date_values[0][:, 0]
+            values_column = [arr[:, 1] for arr in date_values]
+            values = np.stack(values_column, axis=1)
+
+            if not ref:
+                self.ts_values = values
+            else:
+                self.ref_values = values
+
+                if self.selected_field_name:
+                    clicked_values  = vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name)
+                    self.map_reference_clicked_value = np.mean(clicked_values)
+
+            self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values, plot_multiple=True)
+
+
+class ClickHandler(TSClickHandler, PolygonClickHandler):
+    def __init__(self, plugin):
+        TSClickHandler.__init__(self, plugin)
+        PolygonClickHandler.__init__(self, plugin)
