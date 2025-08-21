@@ -456,7 +456,7 @@ class GuiController(QObject):
         self.choose_point_click_handler.plot_ts.plotTs()
 
     def holdOnPlot(self, status):
-        self.choose_point_click_handler.plot_ts.hold_on_flag = self.ui.cb_hold_on_plot.isChecked()
+        self.choose_point_click_handler.plot_ts.hold_on_flag = status
         if status:
             self.msg_signal.emit("Hold on plot enabled: new plots will be added to the existing plot.",
                                  "i", 0)
