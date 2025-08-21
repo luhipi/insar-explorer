@@ -267,8 +267,8 @@ class TSClickHandler(MapClickHandler):
 
 
 class PolygonClickHandler(MapClickHandler):
-    def __init__(self, plugin):
-        super().__init__(plugin)
+    def __init__(self, plugin, msg_signal=None):
+        super().__init__(plugin, msg_signal=msg_signal)
         self.polygon = None
         self.ts_values = None
         self.ref_values = None
