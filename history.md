@@ -1,6 +1,7 @@
 ### History
 
 v1.1.0dev
+- Fix: remove old clicked points, so they do not reappear after changing CSR.
 - Check the selected layer and deactivate plugin if the layer is not compatible with InSAR Explorer.
 - Add support for polygon selection for vector data.
 - Change the reference point for the map on the fly.
