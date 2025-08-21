@@ -115,7 +115,8 @@ class MapClickHandler:
 
     def clearFeatureHighlight(self) -> None:
         if self.highlight:
-            self.highlight.hide()
+            canvas = self.iface.mapCanvas()
+            canvas.scene().removeItem(self.highlight)
             self.highlight = None
 
     def clearReferenceFeatureHighlight(self) -> None:
@@ -123,7 +124,8 @@ class MapClickHandler:
         Clear reference feature highlight
         """
         if self.reference_highlight:
-            self.reference_highlight.hide()
+            canvas = self.iface.mapCanvas()
+            canvas.scene().removeItem(self.reference_highlight)
             self.reference_highlight = None
 
     @classmethod
