@@ -79,7 +79,7 @@ class GuiController(QObject):
                 self.ui.tab_config_panel.setEnabled(True)
                 self.ui.pb_choose_point.setChecked(True)
                 message = ""
-            self.ui.lb_msg_bar.setText(message)
+            self.msg_signal.emit(message, "i", 5000)
 
     def setVectorFields(self):
         layer = self.iface.activeLayer()

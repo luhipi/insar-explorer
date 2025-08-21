@@ -286,12 +286,12 @@ class PolygonClickHandler(MapClickHandler):
         # Check whether layer is a vector layer
         status, message = vector_layer_utils.checkVectorLayer(layer)
         if status is False:
-            self.ui.lb_msg_bar.setText(message)
+            self.msg_signal.emit(message, "i", 5000)
             return []
 
         # Check whether polygon geometry is valid
         if not polygon or not polygon.isGeosValid():
-            self.ui.lb_msg_bar.setText("Invalid polygon geometry.")
+            self.msg_signal.emit("Invalid polygon geometry.", "w", 5000)
             return []
 
         # Prepare a feature request that uses the bounding box of the polygon
@@ -304,9 +304,9 @@ class PolygonClickHandler(MapClickHandler):
                 features.append(feature)
 
         if features:
-            self.ui.lb_msg_bar.setText(f"{len(features)} features identified.")
+            self.msg_signal.emit(f"{len(features)} features identified.", "i", 0)
         else:
-            self.ui.lb_msg_bar.setText("No features found within the polygon.")
+            self.msg_signal.emit("No features found within the polygon.", "w", 5000)
 
         if len(features) == 0:
             return None
@@ -334,7 +334,7 @@ class PolygonClickHandler(MapClickHandler):
 
         status, message = vector_layer_utils.checkVectorLayerTimeseries(layer)
         if status is False:
-            self.ui.lb_msg_bar.setText(message)
+            self.msg_signal.emit(message, "i", 5000)
             return
 
         features = self.identifyFeaturesInPolygon(layer=layer, polygon=polygon, ref=ref)
