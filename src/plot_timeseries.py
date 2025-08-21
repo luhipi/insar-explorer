@@ -205,7 +205,6 @@ class PlotTs():
                 self.ax.plot(self.dates, self.plot_all_values, series_line_style, color=series_line_color,
                          linewidth=series_line_width)
 
-        self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color)
         self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
                         edgecolors=edge_color)
 
