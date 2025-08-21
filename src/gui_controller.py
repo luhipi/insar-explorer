@@ -79,7 +79,7 @@ class GuiController(QObject):
                 self.ui.tab_config_panel.setEnabled(True)
                 self.ui.pb_choose_point.setChecked(True)
                 message = ""
-            self.msg_signal.emit(message, "i", 5000)
+            self.msg_signal.emit(message, "i", 0)
 
     def setVectorFields(self):
         layer = self.iface.activeLayer()
@@ -244,6 +244,7 @@ class GuiController(QObject):
         self.ui.pb_reset_reference.clicked.connect(self.resetReferencePoint)
         self.ui.pb_choose_polygon.clicked.connect(self.activatePolygonSelection)
         self.ui.pb_set_reference_polygon.clicked.connect(self.activateReferencePolygonSelection)
+        self.ui.cb_symbol_value_offset_sync_with_ref.clicked.connect(self.syncOffsetWithReferenceClicked)
         # TS fit handler
         self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
         self.ui.pb_ts_fit_seasonal.clicked.connect(self.seasonalFitClicked)
@@ -264,10 +265,10 @@ class GuiController(QObject):
 
     def connectMapSignals(self):
         self.ui.cb_select_field.currentTextChanged.connect(self.selectVectorFieldChanged)
-        self.ui.pb_symbology.clicked.connect(self.applySymbology)
+        self.ui.pb_symbology.clicked.connect(self.applySymbologyClicked)
         self.ui.sb_symbol_lower_range.valueChanged.connect(self.setSymbologyLowerRange)
         self.ui.sb_symbol_upper_range.valueChanged.connect(self.setSymbologyUpperRange)
-        self.ui.cb_symbol_range_sync.clicked.connect(self.setSymbologyLowerRange)
+        self.ui.cb_symbol_range_sync.clicked.connect(self.symbologyRangeSyncClicked)
         self.ui.sb_symbol_value_offset.valueChanged.connect(self.setSymbologyOffset)
         self.ui.sb_symbol_classes.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_size.valueChanged.connect(self.applyLiveSymbology)
@@ -286,6 +287,7 @@ class GuiController(QObject):
         self.ui.pb_range_from_data.setMenu(menu)
 
     def settingsWidgetPopup(self):
+        self.msg_signal.emit("", "", 0)
         json_file = "config/config.json"
         block_key = "timeseries settings"
         script_path = os.path.abspath(__file__)
@@ -314,6 +316,13 @@ class GuiController(QObject):
         self.ui.sb_symbol_upper_range.blockSignals(False)
         self.applyLiveSymbology()
 
+    def symbologyRangeSyncClicked(self, status):
+        if status:
+            self.setSymbologyLowerRange()
+            self.msg_signal.emit("Symbology range synced: changing one value updates the other.", 't', 0)
+        else:
+            self.msg_signal.emit("Symbology ranges unsynced.", 't', 0)
+
     def setSymbologyOffset(self):
         self.insar_map.offset_value = self.ui.sb_symbol_value_offset.value()
         self.applyLiveSymbology()
@@ -322,14 +331,18 @@ class GuiController(QObject):
         button = self.sender()
         if button.text() == "Range from data":
             message = self.insar_map.setSymbologyRangeFromData()
+            message = "Symbology range set from data."
         elif button.text() == "1xStd":
             message = self.insar_map.setSymbologyRangeFromData(n_std=1)
+            message = "Symbology range set to mean±1σ."
         elif button.text() == "2xStd":
             message = self.insar_map.setSymbologyRangeFromData(n_std=2)
+            message = "Symbology range set to mean±2σ."
         elif button.text() == "3xStd":
             message = self.insar_map.setSymbologyRangeFromData(n_std=3)
+            message = "Symbology range set to mean±3σ."
 
-        self.msg_signal.emit(message, 'i', 5000)
+        self.msg_signal.emit(message, 'i', 0)
         min_value = self.insar_map.min_value
         max_value = self.insar_map.max_value
         if self.ui.cb_symbol_range_sync.isChecked():
@@ -345,9 +358,9 @@ class GuiController(QObject):
     def activateLiveSymbology(self, status):
         if status:
             self.applyLiveSymbology()
-            self.msg_signal.emit("Live symbology enabled — changes will apply immediately.", 't', 5000)
+            self.msg_signal.emit("Live symbology enabled: changes will apply immediately.", 't', 0)
         else:
-            self.msg_signal.emit("Live symbology disabled.", 't', 5000)
+            self.msg_signal.emit("Live symbology disabled.", 't', 0)
 
     def applySymbologyNow(self):
         QTimer.singleShot(0, self.applySymbology)
@@ -362,13 +375,22 @@ class GuiController(QObject):
         self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
         message = self.insar_map.setSymbology()
         if message != "":
-            self.msg_signal.emit(message, "i", 5000)
+            self.msg_signal.emit(message, "i", 0)
         else:
-            self.msg_signal.emit("Symbology applied.", 'done', 5000)
+            self.msg_signal.emit("", "", 0)
 
-    def colormapReverseClicked(self):
+    def applySymbologyClicked(self, status):
+        self.applySymbology()
+        self.msg_signal.emit("Symbology applied.", "done", 5000)
+
+
+    def colormapReverseClicked(self, status):
+        if status:
+            self.msg_signal.emit("Colormap reversed.", "i", 0)
+        else:
+            self.msg_signal.emit("Colormap normal.", "i", 0)
         self.flipComboBoxIcons(self.ui.cmb_colormap)
-        self.insar_map.color_ramp_reverse_flag = self.ui.pb_colormap_reverse.isChecked()
+        self.insar_map.color_ramp_reverse_flag = status
         self.applyLiveSymbology()
 
     def flipComboBoxIcons(self, combo_box: QComboBox):
@@ -384,6 +406,8 @@ class GuiController(QObject):
         if status and self.ui.pb_ts_nofit.isChecked():
             self.ui.pb_ts_fit_poly1.setChecked(True)
         self.timeseriesPlotFit()
+        self.msg_signal.emit("Seasonal fit enabled: a seasonal component will be added to the selected model.",
+                             "i", 0)
 
     def timeseriesPlotFit(self):
         if self.ui.pb_ts_nofit.isChecked():
@@ -400,46 +424,71 @@ class GuiController(QObject):
 
         if self.ui.pb_ts_nofit.isChecked():
             self.choose_point_click_handler.plot_ts.fit_models = []
+            self.msg_signal.emit("No fit model selected.", "i", 0)
         else:
-            self.choose_point_click_handler.plot_ts.fit_models = [check_box_lookup[button] for button in
-                                                                  selected_buttons]
+            fit_models = [check_box_lookup[button] for button in selected_buttons]
+            self.choose_point_click_handler.plot_ts.fit_models = fit_models
+            seasonal_flag = self.ui.pb_ts_fit_seasonal.isChecked()
+            self.choose_point_click_handler.plot_ts.fit_seasonal_flag = seasonal_flag
+            msg = f"Fit model selected: {', '.join(fit_models)}"
+            msg = msg + " Seasonal component will be added." if seasonal_flag else msg
+            self.msg_signal.emit(msg, "i", 0)
 
-        self.choose_point_click_handler.plot_ts.fit_seasonal_flag = self.ui.pb_ts_fit_seasonal.isChecked()
         self.timeseriesPlotResiduals()
 
         self.choose_point_click_handler.plot_ts.fitModel()
 
-    def residualPlotClicked(self):
+    def residualPlotClicked(self, status):
         # disable hold on when residuals are plotted
         self.ui.cb_hold_on_plot.setChecked(False)
         if self.ui.pb_plot_residuals.isChecked() and self.ui.pb_ts_nofit.isChecked():
             self.ui.pb_ts_fit_poly1.setChecked(True)
         self.timeseriesPlotFit()
+        if status:
+            self.msg_signal.emit("Residual plot enabled: measurement − fit.",
+                                 "i", 0)
+        else:
+            self.msg_signal.emit("Residual plot disabled.", "i", 0)
 
     def timeseriesPlotResiduals(self):
         self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.pb_plot_residuals.isChecked()
                                                                        and not self.ui.pb_ts_nofit.isChecked())
         self.choose_point_click_handler.plot_ts.plotTs()
 
-    def holdOnPlot(self):
+    def holdOnPlot(self, status):
         self.choose_point_click_handler.plot_ts.hold_on_flag = self.ui.cb_hold_on_plot.isChecked()
+        if status:
+            self.msg_signal.emit("Hold on plot enabled: new plots will be added to the existing plot.",
+                                 "i", 0)
+        else:
+            self.msg_signal.emit("Hold on plot disabled.",
+                                 "i", 0)
+
 
     def plotYAxis(self):
         if self.ui.cb_y_from_data.isChecked():
             self.choose_point_click_handler.plot_ts.plot_y_axis = "from_data"
+            self.msg_signal.emit("Y-axis range set from data.", "i", 0)
         elif self.ui.cb_y_symmetric.isChecked():
             self.choose_point_click_handler.plot_ts.plot_y_axis = "symmetric"
+            self.msg_signal.emit("Y-axis range set symmetric.", "i", 0)
         elif self.ui.cb_y_adaptive.isChecked():
             self.choose_point_click_handler.plot_ts.plot_y_axis = "adaptive"
+            self.msg_signal.emit("Y-axis range set adaptively: less range change when plotting new time series.", "i",
+                                 0)
 
         self.choose_point_click_handler.plot_ts.plotTs()
 
     def timeseriesReplica(self):
         if self.ui.pb_ts_replica.isChecked():
             self.choose_point_click_handler.plot_ts.replicate_flag = True
-            self.choose_point_click_handler.plot_ts.replicate_value = int(self.ui.sb_ts_replica.text())
+            replicate_value = int(self.ui.sb_ts_replica.text())
+            self.choose_point_click_handler.plot_ts.replicate_value = replicate_value
+            self.msg_signal.emit(f"Replica enabled: time series will be replicated every ±{replicate_value} units.",
+                                 "i", 0)
         else:
             self.choose_point_click_handler.plot_ts.replicate_flag = False
+            self.msg_signal.emit("Replica disabled.", "i", 0)
         self.choose_point_click_handler.plot_ts.plotTs()
 
     def handleUiClose(self, visible):
@@ -460,7 +509,7 @@ class GuiController(QObject):
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
-            self.msg_signal.emit("Click any point on the map to view its time series.", "t", 5000)
+            self.msg_signal.emit("Click any point on the map to view its time series.", "t", 0)
         else:
             self.removeClickTool()
 
@@ -471,7 +520,7 @@ class GuiController(QObject):
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
-            self.msg_signal.emit("Click any point on the map to set it as reference.", "t", 5000)
+            self.msg_signal.emit("Click any point on the map to set it as reference.", "t", 0)
         else:
             self.ui.pb_set_reference.setChecked(False)
             self.removeClickTool()
@@ -483,7 +532,7 @@ class GuiController(QObject):
         if status:
             self.initializePolygonDrawingTool()
             self.msg_signal.emit("Click multiple points to draw polygon; right‑click to close and plot its time series."
-                                 , "t", 5000)
+                                 , "t", 0)
         else:
             self.deactivatePolygonDrawingTool(reference=False)
 
@@ -494,7 +543,7 @@ class GuiController(QObject):
         if status:
             self.initializePolygonDrawingTool(reference=True)
             self.msg_signal.emit("Click multiple points to draw reference polygon; right‑click to close it."
-                                 , "t", 5000)
+                                 , "t", 0)
         else:
             self.deactivatePolygonDrawingTool(reference=True)
 
@@ -505,10 +554,19 @@ class GuiController(QObject):
         if self.ui.cb_symbol_value_offset_sync_with_ref.isChecked():
             self.ui.sb_symbol_value_offset.setValue(0)
             self.applySymbologyNow()
-        self.msg_signal.emit("Reference point has been reset.", "i", 5000)
 
         self.removePolygonDrawingTool(reference=True)  # remove reference polygon
         self.deactivatePolygonDrawingTool(reference=False)  # deactivate polygon
+        self.msg_signal.emit("Reference point has been reset.", "done", 5000)
+
+    def syncOffsetWithReferenceClicked(self, status):
+        if status:
+            self.syncOffsetWithReference()
+            self.msg_signal.emit("Map reference update enabled: map will update when the reference point changes.",
+                                 "i", 0)
+        else:
+            self.msg_signal.emit("Map reference update disabled."
+                                 , "i", 0)
 
     def addSelectedLayers(self):
         """
@@ -532,6 +590,7 @@ class GuiController(QObject):
             self.ui.lw_layers.takeItem(self.ui.lw_layers.row(layer))
 
     def saveTsPlot(self):
+        self.msg_signal.emit("", "", 0)
         file_path, _ = QFileDialog.getSaveFileName(
             self.ui,
             "Save plot as image",

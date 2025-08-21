@@ -44,7 +44,7 @@ class MapClickHandler:
 
         status, message = vector_layer_utils.checkVectorLayer(layer)
         if status is False:
-            self.msg_signal.emit(message, "i", 5000)
+            self.msg_signal.emit(message, "i", 0)
             return
 
         closest_feature_id = self.findFeatureAtPoint(layer, point, self.iface.mapCanvas(),
@@ -220,7 +220,7 @@ class TSClickHandler(MapClickHandler):
 
         status, message = vector_layer_utils.checkVectorLayerTimeseries(layer)
         if status is False:
-            self.msg_signal.emit(message, "i", 5000)
+            self.msg_signal.emit(message, "i", 0)
             return
 
         if feature:
@@ -239,7 +239,7 @@ class TSClickHandler(MapClickHandler):
     def choosePointClickedRaster(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         status, message = grd_layer_utils.checkGrdTimeseries(layer)
         if status is False:
-            self.msg_signal.emit(message, "i", 5000)
+            self.msg_signal.emit(message, "i", 0)
             return
 
         date_values = self.raster_layer.getRasterTimeseriesAttributes(layer, point=point)
@@ -288,12 +288,12 @@ class PolygonClickHandler(MapClickHandler):
         # Check whether layer is a vector layer
         status, message = vector_layer_utils.checkVectorLayer(layer)
         if status is False:
-            self.msg_signal.emit(message, "i", 5000)
+            self.msg_signal.emit(message, "i", 0)
             return []
 
         # Check whether polygon geometry is valid
         if not polygon or not polygon.isGeosValid():
-            self.msg_signal.emit("Invalid polygon geometry.", "w", 5000)
+            self.msg_signal.emit("Invalid polygon geometry.", "w", 0)
             return []
 
         # Prepare a feature request that uses the bounding box of the polygon
@@ -308,7 +308,7 @@ class PolygonClickHandler(MapClickHandler):
         if features:
             self.msg_signal.emit(f"{len(features)} features identified.", "i", 0)
         else:
-            self.msg_signal.emit("No features found within the polygon.", "w", 5000)
+            self.msg_signal.emit("No features found within the polygon.", "w", 0)
 
         if len(features) == 0:
             return None
@@ -336,7 +336,7 @@ class PolygonClickHandler(MapClickHandler):
 
         status, message = vector_layer_utils.checkVectorLayerTimeseries(layer)
         if status is False:
-            self.msg_signal.emit(message, "i", 5000)
+            self.msg_signal.emit(message, "i", 0)
             return
 
         features = self.identifyFeaturesInPolygon(layer=layer, polygon=polygon, ref=ref)
