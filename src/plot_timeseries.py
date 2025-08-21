@@ -210,43 +210,12 @@ class PlotTs():
                         edgecolors=edge_color)
 
         # update ylim for hold on
-        plot_min = min(self.plot_values)
-        plot_max = max(self.plot_values)
-        self.updateYlim(ax=self.ax, new_min=plot_min, new_max=plot_max)
+        self.updateYlim(ax=self.ax, y_data=self.plot_values)
 
         if line_style:
             self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
         if self.replicate_flag:
-            marker_color_1 = parms['replica color 1']  # replica up
-            marker_color_2 = parms['replica color 2']  # replica down
-            marker_size_replica = parms['replica marker size']
-            marker_replica = parms['replica marker']
-            number_of_up_replicas = parms['number of up replicas']
-            number_of_down_replicas = parms['number of down replicas']
-
-            # plot multiple replicas
-            for i in range(number_of_up_replicas):
-                replicate_value = self.replicate_value * (i + 1)
-
-                if i % 2 == 0:
-                    marker_replica_color = marker_color_1
-                else:
-                    marker_replica_color = marker_color_2
-
-                replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value,
-                                               marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
-                self.plot_replicates.append([replicate_up])
-            for i in range(number_of_down_replicas):
-                replicate_value = self.replicate_value * (i + 1)
-
-                if i % 2 == 0:
-                    marker_replica_color = marker_color_2
-                else:
-                    marker_replica_color = marker_color_1
-
-                replicate_dn = self.ax.scatter(self.dates, self.plot_values - replicate_value,
-                                               marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
-                self.plot_replicates.append([replicate_dn])
+            self.plotReplicas()
 
         self.decoratePlot(parms=parms)
         self.fitModel()
@@ -255,6 +224,43 @@ class PlotTs():
         self.decorateFigure(parms=parms_figure)
 
         self.ui.canvas.draw()
+
+    def plotReplicas(self):
+        parms = self.parms['time series plot']
+        marker_color_1 = parms['replica color 1']  # replica up
+        marker_color_2 = parms['replica color 2']  # replica down
+        marker_size_replica = parms['replica marker size']
+        marker_replica = parms['replica marker']
+        number_of_up_replicas = parms['number of up replicas']
+        number_of_down_replicas = parms['number of down replicas']
+
+        # plot multiple replicas
+        for i in range(number_of_up_replicas):
+            replicate_value = self.replicate_value * (i + 1)
+
+            if i % 2 == 0:
+                marker_replica_color = marker_color_1
+            else:
+                marker_replica_color = marker_color_2
+
+            replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value,
+                                           marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+            self.plot_replicates.append([replicate_up])
+
+        self.updateYlim(ax=self.ax, y_data=self.plot_values + replicate_value)
+
+        for i in range(number_of_down_replicas):
+            replicate_value = self.replicate_value * (i + 1)
+
+            if i % 2 == 0:
+                marker_replica_color = marker_color_2
+            else:
+                marker_replica_color = marker_color_1
+
+            replicate_dn = self.ax.scatter(self.dates, self.plot_values - replicate_value,
+                                           marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+            self.plot_replicates.append([replicate_dn])
+        self.updateYlim(ax=self.ax, y_data=self.plot_values - replicate_value)
 
     def fitModel(self):
         [plot.remove() for plot in self.fit_plot_list]
@@ -442,11 +448,15 @@ class PlotTs():
             end_of_year = mdates.num2date(mdates.datestr2num(f'{max_date.year+1}-01-01'))
             ax.set_xlim(start_of_year, end_of_year)
 
-    def updateYlim(self, ax=None, new_min: int = None, new_max: int = None):
+    def updateYlim(self, *, ax=None, y_data):
         if not ax:
             ax = self.ax
+
+        data_min = np.nanmin(y_data)
+        data_max = np.nanmax(y_data)
+
         current_ylim = ax.get_ylim()
-        updated_ylim = (min(current_ylim[0], new_min), max(current_ylim[1], new_max))
+        updated_ylim = (min(current_ylim[0], data_min), max(current_ylim[1], data_max))
         ax.set_ylim(updated_ylim)
 
     def setYlims(self, ax=None, parms={}):
