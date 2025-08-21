@@ -20,8 +20,7 @@ class GuiController(QObject):
         super().__init__()
         self.iface = plugin.iface
         self.ui = plugin.dockwidget
-        self.choose_point_click_handler = cph.TSClickHandler(plugin, msg_signal=self.msg_signal)
-        # self.choose_polygon_click_handler = cph.ClickHandler(plugin)
+        self.choose_point_click_handler = cph.ClickHandler(plugin, msg_signal=self.msg_signal)
         self.click_tool = None  # plugin.click_tool
         self.drawing_tool = None  # for polygon drawing
         self.drawing_tool_reference = None  # for reference polygon drawing

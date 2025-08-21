@@ -362,6 +362,6 @@ class PolygonClickHandler(MapClickHandler):
 
 
 class ClickHandler(TSClickHandler, PolygonClickHandler):
-    def __init__(self, plugin):
-        TSClickHandler.__init__(self, plugin)
-        PolygonClickHandler.__init__(self, plugin)
+    def __init__(self, plugin, msg_signal=None):
+        TSClickHandler.__init__(self, plugin, msg_signal=msg_signal)
+        PolygonClickHandler.__init__(self, plugin, msg_signal=msg_signal)
