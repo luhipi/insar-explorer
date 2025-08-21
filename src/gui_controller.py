@@ -461,8 +461,7 @@ class GuiController(QObject):
             self.msg_signal.emit("Hold on plot enabled: new plots will be added to the existing plot.",
                                  "i", 0)
         else:
-            self.msg_signal.emit("Hold on plot disabled.",
-                                 "i", 0)
+            self.msg_signal.emit("Hold on plot disabled.", "i", 0)
 
 
     def plotYAxis(self):
