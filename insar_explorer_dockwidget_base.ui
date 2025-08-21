@@ -20,7 +20,7 @@
       <item>
        <widget class="QLabel" name="lb_msg_bar">
         <property name="toolTip">
-         <string>Plot fit residual</string>
+         <string/>
         </property>
         <property name="text">
          <string/>
@@ -1131,6 +1131,9 @@
                          <property name="checkable">
                           <bool>true</bool>
                          </property>
+                         <property name="flat">
+                          <bool>true</bool>
+                         </property>
                         </widget>
                        </item>
                        <item>
@@ -1173,6 +1176,9 @@
                           </size>
                          </property>
                          <property name="checkable">
+                          <bool>true</bool>
+                         </property>
+                         <property name="flat">
                           <bool>true</bool>
                          </property>
                         </widget>

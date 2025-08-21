@@ -24,9 +24,10 @@ class MapClickHandler:
         highlight: The QgsHighlight object used to highlight selected features.
 
     """
-    def __init__(self, plugin):
+    def __init__(self, plugin, msg_signal=None):
         self.ui = plugin.dockwidget
         self.iface = plugin.iface
+        self.msg_signal = msg_signal
         self.highlight = None
         self.reference_highlight = None
         self.map_reference_clicked_value = 0
@@ -43,16 +44,16 @@ class MapClickHandler:
 
         status, message = vector_layer_utils.checkVectorLayer(layer)
         if status is False:
-            self.ui.lb_msg_bar.setText(message)
+            self.msg_signal.emit(message, "i", 0)
             return
 
         closest_feature_id = self.findFeatureAtPoint(layer, point, self.iface.mapCanvas(),
                                                      only_the_closest_one=True, only_ids=True)
 
         if closest_feature_id:
-            self.ui.lb_msg_bar.setText("")
+            self.msg_signal.emit("", "i", 0)
         else:
-            self.ui.lb_msg_bar.setText("Identify Result: No nearby point found. Select another point.")
+            self.msg_signal.emit("No nearby point found. Select another point.", "w", 0)
 
         return closest_feature_id
 
@@ -182,8 +183,8 @@ class MapClickHandler:
 
 class TSClickHandler(MapClickHandler):
     # TODO: separate PointClickHandler from TSClickHandler
-    def __init__(self, plugin):
-        super().__init__(plugin)
+    def __init__(self, plugin, msg_signal=None):
+        super().__init__(plugin, msg_signal=msg_signal)
         self.plot_ts = pts.PlotTs(self.ui)
         self.ts_values = 0
         self.ref_values = 0
@@ -219,7 +220,7 @@ class TSClickHandler(MapClickHandler):
 
         status, message = vector_layer_utils.checkVectorLayerTimeseries(layer)
         if status is False:
-            self.ui.lb_msg_bar.setText(message)
+            self.msg_signal.emit(message, "i", 0)
             return
 
         if feature:
@@ -238,7 +239,7 @@ class TSClickHandler(MapClickHandler):
     def choosePointClickedRaster(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         status, message = grd_layer_utils.checkGrdTimeseries(layer)
         if status is False:
-            self.ui.lb_msg_bar.setText(message)
+            self.msg_signal.emit(message, "i", 0)
             return
 
         date_values = self.raster_layer.getRasterTimeseriesAttributes(layer, point=point)
@@ -268,8 +269,8 @@ class TSClickHandler(MapClickHandler):
 
 
 class PolygonClickHandler(MapClickHandler):
-    def __init__(self, plugin):
-        super().__init__(plugin)
+    def __init__(self, plugin, msg_signal=None):
+        super().__init__(plugin, msg_signal=msg_signal)
         self.polygon = None
         self.ts_values = None
         self.ref_values = None
@@ -287,12 +288,12 @@ class PolygonClickHandler(MapClickHandler):
         # Check whether layer is a vector layer
         status, message = vector_layer_utils.checkVectorLayer(layer)
         if status is False:
-            self.ui.lb_msg_bar.setText(message)
+            self.msg_signal.emit(message, "i", 0)
             return []
 
         # Check whether polygon geometry is valid
         if not polygon or not polygon.isGeosValid():
-            self.ui.lb_msg_bar.setText("Invalid polygon geometry.")
+            self.msg_signal.emit("Invalid polygon geometry.", "w", 0)
             return []
 
         # Prepare a feature request that uses the bounding box of the polygon
@@ -305,9 +306,9 @@ class PolygonClickHandler(MapClickHandler):
                 features.append(feature)
 
         if features:
-            self.ui.lb_msg_bar.setText(f"{len(features)} features identified.")
+            self.msg_signal.emit(f"{len(features)} features identified.", "i", 0)
         else:
-            self.ui.lb_msg_bar.setText("No features found within the polygon.")
+            self.msg_signal.emit("No features found within the polygon.", "w", 0)
 
         if len(features) == 0:
             return None
@@ -335,7 +336,7 @@ class PolygonClickHandler(MapClickHandler):
 
         status, message = vector_layer_utils.checkVectorLayerTimeseries(layer)
         if status is False:
-            self.ui.lb_msg_bar.setText(message)
+            self.msg_signal.emit(message, "i", 0)
             return
 
         features = self.identifyFeaturesInPolygon(layer=layer, polygon=polygon, ref=ref)
@@ -363,6 +364,6 @@ class PolygonClickHandler(MapClickHandler):
 
 
 class ClickHandler(TSClickHandler, PolygonClickHandler):
-    def __init__(self, plugin):
-        TSClickHandler.__init__(self, plugin)
-        PolygonClickHandler.__init__(self, plugin)
+    def __init__(self, plugin, msg_signal=None):
+        TSClickHandler.__init__(self, plugin, msg_signal=msg_signal)
+        PolygonClickHandler.__init__(self, plugin, msg_signal=msg_signal)
