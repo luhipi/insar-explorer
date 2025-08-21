@@ -84,7 +84,7 @@ class GuiController(QObject):
             self.click_tool.canvasClicked.connect(lambda point: self.onMapClicked(point=point))
 
     def onMapClicked(self, point):
-        self.msg_signal.emit("", 'i', 0)
+        self.msg_signal.emit("", "", 0)
         self.choose_point_click_handler.choosePointClicked(point=point, layer=None, ref=self.ui.pb_set_reference.isChecked())
 
         if self.ui.pb_set_reference.isChecked():
@@ -114,25 +114,26 @@ class GuiController(QObject):
         buffer = 50
         num_chars = max(20, (width - buffer) // avg_char_width)
 
-        info = "ℹ "  # U+2139
-        warning = "⚠ "  # U+26A0
-        error = "❌ "  # U+274C
-        tip = "💡 "  # U+1F4A1
+        info = ""
+        warning = "🟡️ "
+        error = "🟠 "
+        tip = "💡 "
+        done = "✔️️ "
+
+        if message == "":
+            v = ''
 
         if v == 'w':
-            self.ui.lb_msg_bar.setStyleSheet("color: black; background-color: #FFF3E0;")
             message = warning + str(message)
         elif v == 'e':
-            self.ui.lb_msg_bar.setStyleSheet("color: black; background-color: #FFEBEE;")
             message = error + str(message)
         elif v == 'i':
-            self.ui.lb_msg_bar.setStyleSheet("color: black; background-color: transparent;")
             message = info + str(message)
         elif v == 't':
-            self.ui.lb_msg_bar.setStyleSheet("color: black; background-color: transparent;")
             message = tip + str(message)
+        elif v == 'done':
+            message = done + str(message)
         else:
-            self.ui.lb_msg_bar.setStyleSheet("color: black; background-color: transparent;")
             message = str(message)
 
         self.ui.lb_msg_bar.setText(message[:num_chars])
@@ -185,7 +186,7 @@ class GuiController(QObject):
         self.ui.sb_symbol_classes.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_size.valueChanged.connect(self.applyLiveSymbology)
         self.ui.sb_symbol_opacity.valueChanged.connect(self.applyLiveSymbology)
-        self.ui.pb_symbology_live.toggled.connect(self.applyLiveSymbology)
+        self.ui.pb_symbology_live.toggled.connect(self.activateLiveSymbology)
         self.ui.cmb_colormap.currentIndexChanged.connect(self.applyLiveSymbology)
         self.ui.pb_colormap_reverse.toggled.connect(self.colormapReverseClicked)
 
@@ -255,6 +256,13 @@ class GuiController(QObject):
         if self.ui.pb_symbology_live.isChecked():
             self.applySymbology()
 
+    def activateLiveSymbology(self, status):
+        if status:
+            self.applyLiveSymbology()
+            self.msg_signal.emit("Live symbology enabled — changes will apply immediately.", 't', 5000)
+        else:
+            self.msg_signal.emit("Live symbology disabled.", 't', 5000)
+
     def applySymbologyNow(self):
         QTimer.singleShot(0, self.applySymbology)
 
@@ -267,7 +275,10 @@ class GuiController(QObject):
         self.insar_map.symbol_size = float(self.ui.sb_symbol_size.value())
         self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
         message = self.insar_map.setSymbology()
-        self.msg_signal.emit(message, 'i', 5000)
+        if message != "":
+            self.msg_signal.emit(message, '', 5000)
+        else:
+            self.msg_signal.emit("Symbology applied.", 'done', 5000)
 
     def colormapReverseClicked(self):
         self.flipComboBoxIcons(self.ui.cmb_colormap)
@@ -358,7 +369,7 @@ class GuiController(QObject):
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
-            self.msg_signal.emit("Click on the map to select a point and plot its time series.", 't', 5000)
+            self.msg_signal.emit("Click any point on the map to view its time series.", "t", 5000)
         else:
             self.removeClickTool()
 
@@ -367,7 +378,7 @@ class GuiController(QObject):
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
-            self.msg_signal.emit("Click on the map to select the reference point for the time series.", 't', 5000)
+            self.msg_signal.emit("Click any point on the map to set it as reference.", "t", 5000)
         else:
             self.ui.pb_set_reference.setChecked(False)
             self.removeClickTool()
