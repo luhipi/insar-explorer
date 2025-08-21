@@ -122,7 +122,7 @@ class GuiController(QObject):
             self.click_tool.canvasClicked.connect(lambda point: self.onMapClicked(point=point))
 
     def onMapClicked(self, point):
-        self.msg_signal.emit("", "", 0)
+        self.msg_signal.emit("", "i", 0)
         self.choose_point_click_handler.choosePointClicked(point=point, layer=None, ref=self.ui.pb_set_reference.isChecked(),
                                                   start_callback=self.removePolygonDrawingTool(
                                                       self.ui.pb_set_reference.isChecked()))
@@ -362,7 +362,7 @@ class GuiController(QObject):
         self.insar_map.color_ramp_name = self.ui.cmb_colormap.currentText()
         message = self.insar_map.setSymbology()
         if message != "":
-            self.msg_signal.emit(message, '', 5000)
+            self.msg_signal.emit(message, "i", 5000)
         else:
             self.msg_signal.emit("Symbology applied.", 'done', 5000)
 
@@ -501,7 +501,7 @@ class GuiController(QObject):
         if self.ui.cb_symbol_value_offset_sync_with_ref.isChecked():
             self.ui.sb_symbol_value_offset.setValue(0)
             self.applySymbologyNow()
-        self.msg_signal.emit("Reference point has been reset.", 'i', 5000)
+        self.msg_signal.emit("Reference point has been reset.", "i", 5000)
 
         self.removePolygonDrawingTool(reference=True)  # remove reference polygon
         self.deactivatePolygonDrawingTool(reference=False)  # deactivate polygon
