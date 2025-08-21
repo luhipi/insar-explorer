@@ -208,6 +208,12 @@ class PlotTs():
         self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color)
         self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
                         edgecolors=edge_color)
+
+        # update ylim for hold on
+        plot_min = min(self.plot_values)
+        plot_max = max(self.plot_values)
+        self.updateYlim(ax=self.ax, new_min=plot_min, new_max=plot_max)
+
         if line_style:
             self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
         if self.replicate_flag:
@@ -435,6 +441,13 @@ class PlotTs():
             start_of_year = mdates.num2date(mdates.datestr2num(f'{min_date.year}-01-01'))
             end_of_year = mdates.num2date(mdates.datestr2num(f'{max_date.year+1}-01-01'))
             ax.set_xlim(start_of_year, end_of_year)
+
+    def updateYlim(self, ax=None, new_min: int = None, new_max: int = None):
+        if not ax:
+            ax = self.ax
+        current_ylim = ax.get_ylim()
+        updated_ylim = (min(current_ylim[0], new_min), max(current_ylim[1], new_max))
+        ax.set_ylim(updated_ylim)
 
     def setYlims(self, ax=None, parms={}):
         if not ax:
