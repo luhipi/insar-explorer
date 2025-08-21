@@ -1329,7 +1329,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>:/icons/icons/sync_offset_with_reference.svg</normaloff>:/icons/icons/sync_offset_with_reference.svg</iconset>
+                             <normaloff>:/icons/icons/sync_map_with_reference.svg</normaloff>:/icons/icons/sync_map_with_reference.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
