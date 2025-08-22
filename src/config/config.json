@@ -254,7 +254,7 @@
             },
             "marker": {
                 "type": "dropdown",
-                "value": ".",
+                "value": "o",
                 "options": [
                     "o",
                     ".",
@@ -266,7 +266,7 @@
             },
             "marker color": {
                 "type": "color",
-                "value": "#1f77b4",
+                "value": "#d62728",
                 "default": "#1f77b4"
             },
             "marker edge color": {

@@ -177,6 +177,7 @@ class GuiController(QObject):
             value = self.choose_point_click_handler.map_reference_clicked_value
             self.insar_map.offset_value = value
             self.ui.sb_symbol_value_offset.setValue(value)
+            self.applySymbology()
 
     def connectUiSignals(self):
         self.ui.visibilityChanged.connect(self.handleUiClose)
