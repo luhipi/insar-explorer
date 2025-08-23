@@ -25,6 +25,8 @@ class PlotTs():
         script_path = os.path.abspath(__file__)
         json_file = "config.json"
         self.config_file = os.path.join(os.path.dirname(script_path), 'config', json_file)
+        self.plot_list = []
+        self.plot_line_list = []
         self.fit_plot_list = []
         self.fit_models = []
         self.fit_seasonal_flag = False
@@ -158,9 +160,21 @@ class PlotTs():
             self.plot_all_values = None
         self.plot_values = np.mean(self.ts_values, axis=1) - np.mean(self.ref_values, axis=1)
 
-    def initializeAxes(self):
+    def initializeAxes(self, update=False):
+        """
+        Initialize the axes for the plot.
+        :param update: bool
+            If True, clear the latest plot.
+        """
         if not self.hold_on_flag:
             self.ui.figure.clear()
+            self.plot_list = []
+            self.plot_line_list = []
+
+        if update:
+            # remove current plot
+            self.removeLastPlot()
+
         self.updateSettings()
         if self.plot_residuals_flag:
             self.ax = self.ui.figure.add_subplot(211)
@@ -168,10 +182,9 @@ class PlotTs():
         else:
             self.ax = self.ui.figure.add_subplot(111)
 
-    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True):
-        self.initializeAxes()
-
-
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, update=False):
+        # update: flag incicating if the plot should be updated or a new one created
+        self.initializeAxes(update=update)
 
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
         if self.dates is None:
@@ -207,6 +220,12 @@ class PlotTs():
 
         self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
                         edgecolors=edge_color)
+        if marker_size > 0:
+            plot = self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
+                            edgecolors=edge_color, linewidth=0.2)
+        else:
+            plot = None
+        self.plot_list.append(plot)
 
         # update ylim for hold on
         self.updateYlim(ax=self.ax, y_data=self.plot_values)
@@ -221,6 +240,21 @@ class PlotTs():
 
         parms_figure = self.parms['figure']
         self.decorateFigure(parms=parms_figure)
+
+        self.ui.canvas.draw()
+
+    def removeLastPlot(self, n=1):
+        for _ in range(n):
+            if len(self.plot_list) > 0:
+                plot = self.plot_list[-1]
+                if plot:
+                    plot.remove()
+                self.plot_list.pop()
+
+                plot_line = self.plot_line_list[-1]
+                if plot_line:
+                    plot_line.remove()
+                self.plot_line_list.pop()
 
         self.ui.canvas.draw()
 
