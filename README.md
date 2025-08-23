@@ -24,7 +24,7 @@ More information [here](https://luhipi.github.io/insar-explorer/#usage)
 We welcome contributions to the project. Please follow the guidelines [here](https://luhipi.github.io/insar-explorer/#contributing).
 
 ## License
-This plugin is licensed under the GPL-2.0 license. See the LICENSE file for more details. 
+This plugin is licensed under the GPL-3.0 license. See the LICENSE file for more details. 
 If you use InSAR Explorer in your research, please cite the following paper:
 
 - M. H. Haghighi et al., “SARvey and InSAR Explorer: Open-source tools for InSAR data processing and visualization,” in Proc. 2025 IEEE Int. Geosci. Remote Sens. Symp. (IGARSS), Brisbane, Australia, 2025, pp. 9414–9417.
