@@ -18,6 +18,9 @@ class PlotTs():
         self.ts_values = 0
         self.ref_values = 0
         self.plot_values = None
+        self.plot_all_values = None
+        self.min_plot_values = None
+        self.max_plot_values = None
         self.residuals_values = None
         script_path = os.path.abspath(__file__)
         json_file = "config.json"
@@ -51,7 +54,14 @@ class PlotTs():
         parms['marker size'] = parms_ts.get(["time series plot", "marker size"])
         parms['line style'] = parms_ts.get(["time series plot", "line style"]) or ''
         parms['line color'] = parms_ts.get(["time series plot", "line color"]) or None
-        parms['line width'] = parms_ts.get(["time series plot", "line width"])
+        parms['line width'] = parms_ts.get(["time series plot", "line width"]) or 1
+
+        parms['series fill color'] = parms_ts.get(["time series plot", "series fill color"]) or 'blue'
+        parms['series fill alpha'] = parms_ts.get(["time series plot", "series fill alpha"]) or 0.2
+        parms['series line style'] = parms_ts.get(["time series plot", "series line style"]) or ''
+        parms['series line color'] = parms_ts.get(["time series plot", "series line color"]) or None
+        parms['series line width'] = parms_ts.get(["time series plot", "series line width"]) or 0.2
+
 
         parms['ymin'] = parms_ts.get(["time series plot", "ymin"])
         parms['ymax'] = parms_ts.get(["time series plot", "ymax"])
@@ -113,13 +123,40 @@ class PlotTs():
         if dates is not None:
             self.dates = dates
 
-        if ts_values is not None:
-            self.ts_values = ts_values
+        def prepareValues(values):
+            if values is not None:
+                values = np.array(values, dtype=float, ndmin=2)
+                if values.shape[0] == 1:
+                    values = values.T
+            else:
+                values = np.zeros((len(self.dates), 1))
+            return values
 
-        if ref_values is not None:
-            self.ref_values = ref_values
+        if ts_values is None:
+            ts_values = self.ts_values
+        if ref_values is None:
+            ref_values = self.ref_values
 
-        self.plot_values = self.ts_values - self.ref_values
+        self.ts_values = prepareValues(ts_values)
+        self.ref_values = prepareValues(ref_values)
+        self.preparePlotValues()
+
+    def preparePlotValues(self):
+        plot_values = self.ts_values - np.mean(self.ref_values, axis=1, keepdims=True)
+
+        if np.shape(self.ts_values)[1] > 1:
+            # actual data range
+            self.min_plot_values = np.min(plot_values, axis=1)
+            self.max_plot_values = np.max(plot_values, axis=1)
+            # based on std
+            # self.min_plot_values = np.mean(plot_values, axis=1) - np.std(plot_values, axis=1)
+            # self.max_plot_values = np.mean(plot_values, axis=1) + np.std(plot_values, axis=1)
+            self.plot_all_values = plot_values
+        else:
+            self.min_plot_values = None
+            self.max_plot_values = None
+            self.plot_all_values = None
+        self.plot_values = np.mean(self.ts_values, axis=1) - np.mean(self.ref_values, axis=1)
 
     def initializeAxes(self):
         if not self.hold_on_flag:
@@ -131,11 +168,10 @@ class PlotTs():
         else:
             self.ax = self.ui.figure.add_subplot(111)
 
-    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, marker=None):
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True):
         self.initializeAxes()
 
-        if marker is None:
-            marker = self.parms['time series plot']['marker']
+
 
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
         if self.dates is None:
@@ -147,12 +183,27 @@ class PlotTs():
             return
 
         parms = self.parms['time series plot']
+        marker = parms['marker']
         marker_size = parms['marker size']
         marker_color = parms['marker color']
         edge_color = parms['marker edge color']
         line_style = parms['line style']
         line_color = parms['line color']
         line_width = parms['line width']
+
+        if plot_multiple and self.min_plot_values is not None:
+            lower_bound = self.min_plot_values
+            upper_bound = self.max_plot_values
+            series_fill_color = parms['series fill color']
+            series_fill_alpha = parms['series fill alpha']
+            self.ax.fill_between(self.dates, lower_bound, upper_bound, color=series_fill_color, alpha=series_fill_alpha)
+        if self.plot_all_values is not None:
+            series_line_style = parms['series line style']
+            series_line_color = parms['series line color']
+            series_line_width = parms['series line width']
+            if series_line_style:
+                self.ax.plot(self.dates, self.plot_all_values, series_line_style, color=series_line_color,
+                         linewidth=series_line_width)
 
         self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color)
         self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
