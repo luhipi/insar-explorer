@@ -369,7 +369,7 @@ class GuiController(QObject):
             self.setSymbologyLowerRange()
             self.msg_signal.emit("Symbology range synced: changing one value updates the other.", 't', 0)
         else:
-            self.msg_signal.emit("Symbology ranges unsynced.", 't', 0)
+            self.msg_signal.emit("Symbology ranges unsynced.", 'i', 0)
 
     def setSymbologyOffset(self):
         self.insar_map.offset_value = self.ui.sb_symbol_value_offset.value()
@@ -406,9 +406,9 @@ class GuiController(QObject):
     def activateLiveSymbology(self, status):
         if status:
             self.applyLiveSymbology()
-            self.msg_signal.emit("Live symbology enabled: changes will apply immediately.", 't', 0)
+            self.msg_signal.emit("Live symbology enabled: changes will apply immediately.", 'done', 0)
         else:
-            self.msg_signal.emit("Live symbology disabled.", 't', 0)
+            self.msg_signal.emit("Live symbology disabled.", 'i', 0)
 
     def applySymbologyNow(self):
         QTimer.singleShot(0, self.applySymbology)
@@ -688,7 +688,7 @@ class GuiController(QObject):
         if status:
             self.syncOffsetWithReference()
             self.msg_signal.emit("Map reference update enabled: map will update when the reference point changes.",
-                                 "i", 0)
+                                 "done", 0)
         else:
             self.msg_signal.emit("Map reference update disabled."
                                  , "i", 0)
