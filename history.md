@@ -1,6 +1,7 @@
 ### History
 
-v2.0.0dev
+v2.0.0
+- Fix: Sort time series data by date before plotting.
 - Introduce new time series setting in the UI.
 - Add Settings Panel for managing time series settings.
 - Add citation information.

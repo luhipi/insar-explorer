@@ -37,7 +37,6 @@ class RasterTimeseries:
     def reset(self):
         self.time_series_data = None
 
-
     def getClickedPixelValue(self, layer, point):
         """
         Get the pixel value of the clicked point from the raster layer.
@@ -70,7 +69,6 @@ class RasterTimeseries:
             return pixel_value[0, 0]
 
         return None
-
 
     def getRasterTimeseriesAttributes(self, layer, point):
         """
