@@ -1,6 +1,7 @@
 ### History
 
 v1.1.0dev
+- Add citation information.
 - Add status bar messages for different UI components.
 - Enhance status bar updates by a signal-based mechanism.
 - Fix: remove old clicked points, so they do not reappear after changing CSR.
