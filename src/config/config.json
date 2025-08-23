@@ -262,7 +262,7 @@
                     "s",
                     "x"
                 ],
-                "default": "."
+                "default": "o"
             },
             "marker color": {
                 "type": "color",
