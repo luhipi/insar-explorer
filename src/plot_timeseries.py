@@ -230,8 +230,12 @@ class PlotTs():
         # update ylim for hold on
         self.updateYlim(ax=self.ax, y_data=self.plot_values)
 
-        if line_style:
-            self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
+        if line_style != '':
+            plot_line = self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
+        else:
+            plot_line = [None]
+        self.plot_line_list.append(plot_line[0])
+
         if self.replicate_flag:
             self.plotReplicas()
 
