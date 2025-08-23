@@ -128,13 +128,18 @@ class PlotTs():
 
     def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
         if dates is not None:
-            self.dates = dates
+            sort_idx = np.argsort(dates)
+            self.dates = dates[sort_idx]
+        else:
+            sort_idx = None
 
-        def prepareValues(values):
+        def prepareValues(values, sort_idx=None):
             if values is not None:
                 values = np.array(values, dtype=float, ndmin=2)
                 if values.shape[0] == 1:
                     values = values.T
+                if values.shape[0] > 1 and sort_idx is not None:
+                    values = values[sort_idx, :]
             else:
                 values = np.zeros((len(self.dates), 1))
             return values
@@ -144,8 +149,8 @@ class PlotTs():
         if ref_values is None:
             ref_values = self.ref_values
 
-        self.ts_values = prepareValues(ts_values)
-        self.ref_values = prepareValues(ref_values)
+        self.ts_values = prepareValues(ts_values, sort_idx)
+        self.ref_values = prepareValues(ref_values, sort_idx)
         self.preparePlotValues()
 
     def preparePlotValues(self):
