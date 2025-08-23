@@ -11,17 +11,18 @@ about = """
         <h3>Citation</h3>
             <p style="text-align: justify;">
                 If you use <em>InSAR Explorer</em> in your research, please cite:
-                <ul>
                     <li>
                         <cite>
-                            M.&nbsp;H.&nbsp;Haghighi&nbsp;<em>et&nbsp;al.</em>,&nbsp;"SARvey and InSAR Explorer: Open-source tools for InSAR data processing and visualization," in 
+                            M.&nbsp;H.&nbsp;Haghighi&nbsp;,&nbsp;
+                            A.&nbsp;Piter&nbsp;,&nbsp;
+                            M.&nbsp;Motagh&nbsp;,&nbsp;
+                            "SARvey and InSAR Explorer: Open-source tools for InSAR data processing and visualization," in 
                             <em>Proc.&nbsp;2025 IEEE Int.&nbsp;Geosci.&nbsp;Remote Sens.&nbsp;Symp.&nbsp;(IGARSS)</em>, Brisbane,&nbsp;Australia, 2025, pp.&nbsp;9414–9417.
                         </cite>
                     </li>
-                </ul>
             </p>
 
-            <p  style="text-align: justify;">
+            <p  style="text-align:justify;">
                 To cite a specific version of InSAR Explorer, you can use the DOI available in the <a href="https://doi.org/10.5281/zenodo.14052813"> InSAR Explorer Zenodo repository
                 </a>.</span>
             </p>
