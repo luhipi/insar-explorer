@@ -11,6 +11,7 @@ from .map_setting import InsarMap
 from .layer_utils import vector_layer as vector_layer_utils
 from .about import about as insar_explorer_about
 from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
+from ..external.setting_manager_ui.json_settings import JsonSettings
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 
 
