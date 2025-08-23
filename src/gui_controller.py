@@ -29,6 +29,7 @@ class GuiController(QObject):
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
         self.last_saved_ts_path = "ts_plot.png"
+        self.initializeUiParams()
         self.connectUiSignals()
         # make point selection active by default
         self.ui.pb_choose_point.setChecked(True)
@@ -41,6 +42,43 @@ class GuiController(QObject):
         self.onLayerChanged()
 
         self.setVectorFields()
+
+    def initializeUiParams(self):
+        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
+        parms.load(block_key="timeseries settings")
+
+        # plot marker size
+        marker_size = parms.get(["time series plot", "marker size"]) or 5.0
+        self.ui.sb_marker_size.setValue(marker_size)
+
+        # plot marker color
+        marker_color = parms.get(["time series plot", "marker color"]) or "#000000"
+        self.ui.cb_marker_color.setStyleSheet(f"QPushButton:enabled {{ color: {marker_color}; }} ")
+
+        # marker style
+        marker_style_options = parms.get(["time series plot", "marker"], sub_key="options") or ["", "o"]
+        marker_style = parms.get(["time series plot", "marker"])
+        self.ui.cmb_marker_style.clear()
+        if isinstance(marker_style_options, list):
+            self.ui.cmb_marker_style.addItems(marker_style_options)
+        self.ui.cmb_marker_style.setCurrentText(marker_style)
+
+        # line style
+        line_style_options = parms.get(["time series plot", "line style"], sub_key="options") or ["", "-"]
+        line_style = parms.get(["time series plot", "line style"])
+        self.ui.cmb_line_style.clear()
+        if isinstance(line_style_options, list):
+            self.ui.cmb_line_style.addItems(line_style_options)
+        self.ui.cmb_line_style.setCurrentText(line_style)
+
+        # line color
+        line_color = parms.get(["time series plot", "line color"]) or "#000000"
+        self.ui.cb_line_color.setStyleSheet(f"QPushButton:enabled {{ color: {line_color}; }} ")
+
+        # line width
+        line_width = parms.get(["time series plot", "line width"]) or 1.0
+        self.ui.sb_line_width.setValue(line_width)
+
 
     def initializeSelection(self):
         if self.selection_type == "point":
