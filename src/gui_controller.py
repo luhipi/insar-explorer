@@ -631,6 +631,7 @@ class GuiController(QObject):
         self.ui.pb_set_reference.setChecked(False)
         self.ui.pb_choose_polygon.setChecked(False)
         self.ui.pb_set_reference_polygon.setChecked(False)
+        self.disableHoldOn(not status)
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
@@ -642,6 +643,7 @@ class GuiController(QObject):
         self.ui.pb_choose_point.setChecked(False)
         self.ui.pb_choose_polygon.setChecked(False)
         self.ui.pb_set_reference_polygon.setChecked(False)
+        self.disableHoldOn(not status)
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
@@ -650,10 +652,20 @@ class GuiController(QObject):
             self.ui.pb_set_reference.setChecked(False)
             self.removeClickTool()
 
+    def disableHoldOn(self, status):
+        if status:
+            self.ui.cb_hold_on_plot.setChecked(False)
+            self.ui.cb_hold_on_plot.setEnabled(False)
+            self.ui.cb_remove_last_plot.setEnabled(False)
+        else:
+            self.ui.cb_hold_on_plot.setEnabled(True)
+            self.ui.cb_remove_last_plot.setEnabled(True)
+
     def activatePolygonSelection(self, status):
         self.ui.pb_choose_point.setChecked(False)
         self.ui.pb_set_reference.setChecked(False)
         self.ui.pb_set_reference_polygon.setChecked(False)
+        self.disableHoldOn(status)
         if status:
             self.initializePolygonDrawingTool()
             self.msg_signal.emit("Click multiple points to draw polygon; right‑click to close and plot its time series."
