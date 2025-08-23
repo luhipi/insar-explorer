@@ -1,6 +1,6 @@
 ### History
 
-v1.1.0dev
+v2.0.0dev
 - Introduce new time series setting in the UI.
 - Add Settings Panel for managing time series settings.
 - Add citation information.
