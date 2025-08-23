@@ -38,8 +38,13 @@ class PlotTs():
         self.plot_residuals_flag = False
         self.plot_residuals_list = []
         self.hold_on_flag = False
+        self.random_marker_color_flag = False
         self.parms = {}
         self.updateSettings()
+
+    def modifySettings(self, block_key, value):
+        params = JsonSettings(self.config_file)
+        params.save(block_key, value)
 
     def updateSettings(self):
         parms_ts = JsonSettings(self.config_file)
@@ -218,8 +223,9 @@ class PlotTs():
                 self.ax.plot(self.dates, self.plot_all_values, series_line_style, color=series_line_color,
                          linewidth=series_line_width)
 
-        self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
-                        edgecolors=edge_color)
+        if self.random_marker_color_flag:
+            marker_color = line_color = np.random.rand(3,)
+
         if marker_size > 0:
             plot = self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
                             edgecolors=edge_color, linewidth=0.2)

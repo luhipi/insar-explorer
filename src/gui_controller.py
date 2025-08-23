@@ -13,6 +13,7 @@ from .about import about as insar_explorer_about
 from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
 from ..external.setting_manager_ui.json_settings import JsonSettings
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
+from .ui_windows.color_picker import ColorPicker
 
 
 class GuiController(QObject):
@@ -290,6 +291,14 @@ class GuiController(QObject):
         # Plot setting
         self.ui.gb_y_axis.buttonClicked.connect(self.plotYAxis)
         self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
+        self.ui.cb_remove_last_plot.clicked.connect(self.removeLastPlotClicked)
+        self.ui.cb_marker_color_auto.toggled.connect(self.markerColorAutoClicked)
+        self.ui.sb_marker_size.valueChanged.connect(self.markerSizeValueChanged)
+        self.ui.cb_marker_color.clicked.connect(self.markerColorClicked)
+        self.ui.cmb_marker_style.currentTextChanged.connect(self.markerStyleChanged)
+        self.ui.cmb_line_style.currentTextChanged.connect(self.lineStyleChanged)
+        self.ui.cb_line_color.clicked.connect(self.lineColorClicked)
+        self.ui.sb_line_width.valueChanged.connect(self.lineWidthChanged)
         # TS save
         self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
         # Replica
@@ -334,6 +343,7 @@ class GuiController(QObject):
         dialog.accepted.connect(self.onSettingDialogChanged)
         dialog.applyClicked.connect(self.onSettingDialogChanged)
         dialog.exec()
+        self.initializeUiParams()
 
     def onSettingDialogChanged(self):
         self.choose_point_click_handler.plot_ts.plotTs()
@@ -500,6 +510,85 @@ class GuiController(QObject):
         else:
             self.msg_signal.emit("Hold on plot disabled.", "i", 0)
 
+    def removeLastPlotClicked(self):
+        self.choose_point_click_handler.plot_ts.removeLastPlot()
+
+    def markerSizeValueChanged(self, value):
+        value = float(value)
+        self.updateConfigFile(["time series plot", "marker size"], "float", new_value=value)
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+
+        if value == 0 and self.ui.cmb_line_style.currentText() == "":
+            self.msg_signal.emit("No time series plot: 'Marker size' is 0 and no 'Line style' is selected. ", "e", 0)
+        else:
+            self.msg_signal.emit("", "", 0)
+
+    def markerColorClicked(self):
+        marker_color = self.updateConfigFile(["time series plot", "marker color"], "color")
+        self.choose_point_click_handler.plot_ts.random_marker_color_flag = False
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+        self.ui.cb_marker_color.setStyleSheet(f"QPushButton:enabled {{ color: {marker_color}; }} ")
+        self.ui.cb_marker_color_auto.setChecked(False)
+        self.msg_signal.emit("", "", 0)
+
+    def markerColorAutoClicked(self, status):
+        self.choose_point_click_handler.plot_ts.random_marker_color_flag = status
+        self.ui.cb_marker_color.setEnabled(not status)
+        self.ui.cb_line_color.setEnabled(not status)
+        if status:
+            self.msg_signal.emit("Random marker color enabled: each time series will have a random color.", "t", 0)
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+
+    def markerStyleChanged(self, value):
+        self.updateConfigFile(["time series plot", "marker"], "string", new_value=value)
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+
+        self.msg_signal.emit("", "", 0)
+
+    def lineStyleChanged(self, value):
+        self.updateConfigFile(["time series plot", "line style"], "string", new_value=value)
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+
+        if value == "" and self.ui.sb_marker_size.value() == 0:
+            self.msg_signal.emit("No time series plot: No 'Line style' is selected and 'Marker size' is 0. ", "e", 0)
+        else:
+            self.msg_signal.emit("", "", 0)
+
+    def lineColorClicked(self):
+        line_color = self.updateConfigFile(["time series plot", "line color"], "color")
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+        self.ui.cb_line_color.setStyleSheet(f"QPushButton:enabled {{ color: {line_color}; }} ")
+        self.msg_signal.emit("", "", 0)
+
+    def lineWidthChanged(self, value):
+        value = float(value)
+        self.updateConfigFile(["time series plot", "line width"], "float", new_value=value)
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+        self.msg_signal.emit("", "", 0)
+
+    def updateConfigFile(self, key_list, value_type, new_value=None):
+        block_key = "timeseries settings"
+        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
+        settings_block = parms.load(block_key=block_key)
+
+        if value_type == "string":
+            new_value = str(new_value)
+
+        if value_type == "float":
+            new_value = float(new_value)
+
+        if value_type == "color":
+            initial_value = parms.get(key_list) or "#000000"
+            color_picker = ColorPicker(parent=self.ui, initial_color=initial_value, use_native_flag=False)
+            new_value = color_picker.pickColor()
+
+        settings_ref = settings_block
+        for key in key_list:
+            settings_ref = settings_ref[key]
+        settings_ref["value"] = new_value
+
+        parms.save(block_key, settings_block)
+        return new_value
 
     def plotYAxis(self):
         if self.ui.cb_y_from_data.isChecked():
