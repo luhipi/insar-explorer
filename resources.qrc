@@ -26,6 +26,8 @@
     <file>icons/select_select_reference.svg</file>
     <file>icons/synched.svg</file>
     <file>icons/sync_map_with_reference.svg</file>
+    <file>icons/plot_random_color.svg</file>
+    <file>icons/plot_remove_last.svg</file>
     <file>icons/reverse.svg</file>
     <file>icons/fit_poly3.svg</file>
     <file>icons/fit_poly2.svg</file>

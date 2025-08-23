@@ -25,19 +25,27 @@ class PlotTs():
         script_path = os.path.abspath(__file__)
         json_file = "config.json"
         self.config_file = os.path.join(os.path.dirname(script_path), 'config', json_file)
+        self.plot_list = []
+        self.plot_line_list = []
         self.fit_plot_list = []
         self.fit_models = []
         self.fit_seasonal_flag = False
         self.replicate_flag = False
-        self.plot_replicates = []
+        self.plot_replica_up = []
+        self.plot_replica_dn = []
         self.plot_y_axis = "from_data"
         self.replicate_value = 5.6 / 2
         self.ax_residuals = None
         self.plot_residuals_flag = False
         self.plot_residuals_list = []
         self.hold_on_flag = False
+        self.random_marker_color_flag = False
         self.parms = {}
         self.updateSettings()
+
+    def modifySettings(self, block_key, value):
+        params = JsonSettings(self.config_file)
+        params.save(block_key, value)
 
     def updateSettings(self):
         parms_ts = JsonSettings(self.config_file)
@@ -158,9 +166,21 @@ class PlotTs():
             self.plot_all_values = None
         self.plot_values = np.mean(self.ts_values, axis=1) - np.mean(self.ref_values, axis=1)
 
-    def initializeAxes(self):
+    def initializeAxes(self, update=False):
+        """
+        Initialize the axes for the plot.
+        :param update: bool
+            If True, clear the latest plot.
+        """
         if not self.hold_on_flag:
             self.ui.figure.clear()
+            self.plot_list = []
+            self.plot_line_list = []
+
+        if update:
+            # remove current plot
+            self.removeLastPlot()
+
         self.updateSettings()
         if self.plot_residuals_flag:
             self.ax = self.ui.figure.add_subplot(211)
@@ -168,10 +188,9 @@ class PlotTs():
         else:
             self.ax = self.ui.figure.add_subplot(111)
 
-    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True):
-        self.initializeAxes()
-
-
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, update=False):
+        # update: flag incicating if the plot should be updated or a new one created
+        self.initializeAxes(update=update)
 
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
         if self.dates is None:
@@ -205,42 +224,30 @@ class PlotTs():
                 self.ax.plot(self.dates, self.plot_all_values, series_line_style, color=series_line_color,
                          linewidth=series_line_width)
 
-        self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color)
-        self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
-                        edgecolors=edge_color)
-        if line_style:
-            self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
+        if self.random_marker_color_flag:
+            marker_color = line_color = np.random.rand(3,)
+
+        if marker_size > 0:
+            plot = self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
+                            edgecolors=edge_color, linewidth=0.2)
+        else:
+            plot = None
+        self.plot_list.append(plot)
+
+        # update ylim for hold on
+        self.updateYlim(ax=self.ax, y_data=self.plot_values)
+
+        if line_style != '':
+            plot_line = self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
+        else:
+            plot_line = [None]
+        self.plot_line_list.append(plot_line[0])
+
         if self.replicate_flag:
-            marker_color_1 = parms['replica color 1']  # replica up
-            marker_color_2 = parms['replica color 2']  # replica down
-            marker_size_replica = parms['replica marker size']
-            marker_replica = parms['replica marker']
-            number_of_up_replicas = parms['number of up replicas']
-            number_of_down_replicas = parms['number of down replicas']
-
-            # plot multiple replicas
-            for i in range(number_of_up_replicas):
-                replicate_value = self.replicate_value * (i + 1)
-
-                if i % 2 == 0:
-                    marker_replica_color = marker_color_1
-                else:
-                    marker_replica_color = marker_color_2
-
-                replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value,
-                                               marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
-                self.plot_replicates.append([replicate_up])
-            for i in range(number_of_down_replicas):
-                replicate_value = self.replicate_value * (i + 1)
-
-                if i % 2 == 0:
-                    marker_replica_color = marker_color_2
-                else:
-                    marker_replica_color = marker_color_1
-
-                replicate_dn = self.ax.scatter(self.dates, self.plot_values - replicate_value,
-                                               marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
-                self.plot_replicates.append([replicate_dn])
+            self.plotReplicas()
+        else:
+            self.plot_replica_up.append([None])
+            self.plot_replica_dn.append([None])
 
         self.decoratePlot(parms=parms)
         self.fitModel()
@@ -249,6 +256,75 @@ class PlotTs():
         self.decorateFigure(parms=parms_figure)
 
         self.ui.canvas.draw()
+
+    def removeLastPlot(self, n=1):
+        for _ in range(n):
+            if len(self.plot_list) > 0:
+                plot = self.plot_list[-1]
+                if plot:
+                    plot.remove()
+                self.plot_list.pop()
+
+                plot_line = self.plot_line_list[-1]
+                if plot_line:
+                    plot_line.remove()
+                self.plot_line_list.pop()
+
+                plot_replica_up = self.plot_replica_up[-1]
+                for plot in plot_replica_up:
+                    if plot:
+                        plot.remove()
+                self.plot_replica_up.pop()
+
+                plot_replica_dn = self.plot_replica_dn[-1]
+                for plot in plot_replica_dn:
+                    if plot:
+                        plot.remove()
+                self.plot_replica_dn.pop()
+
+        self.ui.canvas.draw()
+
+    def plotReplicas(self):
+        parms = self.parms['time series plot']
+        marker_color_1 = parms['replica color 1']  # replica up
+        marker_color_2 = parms['replica color 2']  # replica down
+        marker_size_replica = parms['replica marker size']
+        marker_replica = parms['replica marker']
+        number_of_up_replicas = parms['number of up replicas']
+        number_of_down_replicas = parms['number of down replicas']
+
+        # plot multiple replicas
+        replicate_up_list = []
+        for i in range(number_of_up_replicas):
+            replicate_value = self.replicate_value * (i + 1)
+
+            if i % 2 == 0:
+                marker_replica_color = marker_color_1
+            else:
+                marker_replica_color = marker_color_2
+
+            replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value,
+                                           marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+            replicate_up_list.append(replicate_up)
+        self.plot_replica_up.append(replicate_up_list)
+
+        self.updateYlim(ax=self.ax, y_data=self.plot_values + replicate_value)
+
+        replicate_dn_list = []
+        for i in range(number_of_down_replicas):
+            replicate_value = self.replicate_value * (i + 1)
+
+            if i % 2 == 0:
+                marker_replica_color = marker_color_2
+            else:
+                marker_replica_color = marker_color_1
+
+            replicate_dn = self.ax.scatter(self.dates, self.plot_values - replicate_value,
+                                           marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+            replicate_dn_list.append(replicate_dn)
+
+        self.plot_replica_dn.append(replicate_dn_list)
+        self.updateYlim(ax=self.ax, y_data=self.plot_values - replicate_value)
 
     def fitModel(self):
         [plot.remove() for plot in self.fit_plot_list]
@@ -435,6 +511,17 @@ class PlotTs():
             start_of_year = mdates.num2date(mdates.datestr2num(f'{min_date.year}-01-01'))
             end_of_year = mdates.num2date(mdates.datestr2num(f'{max_date.year+1}-01-01'))
             ax.set_xlim(start_of_year, end_of_year)
+
+    def updateYlim(self, *, ax=None, y_data):
+        if not ax:
+            ax = self.ax
+
+        data_min = np.nanmin(y_data)
+        data_max = np.nanmax(y_data)
+
+        current_ylim = ax.dataLim.intervaly
+        updated_ylim = (min(current_ylim[0], data_min), max(current_ylim[1], data_max))
+        ax.set_ylim(updated_ylim)
 
     def setYlims(self, ax=None, parms={}):
         if not ax:
