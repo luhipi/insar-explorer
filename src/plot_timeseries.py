@@ -454,7 +454,7 @@ class PlotTs():
         data_min = np.nanmin(y_data)
         data_max = np.nanmax(y_data)
 
-        current_ylim = ax.get_ylim()
+        current_ylim = ax.dataLim.intervaly
         updated_ylim = (min(current_ylim[0], data_min), max(current_ylim[1], data_max))
         ax.set_ylim(updated_ylim)
 
