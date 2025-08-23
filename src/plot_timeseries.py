@@ -31,7 +31,8 @@ class PlotTs():
         self.fit_models = []
         self.fit_seasonal_flag = False
         self.replicate_flag = False
-        self.plot_replicates = []
+        self.plot_replica_up = []
+        self.plot_replica_dn = []
         self.plot_y_axis = "from_data"
         self.replicate_value = 5.6 / 2
         self.ax_residuals = None
@@ -244,6 +245,9 @@ class PlotTs():
 
         if self.replicate_flag:
             self.plotReplicas()
+        else:
+            self.plot_replica_up.append([None])
+            self.plot_replica_dn.append([None])
 
         self.decoratePlot(parms=parms)
         self.fitModel()
@@ -266,6 +270,18 @@ class PlotTs():
                     plot_line.remove()
                 self.plot_line_list.pop()
 
+                plot_replica_up = self.plot_replica_up[-1]
+                for plot in plot_replica_up:
+                    if plot:
+                        plot.remove()
+                self.plot_replica_up.pop()
+
+                plot_replica_dn = self.plot_replica_dn[-1]
+                for plot in plot_replica_dn:
+                    if plot:
+                        plot.remove()
+                self.plot_replica_dn.pop()
+
         self.ui.canvas.draw()
 
     def plotReplicas(self):
@@ -278,6 +294,7 @@ class PlotTs():
         number_of_down_replicas = parms['number of down replicas']
 
         # plot multiple replicas
+        replicate_up_list = []
         for i in range(number_of_up_replicas):
             replicate_value = self.replicate_value * (i + 1)
 
@@ -288,10 +305,12 @@ class PlotTs():
 
             replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value,
                                            marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
-            self.plot_replicates.append([replicate_up])
+            replicate_up_list.append(replicate_up)
+        self.plot_replica_up.append(replicate_up_list)
 
         self.updateYlim(ax=self.ax, y_data=self.plot_values + replicate_value)
 
+        replicate_dn_list = []
         for i in range(number_of_down_replicas):
             replicate_value = self.replicate_value * (i + 1)
 
@@ -302,7 +321,9 @@ class PlotTs():
 
             replicate_dn = self.ax.scatter(self.dates, self.plot_values - replicate_value,
                                            marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
-            self.plot_replicates.append([replicate_dn])
+            replicate_dn_list.append(replicate_dn)
+
+        self.plot_replica_dn.append(replicate_dn_list)
         self.updateYlim(ax=self.ax, y_data=self.plot_values - replicate_value)
 
     def fitModel(self):
