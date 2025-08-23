@@ -195,13 +195,11 @@ class GuiController(QObject):
         font_metrics = self.ui.lb_msg_bar.fontMetrics()
         avg_char_width = max(1, font_metrics.horizontalAdvance(str(message)) // max(1, len(str(message))))
         buffer = 50
-        num_chars = max(20, (width - buffer) // avg_char_width)
+        num_chars = max(50, (width - buffer) // avg_char_width)
 
         info = ""
-        warning = "🟡️ "
-        error = "🟠 "
         tip = "💡 "
-        done = "🟢 "
+        warning, error, done = [f'<span style="font-size:10px">{s}</span>&nbsp;' for s in ["🟡️", "🟠", "🟢"]]
 
         if message == "":
             v = ''
