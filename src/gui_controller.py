@@ -678,8 +678,8 @@ class GuiController(QObject):
         self.ui.pb_choose_polygon.setChecked(False)
         if status:
             self.initializePolygonDrawingTool(reference=True)
-            self.msg_signal.emit("Click multiple points to draw reference polygon; right‑click to close polygon."
-                                 , "t", 0)
+            self.msg_signal.emit("Click multiple points to draw reference polygon; right‑click to close polygon.", "t",
+                                 0)
         else:
             self.deactivatePolygonDrawingTool(reference=True)
 
