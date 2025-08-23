@@ -2,7 +2,7 @@
 License
 *******
 
-This plugin is licensed under the GPL-2.0 license. See the `LICENSE` file for more details.
+This plugin is licensed under the GPL-3.0 license. See the `LICENSE` file for more details.
 
 If you use InSAR Explorer in your research, please cite the following paper:
 
