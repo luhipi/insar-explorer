@@ -10,7 +10,7 @@
 
 __author__ = 'mahmud@ipi.uni-hannover.de'
 __date__ = '2024-11-01'
-__copyright__ = 'Copyright 2024, Mahmud Haghighi'
+__copyright__ = 'Copyright 2024-2025, Mahmud Haghighi'
 
 import unittest
 

@@ -8,7 +8,7 @@
                              -------------------
         begin                : 2024-11-01
         git sha              : $Format:%H$
-        copyright            : (C) 2024 by Mahmud Haghighi
+        copyright            : (C) 2024-2025 by Mahmud Haghighi
         email                : mahmud@ipi.uni-hannover.de
  ***************************************************************************/
 
