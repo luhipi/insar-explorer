@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QColorDialog
 from qgis.PyQt.QtGui import QColor
 
+
 class ColorPicker:
     def __init__(self, initial_color, use_native_flag=False, parent=None):
         self.parent = parent

@@ -231,7 +231,8 @@ class TSClickHandler(MapClickHandler):
             else:
                 self.ref_values = date_values[:, 1]
                 if self.selected_field_name:
-                    self.map_reference_clicked_value  = vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name)
+                    self.map_reference_clicked_value = (
+                        vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name))
 
             dates = date_values[:, 0]
             self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
@@ -357,7 +358,7 @@ class PolygonClickHandler(MapClickHandler):
                 self.ref_values = values
 
                 if self.selected_field_name:
-                    clicked_values  = vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name)
+                    clicked_values = vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name)
                     self.map_reference_clicked_value = np.mean(clicked_values)
 
             self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values, plot_multiple=True)

@@ -18,6 +18,7 @@ from .ui_windows.color_picker import ColorPicker
 
 class GuiController(QObject):
     msg_signal = pyqtSignal(str, str, int)
+
     def __init__(self, plugin):
         super().__init__()
         self.iface = plugin.iface
@@ -81,7 +82,6 @@ class GuiController(QObject):
         line_width = parms.get(["time series plot", "line width"]) or 1.0
         self.ui.sb_line_width.setValue(line_width)
 
-
     def initializeSelection(self):
         if self.selection_type == "point":
             self.initializeClickTool()
@@ -101,7 +101,7 @@ class GuiController(QObject):
 
             layer_type = layer.type()
             is_local_raster = (hasattr(layer, "dataProvider") and getattr(layer.dataProvider(), "name", lambda: "")()
-                               in ["gdal"]) #  "ogr"
+                               in ["gdal"])  # "ogr"
 
             if layer_type == layer.VectorLayer:
                 self.ui.pb_choose_polygon.setEnabled(True)
@@ -163,9 +163,10 @@ class GuiController(QObject):
 
     def onMapClicked(self, point):
         self.msg_signal.emit("", "i", 0)
-        self.choose_point_click_handler.choosePointClicked(point=point, layer=None, ref=self.ui.pb_set_reference.isChecked(),
-                                                  start_callback=self.removePolygonDrawingTool(
-                                                      self.ui.pb_set_reference.isChecked()))
+        self.choose_point_click_handler.choosePointClicked(point=point, layer=None,
+                                                           ref=self.ui.pb_set_reference.isChecked(),
+                                                           start_callback=self.removePolygonDrawingTool(
+                                                               self.ui.pb_set_reference.isChecked()))
 
         if self.ui.pb_set_reference.isChecked():
             self.syncOffsetWithReference()
@@ -209,7 +210,6 @@ class GuiController(QObject):
         self.choose_point_click_handler.choosePolygonDrawn(polygon=polygon,
                                                            ref=self.ui.pb_set_reference_polygon.isChecked())
         self.syncOffsetWithReference()
-
 
     def syncOffsetWithReference(self):
         """Sync offset value with reference point or polygon."""
@@ -430,7 +430,6 @@ class GuiController(QObject):
     def applySymbologyClicked(self, status):
         self.applySymbology()
         self.msg_signal.emit("Symbology applied.", "done", 5000)
-
 
     def colormapReverseClicked(self, status):
         if status:
@@ -668,8 +667,8 @@ class GuiController(QObject):
         self.disableHoldOn(status)
         if status:
             self.initializePolygonDrawingTool()
-            self.msg_signal.emit("Click multiple points to draw polygon; right‑click to close and plot its time series."
-                                 , "t", 0)
+            self.msg_signal.emit("Click multiple points to draw polygon; right‑click to close polygon and plot time "
+                                 "series.", "t", 0)
         else:
             self.deactivatePolygonDrawingTool(reference=False)
 
@@ -679,7 +678,7 @@ class GuiController(QObject):
         self.ui.pb_choose_polygon.setChecked(False)
         if status:
             self.initializePolygonDrawingTool(reference=True)
-            self.msg_signal.emit("Click multiple points to draw reference polygon; right‑click to close it."
+            self.msg_signal.emit("Click multiple points to draw reference polygon; right‑click to close polygon."
                                  , "t", 0)
         else:
             self.deactivatePolygonDrawingTool(reference=True)
@@ -702,8 +701,7 @@ class GuiController(QObject):
             self.msg_signal.emit("Map reference update enabled: map will update when the reference point changes.",
                                  "done", 0)
         else:
-            self.msg_signal.emit("Map reference update disabled."
-                                 , "i", 0)
+            self.msg_signal.emit("Map reference update disabled.", "i", 0)
 
     def addSelectedLayers(self):
         """

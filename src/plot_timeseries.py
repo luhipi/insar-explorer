@@ -70,7 +70,6 @@ class PlotTs():
         parms['series line color'] = parms_ts.get(["time series plot", "series line color"]) or None
         parms['series line width'] = parms_ts.get(["time series plot", "series line width"]) or 0.2
 
-
         parms['ymin'] = parms_ts.get(["time series plot", "ymin"])
         parms['ymax'] = parms_ts.get(["time series plot", "ymax"])
         parms['grid'] = parms_ts.get(["time series plot", "grid"])
@@ -222,14 +221,14 @@ class PlotTs():
             series_line_width = parms['series line width']
             if series_line_style:
                 self.ax.plot(self.dates, self.plot_all_values, series_line_style, color=series_line_color,
-                         linewidth=series_line_width)
+                             linewidth=series_line_width)
 
         if self.random_marker_color_flag:
             marker_color = line_color = np.random.rand(3,)
 
         if marker_size > 0:
             plot = self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
-                            edgecolors=edge_color, linewidth=0.2)
+                                   edgecolors=edge_color, linewidth=0.2)
         else:
             plot = None
         self.plot_list.append(plot)
