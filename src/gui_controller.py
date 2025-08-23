@@ -11,7 +11,9 @@ from .map_setting import InsarMap
 from .layer_utils import vector_layer as vector_layer_utils
 from .about import about as insar_explorer_about
 from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
+from ..external.setting_manager_ui.json_settings import JsonSettings
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
+from .ui_windows.color_picker import ColorPicker
 
 
 class GuiController(QObject):
@@ -29,6 +31,7 @@ class GuiController(QObject):
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
         self.last_saved_ts_path = "ts_plot.png"
+        self.initializeUiParams()
         self.connectUiSignals()
         # make point selection active by default
         self.ui.pb_choose_point.setChecked(True)
@@ -41,6 +44,43 @@ class GuiController(QObject):
         self.onLayerChanged()
 
         self.setVectorFields()
+
+    def initializeUiParams(self):
+        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
+        parms.load(block_key="timeseries settings")
+
+        # plot marker size
+        marker_size = parms.get(["time series plot", "marker size"]) or 5.0
+        self.ui.sb_marker_size.setValue(marker_size)
+
+        # plot marker color
+        marker_color = parms.get(["time series plot", "marker color"]) or "#000000"
+        self.ui.cb_marker_color.setStyleSheet(f"QPushButton:enabled {{ color: {marker_color}; }} ")
+
+        # marker style
+        marker_style_options = parms.get(["time series plot", "marker"], sub_key="options") or ["", "o"]
+        marker_style = parms.get(["time series plot", "marker"])
+        self.ui.cmb_marker_style.clear()
+        if isinstance(marker_style_options, list):
+            self.ui.cmb_marker_style.addItems(marker_style_options)
+        self.ui.cmb_marker_style.setCurrentText(marker_style)
+
+        # line style
+        line_style_options = parms.get(["time series plot", "line style"], sub_key="options") or ["", "-"]
+        line_style = parms.get(["time series plot", "line style"])
+        self.ui.cmb_line_style.clear()
+        if isinstance(line_style_options, list):
+            self.ui.cmb_line_style.addItems(line_style_options)
+        self.ui.cmb_line_style.setCurrentText(line_style)
+
+        # line color
+        line_color = parms.get(["time series plot", "line color"]) or "#000000"
+        self.ui.cb_line_color.setStyleSheet(f"QPushButton:enabled {{ color: {line_color}; }} ")
+
+        # line width
+        line_width = parms.get(["time series plot", "line width"]) or 1.0
+        self.ui.sb_line_width.setValue(line_width)
+
 
     def initializeSelection(self):
         if self.selection_type == "point":
@@ -195,13 +235,11 @@ class GuiController(QObject):
         font_metrics = self.ui.lb_msg_bar.fontMetrics()
         avg_char_width = max(1, font_metrics.horizontalAdvance(str(message)) // max(1, len(str(message))))
         buffer = 50
-        num_chars = max(20, (width - buffer) // avg_char_width)
+        num_chars = max(50, (width - buffer) // avg_char_width)
 
         info = ""
-        warning = "🟡️ "
-        error = "🟠 "
         tip = "💡 "
-        done = "🟢 "
+        warning, error, done = [f'<span style="font-size:10px">{s}</span>&nbsp;' for s in ["🟡️", "🟠", "🟢"]]
 
         if message == "":
             v = ''
@@ -253,6 +291,14 @@ class GuiController(QObject):
         # Plot setting
         self.ui.gb_y_axis.buttonClicked.connect(self.plotYAxis)
         self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
+        self.ui.cb_remove_last_plot.clicked.connect(self.removeLastPlotClicked)
+        self.ui.cb_marker_color_auto.toggled.connect(self.markerColorAutoClicked)
+        self.ui.sb_marker_size.valueChanged.connect(self.markerSizeValueChanged)
+        self.ui.cb_marker_color.clicked.connect(self.markerColorClicked)
+        self.ui.cmb_marker_style.currentTextChanged.connect(self.markerStyleChanged)
+        self.ui.cmb_line_style.currentTextChanged.connect(self.lineStyleChanged)
+        self.ui.cb_line_color.clicked.connect(self.lineColorClicked)
+        self.ui.sb_line_width.valueChanged.connect(self.lineWidthChanged)
         # TS save
         self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
         # Replica
@@ -297,6 +343,7 @@ class GuiController(QObject):
         dialog.accepted.connect(self.onSettingDialogChanged)
         dialog.applyClicked.connect(self.onSettingDialogChanged)
         dialog.exec()
+        self.initializeUiParams()
 
     def onSettingDialogChanged(self):
         self.choose_point_click_handler.plot_ts.plotTs()
@@ -322,7 +369,7 @@ class GuiController(QObject):
             self.setSymbologyLowerRange()
             self.msg_signal.emit("Symbology range synced: changing one value updates the other.", 't', 0)
         else:
-            self.msg_signal.emit("Symbology ranges unsynced.", 't', 0)
+            self.msg_signal.emit("Symbology ranges unsynced.", 'i', 0)
 
     def setSymbologyOffset(self):
         self.insar_map.offset_value = self.ui.sb_symbol_value_offset.value()
@@ -359,9 +406,9 @@ class GuiController(QObject):
     def activateLiveSymbology(self, status):
         if status:
             self.applyLiveSymbology()
-            self.msg_signal.emit("Live symbology enabled: changes will apply immediately.", 't', 0)
+            self.msg_signal.emit("Live symbology enabled: changes will apply immediately.", 'done', 0)
         else:
-            self.msg_signal.emit("Live symbology disabled.", 't', 0)
+            self.msg_signal.emit("Live symbology disabled.", 'i', 0)
 
     def applySymbologyNow(self):
         QTimer.singleShot(0, self.applySymbology)
@@ -457,14 +504,91 @@ class GuiController(QObject):
         self.choose_point_click_handler.plot_ts.plotTs()
 
     def holdOnPlot(self, status):
-        self.choose_point_click_handler.plot_ts.hold_on_flag = self.ui.cb_hold_on_plot.isChecked()
+        self.choose_point_click_handler.plot_ts.hold_on_flag = status
         if status:
-            self.msg_signal.emit("Hold on plot enabled: new plots will be added to the existing plot.",
-                                 "i", 0)
+            self.msg_signal.emit("Hold on plot enabled: new plots will be added to the existing plot.", "i", 0)
         else:
-            self.msg_signal.emit("Hold on plot disabled.",
-                                 "i", 0)
+            self.msg_signal.emit("Hold on plot disabled.", "i", 0)
 
+    def removeLastPlotClicked(self):
+        self.choose_point_click_handler.plot_ts.removeLastPlot()
+
+    def markerSizeValueChanged(self, value):
+        value = float(value)
+        self.updateConfigFile(["time series plot", "marker size"], "float", new_value=value)
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+
+        if value == 0 and self.ui.cmb_line_style.currentText() == "":
+            self.msg_signal.emit("No time series plot: 'Marker size' is 0 and no 'Line style' is selected. ", "e", 0)
+        else:
+            self.msg_signal.emit("", "", 0)
+
+    def markerColorClicked(self):
+        marker_color = self.updateConfigFile(["time series plot", "marker color"], "color")
+        self.choose_point_click_handler.plot_ts.random_marker_color_flag = False
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+        self.ui.cb_marker_color.setStyleSheet(f"QPushButton:enabled {{ color: {marker_color}; }} ")
+        self.ui.cb_marker_color_auto.setChecked(False)
+        self.msg_signal.emit("", "", 0)
+
+    def markerColorAutoClicked(self, status):
+        self.choose_point_click_handler.plot_ts.random_marker_color_flag = status
+        self.ui.cb_marker_color.setEnabled(not status)
+        self.ui.cb_line_color.setEnabled(not status)
+        if status:
+            self.msg_signal.emit("Random marker color enabled: each time series will have a random color.", "t", 0)
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+
+    def markerStyleChanged(self, value):
+        self.updateConfigFile(["time series plot", "marker"], "string", new_value=value)
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+
+        self.msg_signal.emit("", "", 0)
+
+    def lineStyleChanged(self, value):
+        self.updateConfigFile(["time series plot", "line style"], "string", new_value=value)
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+
+        if value == "" and self.ui.sb_marker_size.value() == 0:
+            self.msg_signal.emit("No time series plot: No 'Line style' is selected and 'Marker size' is 0. ", "e", 0)
+        else:
+            self.msg_signal.emit("", "", 0)
+
+    def lineColorClicked(self):
+        line_color = self.updateConfigFile(["time series plot", "line color"], "color")
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+        self.ui.cb_line_color.setStyleSheet(f"QPushButton:enabled {{ color: {line_color}; }} ")
+        self.msg_signal.emit("", "", 0)
+
+    def lineWidthChanged(self, value):
+        value = float(value)
+        self.updateConfigFile(["time series plot", "line width"], "float", new_value=value)
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+        self.msg_signal.emit("", "", 0)
+
+    def updateConfigFile(self, key_list, value_type, new_value=None):
+        block_key = "timeseries settings"
+        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
+        settings_block = parms.load(block_key=block_key)
+
+        if value_type == "string":
+            new_value = str(new_value)
+
+        if value_type == "float":
+            new_value = float(new_value)
+
+        if value_type == "color":
+            initial_value = parms.get(key_list) or "#000000"
+            color_picker = ColorPicker(parent=self.ui, initial_color=initial_value, use_native_flag=False)
+            new_value = color_picker.pickColor()
+
+        settings_ref = settings_block
+        for key in key_list:
+            settings_ref = settings_ref[key]
+        settings_ref["value"] = new_value
+
+        parms.save(block_key, settings_block)
+        return new_value
 
     def plotYAxis(self):
         if self.ui.cb_y_from_data.isChecked():
@@ -507,6 +631,7 @@ class GuiController(QObject):
         self.ui.pb_set_reference.setChecked(False)
         self.ui.pb_choose_polygon.setChecked(False)
         self.ui.pb_set_reference_polygon.setChecked(False)
+        self.disableHoldOn(not status)
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
@@ -518,6 +643,7 @@ class GuiController(QObject):
         self.ui.pb_choose_point.setChecked(False)
         self.ui.pb_choose_polygon.setChecked(False)
         self.ui.pb_set_reference_polygon.setChecked(False)
+        self.disableHoldOn(not status)
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
@@ -526,10 +652,20 @@ class GuiController(QObject):
             self.ui.pb_set_reference.setChecked(False)
             self.removeClickTool()
 
+    def disableHoldOn(self, status):
+        if status:
+            self.ui.cb_hold_on_plot.setChecked(False)
+            self.ui.cb_hold_on_plot.setEnabled(False)
+            self.ui.cb_remove_last_plot.setEnabled(False)
+        else:
+            self.ui.cb_hold_on_plot.setEnabled(True)
+            self.ui.cb_remove_last_plot.setEnabled(True)
+
     def activatePolygonSelection(self, status):
         self.ui.pb_choose_point.setChecked(False)
         self.ui.pb_set_reference.setChecked(False)
         self.ui.pb_set_reference_polygon.setChecked(False)
+        self.disableHoldOn(status)
         if status:
             self.initializePolygonDrawingTool()
             self.msg_signal.emit("Click multiple points to draw polygon; right‑click to close and plot its time series."
@@ -564,7 +700,7 @@ class GuiController(QObject):
         if status:
             self.syncOffsetWithReference()
             self.msg_signal.emit("Map reference update enabled: map will update when the reference point changes.",
-                                 "i", 0)
+                                 "done", 0)
         else:
             self.msg_signal.emit("Map reference update disabled."
                                  , "i", 0)

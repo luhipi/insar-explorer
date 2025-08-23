@@ -63,12 +63,14 @@ class JsonSettings:
         with open(self.filename, 'w', encoding='utf-8') as f:
             json.dump(self.data, f, indent=4)
 
-    def get(self, key: list):
+    def get(self, key: list, sub_key: str = "value"):
         """
         Get the value of a key.
 
         :param key: The list of keys to access the nested value.
         :type key: list
+        :param sub_key: The sub-key to access the value, defaults to "value".
+        :type sub_key: str, optional
         :return: The value of the key, or the default value if the auto flag is set.
         :rtype: any
         """
@@ -81,7 +83,7 @@ class JsonSettings:
         auto_flag = data.get("auto", False)
         if auto_flag:
             return None
-        return data.get("value", default)
+        return data.get(sub_key, default)
 
     def getDefault(self, key: list):
         """
