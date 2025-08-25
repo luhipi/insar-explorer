@@ -1,6 +1,7 @@
 ### History
 
 v2.1.0-dev
+- Enable hold on plots for polygons.
 - Fix: resolved error during time series curve fitting.
 
 v2.0.0

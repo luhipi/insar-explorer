@@ -27,6 +27,8 @@ class PlotTs():
         self.config_file = os.path.join(os.path.dirname(script_path), 'config', json_file)
         self.plot_list = []
         self.plot_line_list = []
+        self.plot_multiple_fill_list = []
+        self.plot_multiple_lines_list = []
         self.fit_plot_list = []
         self.fit_models = []
         self.fit_seasonal_flag = False
@@ -182,6 +184,8 @@ class PlotTs():
             self.ax_residuals = None
             self.plot_list = []
             self.plot_line_list = []
+            self.plot_multiple_fill_list = []
+            self.plot_multiple_lines_list = []
             self.fit_plot_list = []
             self.plot_residuals_list = []
 
@@ -226,14 +230,22 @@ class PlotTs():
             upper_bound = self.max_plot_values
             series_fill_color = parms['series fill color']
             series_fill_alpha = parms['series fill alpha']
-            self.ax.fill_between(self.dates, lower_bound, upper_bound, color=series_fill_color, alpha=series_fill_alpha)
+            plot_fill_between = self.ax.fill_between(self.dates, lower_bound, upper_bound, color=series_fill_color,
+                                                     alpha=series_fill_alpha)
+        else:
+            plot_fill_between = None
+        self.plot_multiple_fill_list.append(plot_fill_between)
+
         if self.plot_all_values is not None:
             series_line_style = parms['series line style']
             series_line_color = parms['series line color']
             series_line_width = parms['series line width']
             if series_line_style:
-                self.ax.plot(self.dates, self.plot_all_values, series_line_style, color=series_line_color,
-                             linewidth=series_line_width)
+                plot_multiple_lines = self.ax.plot(self.dates, self.plot_all_values, series_line_style,
+                                                   color=series_line_color, linewidth=series_line_width)
+        else:
+            plot_multiple_lines = [None]
+        self.plot_multiple_lines_list.append(plot_multiple_lines)
 
         if self.random_marker_color_flag:
             marker_color = line_color = np.random.rand(3,)
@@ -280,6 +292,17 @@ class PlotTs():
                 if plot_line:
                     plot_line.remove()
                 self.plot_line_list.pop()
+
+                plot_multiple_fill = self.plot_multiple_fill_list[-1]
+                if plot_multiple_fill:
+                    plot_multiple_fill.remove()
+                self.plot_multiple_fill_list.pop()
+
+                plot_multiple_lines = self.plot_multiple_lines_list[-1]
+                for plot in plot_multiple_lines:
+                    if plot:
+                        plot.remove()
+                self.plot_multiple_lines_list.pop()
 
                 plot_replica_up = self.plot_replica_up[-1]
                 for plot in plot_replica_up:
