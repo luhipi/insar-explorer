@@ -18,7 +18,7 @@ class PlotTs():
         self.ts_values = 0
         self.ref_values = 0
         self.plot_values = None
-        self.plot_all_values = None
+        self.plot_multiple_values = None
         self.min_plot_values = None
         self.max_plot_values = None
         self.residuals_values = None
@@ -165,11 +165,11 @@ class PlotTs():
             # based on std
             # self.min_plot_values = np.mean(plot_values, axis=1) - np.std(plot_values, axis=1)
             # self.max_plot_values = np.mean(plot_values, axis=1) + np.std(plot_values, axis=1)
-            self.plot_all_values = plot_values
+            self.plot_multiple_values = plot_values
         else:
             self.min_plot_values = None
             self.max_plot_values = None
-            self.plot_all_values = None
+            self.plot_multiple_values = None
         self.plot_values = np.mean(self.ts_values, axis=1) - np.mean(self.ref_values, axis=1)
 
     def initializeAxes(self, update=False):
@@ -236,12 +236,12 @@ class PlotTs():
             plot_fill_between = None
         self.plot_multiple_fill_list.append(plot_fill_between)
 
-        if self.plot_all_values is not None:
+        if self.plot_multiple_values is not None:
             series_line_style = parms['series line style']
             series_line_color = parms['series line color']
             series_line_width = parms['series line width']
             if series_line_style:
-                plot_multiple_lines = self.ax.plot(self.dates, self.plot_all_values, series_line_style,
+                plot_multiple_lines = self.ax.plot(self.dates, self.plot_multiple_values, series_line_style,
                                                    color=series_line_color, linewidth=series_line_width)
         else:
             plot_multiple_lines = [None]
