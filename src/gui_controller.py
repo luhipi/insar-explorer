@@ -482,8 +482,7 @@ class GuiController(QObject):
             self.msg_signal.emit(msg, "i", 0)
 
         self.timeseriesPlotResiduals()
-
-        self.choose_point_click_handler.plot_ts.fitModel()
+        self.choose_point_click_handler.plot_ts.plotTs()
 
     def residualPlotClicked(self, status):
         # disable hold on when residuals are plotted
@@ -500,7 +499,6 @@ class GuiController(QObject):
     def timeseriesPlotResiduals(self):
         self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.pb_plot_residuals.isChecked()
                                                                        and not self.ui.pb_ts_nofit.isChecked())
-        self.choose_point_click_handler.plot_ts.plotTs()
 
     def holdOnPlot(self, status):
         self.choose_point_click_handler.plot_ts.hold_on_flag = status
