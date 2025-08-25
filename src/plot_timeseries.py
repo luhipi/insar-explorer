@@ -178,6 +178,8 @@ class PlotTs():
         """
         if not self.hold_on_flag:
             self.ui.figure.clear()
+            self.ax = None
+            self.ax_residuals = None
             self.plot_list = []
             self.plot_line_list = []
             self.fit_plot_list = []
@@ -189,10 +191,13 @@ class PlotTs():
 
         self.updateSettings()
         if self.plot_residuals_flag:
-            self.ax = self.ui.figure.add_subplot(211)
-            self.ax_residuals = self.ui.figure.add_subplot(212)
+            if not self.ax:
+                self.ax = self.ui.figure.add_subplot(211)
+            if not self.ax_residuals:
+                self.ax_residuals = self.ui.figure.add_subplot(212)
         else:
-            self.ax = self.ui.figure.add_subplot(111)
+            if not self.ax:
+                self.ax = self.ui.figure.add_subplot(111)
 
     def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, update=False):
         # update: flag incicating if the plot should be updated or a new one created
