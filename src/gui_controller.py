@@ -508,7 +508,11 @@ class GuiController(QObject):
             self.msg_signal.emit("Hold on plot disabled.", "i", 0)
 
     def removeLastPlotClicked(self):
-        self.choose_point_click_handler.plot_ts.removeLastPlot()
+        # TODO: remove the last plot and show the previous plot polygon/point highlight
+        self.choose_point_click_handler.removeLastPlot()
+        # TODO: move polygon drawing methods to PolygonDrawingTool class
+        self.removePolygonDrawingTool(reference=False)
+        self.removePolygonDrawingTool(reference=True)
 
     def markerSizeValueChanged(self, value):
         value = float(value)

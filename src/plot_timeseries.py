@@ -25,6 +25,7 @@ class PlotTs():
         script_path = os.path.abspath(__file__)
         json_file = "config.json"
         self.config_file = os.path.join(os.path.dirname(script_path), 'config', json_file)
+        self.plot_data_list = {'dates': [], 'ts_values': [], 'ref_values': []}
         self.plot_list = []
         self.plot_line_list = []
         self.plot_multiple_fill_list = []
@@ -127,6 +128,15 @@ class PlotTs():
         if not self.hold_on_flag:
             self.ui.figure.clear()
         self.ui.canvas.draw()
+        self.plot_data_list = {'dates': [], 'ts_values': [], 'ref_values': []}
+        self.dates = None
+        self.ts_values = 0
+        self.ref_values = 0
+        self.plot_list = []
+        self.plot_line_list = []
+        self.plot_multiple_fill_list = []
+        self.plot_multiple_lines_list = []
+        self.fit_plot_list = []
 
     def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
         if dates is not None:
@@ -172,7 +182,7 @@ class PlotTs():
             self.plot_multiple_values = None
         self.plot_values = np.mean(self.ts_values, axis=1) - np.mean(self.ref_values, axis=1)
 
-    def initializeAxes(self, update=False):
+    def initializeAxes(self):
         """
         Initialize the axes for the plot.
         :param update: bool
@@ -189,10 +199,6 @@ class PlotTs():
             self.fit_plot_list = []
             self.plot_residuals_list = []
 
-        if update:
-            # remove current plot
-            self.removeLastPlot()
-
         self.updateSettings()
         if self.plot_residuals_flag:
             if not self.ax:
@@ -205,9 +211,26 @@ class PlotTs():
 
     def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, update=False):
         # update: flag incicating if the plot should be updated or a new one created
-        self.initializeAxes(update=update)
+
+        if update:
+            if len(self.plot_data_list['dates']) == 0:
+                return
+            dates = self.plot_data_list['dates'][-1]
+            ts_values = self.plot_data_list['ts_values'][-1]
+            ref_values = self.plot_data_list['ref_values'][-1]
+            self.removeLastPlot()
+            self.dates = dates
+            self.ts_values = ts_values
+            self.ref_values = ref_values
+
+        self.initializeAxes()
 
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
+
+        self.plot_data_list['dates'].append(self.dates)
+        self.plot_data_list['ts_values'].append(self.ts_values)
+        self.plot_data_list['ref_values'].append(self.ref_values)
+
         if self.dates is None:
             return
 
@@ -282,7 +305,7 @@ class PlotTs():
 
     def removeLastPlot(self, n=1):
         for _ in range(n):
-            if len(self.plot_list) > 0:
+            if len(self.plot_list) > 1:
                 plot = self.plot_list[-1]
                 if plot:
                     plot.remove()
@@ -315,6 +338,14 @@ class PlotTs():
                     if plot:
                         plot.remove()
                 self.plot_replica_dn.pop()
+
+                # also remove from plot data list
+                self.plot_data_list['dates'].pop()
+                self.plot_data_list['ts_values'].pop()
+                self.plot_data_list['ref_values'].pop()
+                self.dates = self.plot_data_list['dates'][-1]
+                self.ts_values = self.plot_data_list['ts_values'][-1]
+                self.ref_values = self.plot_data_list['ref_values'][-1]
 
         # remove any fit lines
         [plot.remove() for plot in self.fit_plot_list]

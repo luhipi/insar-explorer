@@ -186,17 +186,12 @@ class TSClickHandler(MapClickHandler):
     def __init__(self, plugin, msg_signal=None):
         super().__init__(plugin, msg_signal=msg_signal)
         self.plot_ts = pts.PlotTs(self.ui)
-        self.ts_values = 0
-        self.ref_values = 0
         self.raster_layer = raster_layer_utils.RasterTimeseries()
         self.selected_field_name = None
 
     def reset(self):
         self.clearFeatureHighlight()
         self.clearReferenceFeatureHighlight()
-
-        self.ts_values = 0
-        self.ref_values = 0
         self.raster_layer.reset()
 
         self.plot_ts.clear()
@@ -227,15 +222,17 @@ class TSClickHandler(MapClickHandler):
             attributes = vector_layer_utils.getFeatureAttributes(feature)
             date_values = vector_layer_utils.extractDateValueAttributes(attributes)
             if not ref:
-                self.ts_values = date_values[:, 1]
+                ts_values = date_values[:, 1]
+                ref_values = None
             else:
-                self.ref_values = date_values[:, 1]
+                ref_values = date_values[:, 1]
                 if self.selected_field_name:
                     self.map_reference_clicked_value = (
                         vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name))
+                ts_values = None
 
             dates = date_values[:, 0]
-            self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
+            self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values)
 
     def choosePointClickedRaster(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         status, message = grd_layer_utils.checkGrdTimeseries(layer)
@@ -255,26 +252,25 @@ class TSClickHandler(MapClickHandler):
             self.highlightSelectedReferenceFeature(clicked_point)
 
         if not ref:
-            self.ts_values = date_values[:, 1]
+            ts_values = date_values[:, 1]
+            ref_values = None
         else:
-            self.ref_values = date_values[:, 1]
+            ref_values = date_values[:, 1]
             self.map_reference_clicked_value = self.raster_layer.getClickedPixelValue(layer, point=point)
+            ts_values = None
 
         dates = date_values[:, 0]
-        self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values)
+        self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values)
 
     def resetReferencePoint(self):
-        self.ref_values = 0
         self.clearReferenceFeatureHighlight()
-        self.plot_ts.plotTs(ref_values=self.ref_values)
+        self.plot_ts.plotTs(ref_values=0)
 
 
 class PolygonClickHandler(MapClickHandler):
     def __init__(self, plugin, msg_signal=None):
         super().__init__(plugin, msg_signal=msg_signal)
         self.polygon = None
-        self.ts_values = None
-        self.ref_values = None
 
     def identifyFeaturesInPolygon(self, layer: QgsMapLayer, polygon: QgsGeometry, ref=False) -> list:
         if not layer:
@@ -353,18 +349,25 @@ class PolygonClickHandler(MapClickHandler):
             values = np.stack(values_column, axis=1)
 
             if not ref:
-                self.ts_values = values
+                ts_values = values
+                ref_values = None
             else:
-                self.ref_values = values
+                ref_values = values
+                ts_values = None
 
                 if self.selected_field_name:
                     clicked_values = vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name)
                     self.map_reference_clicked_value = np.mean(clicked_values)
 
-            self.plot_ts.plotTs(dates=dates, ts_values=self.ts_values, ref_values=self.ref_values, plot_multiple=True)
+            self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values, plot_multiple=True)
 
 
 class ClickHandler(TSClickHandler, PolygonClickHandler):
     def __init__(self, plugin, msg_signal=None):
         TSClickHandler.__init__(self, plugin, msg_signal=msg_signal)
         PolygonClickHandler.__init__(self, plugin, msg_signal=msg_signal)
+
+    def removeLastPlot(self):
+        self.clearFeatureHighlight()
+        self.clearReferenceFeatureHighlight()
+        self.plot_ts.removeLastPlot()
