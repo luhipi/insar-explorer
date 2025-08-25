@@ -1,5 +1,8 @@
 ### History
 
+v2.1.0-dev
+- Fix: resolved error during time series curve fitting.
+
 v2.0.0
 - Fix: Sort time series data by date before plotting.
 - Introduce new time series setting in the UI.

@@ -180,6 +180,8 @@ class PlotTs():
             self.ui.figure.clear()
             self.plot_list = []
             self.plot_line_list = []
+            self.fit_plot_list = []
+            self.plot_residuals_list = []
 
         if update:
             # remove current plot
