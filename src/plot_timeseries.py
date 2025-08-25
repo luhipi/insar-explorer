@@ -293,6 +293,10 @@ class PlotTs():
                         plot.remove()
                 self.plot_replica_dn.pop()
 
+        # remove any fit lines
+        [plot.remove() for plot in self.fit_plot_list]
+        self.fit_plot_list = []
+
         self.ui.canvas.draw()
 
     def plotReplicas(self):
