@@ -320,6 +320,10 @@ class PlotTs():
         [plot.remove() for plot in self.fit_plot_list]
         self.fit_plot_list = []
 
+        # remove any residual plots
+        [plot.remove() for plot in self.plot_residuals_list]
+        self.plot_residuals_list = []
+
         self.ui.canvas.draw()
 
     def plotReplicas(self):
