@@ -1,6 +1,7 @@
 ### History
 
 v2.1.0-dev
+- Fix hold on plot on windows.
 - Enable hold on plots for polygons.
 - Fix: resolved error during time series curve fitting.
 
