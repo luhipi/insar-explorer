@@ -486,7 +486,6 @@ class GuiController(QObject):
 
     def residualPlotClicked(self, status):
         # disable hold on when residuals are plotted
-        self.ui.cb_hold_on_plot.setChecked(False)
         if self.ui.pb_plot_residuals.isChecked() and self.ui.pb_ts_nofit.isChecked():
             self.ui.pb_ts_fit_poly1.setChecked(True)
         self.timeseriesPlotFit()
