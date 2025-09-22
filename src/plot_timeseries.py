@@ -348,8 +348,9 @@ class PlotTs():
                     plot_multiple_fill.remove()
 
                 plot_multiple_lines = plot_dict.get('plot_multiple_lines', None)
-                if plot_multiple_lines[0]:
-                    plot_multiple_lines[0].remove()
+                for plot in plot_multiple_lines:
+                    if plot:
+                        plot.remove()
 
                 plot_replica_up = plot_dict.get('replicate_up', None)
                 for plot in plot_replica_up:
