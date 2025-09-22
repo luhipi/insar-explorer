@@ -313,7 +313,7 @@ class PlotTs():
             idx = -n - 1
 
         if len(self.plot_list) < n:
-            return
+            return False
 
         plot_data_dict = self.plot_data_list[idx]
         params = plot_data_dict['param'] or None
@@ -378,6 +378,7 @@ class PlotTs():
                 self.plot_data_list.pop()
 
         self.ui.canvas.draw()
+        return True
 
     def plotReplicas(self):
         parms = self.parms['time series plot']
