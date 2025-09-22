@@ -346,7 +346,7 @@ class GuiController(QObject):
         self.initializeUiParams()
 
     def onSettingDialogChanged(self):
-        self.choose_point_click_handler.plot_ts.plotTs()
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
 
     def setSymbologyUpperRange(self):
         self.ui.sb_symbol_lower_range.blockSignals(True)
@@ -482,7 +482,7 @@ class GuiController(QObject):
             self.msg_signal.emit(msg, "i", 0)
 
         self.timeseriesPlotResiduals()
-        self.choose_point_click_handler.plot_ts.plotTs()
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
 
     def residualPlotClicked(self, status):
         # disable hold on when residuals are plotted
@@ -603,7 +603,7 @@ class GuiController(QObject):
             self.msg_signal.emit("Y-axis range set adaptively: less range change when plotting new time series.", "i",
                                  0)
 
-        self.choose_point_click_handler.plot_ts.plotTs()
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
 
     def timeseriesReplica(self):
         if self.ui.pb_ts_replica.isChecked():
@@ -615,7 +615,7 @@ class GuiController(QObject):
         else:
             self.choose_point_click_handler.plot_ts.replicate_flag = False
             self.msg_signal.emit("Replica disabled.", "i", 0)
-        self.choose_point_click_handler.plot_ts.plotTs()
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
 
     def handleUiClose(self, visible):
         if not visible:
