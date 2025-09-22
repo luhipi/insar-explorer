@@ -490,8 +490,7 @@ class GuiController(QObject):
             self.ui.pb_ts_fit_poly1.setChecked(True)
         self.timeseriesPlotFit()
         if status:
-            self.msg_signal.emit("Residual plot enabled: measurement − fit.",
-                                 "i", 0)
+            self.msg_signal.emit("Residual plot enabled: measurement − fit.", "i", 0)
         else:
             self.msg_signal.emit("Residual plot disabled.", "i", 0)
 
