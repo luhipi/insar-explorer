@@ -305,7 +305,7 @@ class PlotTs():
 
     def removeLastPlot(self, n=1):
         for _ in range(n):
-            if len(self.plot_list) > 1:
+            if len(self.plot_list) > 0:
                 plot = self.plot_list[-1]
                 if plot:
                     plot.remove()
