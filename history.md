@@ -1,6 +1,7 @@
 ### History
 
 v2.1.0-dev
+- Enhance UI.
 - Make the colormap in the UI larger.
 - Reverse Turbo default colormap to have red for low and blue for high values.
 - Set default checked for applying symbology on the fly.

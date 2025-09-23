@@ -136,7 +136,7 @@
                <string/>
               </property>
               <property name="currentIndex">
-               <number>2</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tab_map">
                <attribute name="title">
@@ -257,8 +257,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>30</width>
-                           <height>30</height>
+                           <width>24</width>
+                           <height>24</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -404,8 +404,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>30</width>
-                           <height>30</height>
+                           <width>24</width>
+                           <height>24</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -570,8 +570,8 @@
                           <widget class="QPushButton" name="pb_colormap_reverse">
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -789,8 +789,8 @@
                         <widget class="QPushButton" name="pb_symbology_live">
                          <property name="maximumSize">
                           <size>
-                           <width>30</width>
-                           <height>30</height>
+                           <width>24</width>
+                           <height>24</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -851,8 +851,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>30</width>
-                           <height>30</height>
+                           <width>24</width>
+                           <height>24</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -995,6 +995,12 @@
                                <height>30</height>
                               </size>
                              </property>
+                             <property name="sizeIncrement">
+                              <size>
+                               <width>24</width>
+                               <height>24</height>
+                              </size>
+                             </property>
                              <property name="toolTip">
                               <string>Select point</string>
                              </property>
@@ -1050,6 +1056,12 @@
                               <size>
                                <width>30</width>
                                <height>30</height>
+                              </size>
+                             </property>
+                             <property name="sizeIncrement">
+                              <size>
+                               <width>24</width>
+                               <height>24</height>
                               </size>
                              </property>
                              <property name="toolTip">
@@ -1112,6 +1124,12 @@
                                <height>30</height>
                               </size>
                              </property>
+                             <property name="sizeIncrement">
+                              <size>
+                               <width>24</width>
+                               <height>24</height>
+                              </size>
+                             </property>
                              <property name="toolTip">
                               <string>Draw polygon for point selection</string>
                              </property>
@@ -1162,8 +1180,8 @@
                              </property>
                              <property name="maximumSize">
                               <size>
-                               <width>30</width>
-                               <height>30</height>
+                               <width>24</width>
+                               <height>24</height>
                               </size>
                              </property>
                              <property name="toolTip">
@@ -1204,7 +1222,7 @@
                        <item>
                         <spacer name="horizontalSpacer">
                          <property name="toolTip">
-                          <string/>
+                          <string>Horizontal Spacer 'horizontalSpacer', 40 x 20</string>
                          </property>
                          <property name="orientation">
                           <enum>Qt::Horizontal</enum>
@@ -1238,8 +1256,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -1332,8 +1350,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -1455,8 +1473,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="acceptDrops">
@@ -1514,8 +1532,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="acceptDrops">
@@ -1574,8 +1592,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -1634,8 +1652,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -1694,8 +1712,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -1774,8 +1792,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -1828,8 +1846,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -1958,8 +1976,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>30</width>
-                           <height>30</height>
+                           <width>24</width>
+                           <height>24</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -2130,7 +2148,7 @@
                      <string/>
                     </property>
                     <property name="title">
-                     <string>Plot settings</string>
+                     <string>Plot setting</string>
                     </property>
                     <property name="flat">
                      <bool>true</bool>
@@ -2154,65 +2172,11 @@
                      <item>
                       <layout class="QVBoxLayout" name="verticalLayout_2">
                        <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_21">
-                         <property name="spacing">
-                          <number>5</number>
-                         </property>
+                        <layout class="QHBoxLayout" name="horizontalLayout_10">
                          <item>
-                          <widget class="QLabel" name="label_8">
+                          <widget class="QLabel" name="label_10">
                            <property name="text">
-                            <string>Color::</string>
-                           </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <widget class="QPushButton" name="cb_marker_color_auto">
-                           <property name="sizePolicy">
-                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                             <horstretch>0</horstretch>
-                             <verstretch>0</verstretch>
-                            </sizepolicy>
-                           </property>
-                           <property name="minimumSize">
-                            <size>
-                             <width>0</width>
-                             <height>0</height>
-                            </size>
-                           </property>
-                           <property name="maximumSize">
-                            <size>
-                             <width>30</width>
-                             <height>30</height>
-                            </size>
-                           </property>
-                           <property name="toolTip">
-                            <string>Random plot color</string>
-                           </property>
-                           <property name="styleSheet">
-                            <string notr="true">QPushButton:hover {
-    border: 1px solid #bbb;
-}
-
-</string>
-                           </property>
-                           <property name="text">
-                            <string/>
-                           </property>
-                           <property name="icon">
-                            <iconset>
-                             <normaloff>:/icons/icons/plot_random_color.svg</normaloff>:/icons/icons/plot_random_color.svg</iconset>
-                           </property>
-                           <property name="iconSize">
-                            <size>
-                             <width>16</width>
-                             <height>16</height>
-                            </size>
-                           </property>
-                           <property name="checkable">
-                            <bool>true</bool>
-                           </property>
-                           <property name="flat">
-                            <bool>true</bool>
+                            <string>Color:</string>
                            </property>
                           </widget>
                          </item>
@@ -2235,8 +2199,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -2319,37 +2283,54 @@
                            </property>
                           </widget>
                          </item>
-                        </layout>
-                       </item>
-                       <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_22">
-                         <property name="spacing">
-                          <number>5</number>
-                         </property>
                          <item>
-                          <widget class="QLabel" name="label_9">
+                          <widget class="QPushButton" name="cb_marker_color_auto">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>0</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>24</width>
+                             <height>24</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>Random plot color</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">QPushButton:hover {
+    border: 1px solid #bbb;
+}
+
+</string>
+                           </property>
                            <property name="text">
-                            <string>Style:</string>
+                            <string/>
                            </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <widget class="QComboBox" name="cmb_marker_style">
-                           <property name="maximumSize">
+                           <property name="icon">
+                            <iconset>
+                             <normaloff>:/icons/icons/plot_random_color.svg</normaloff>:/icons/icons/plot_random_color.svg</iconset>
+                           </property>
+                           <property name="iconSize">
                             <size>
-                             <width>48</width>
-                             <height>16777215</height>
+                             <width>16</width>
+                             <height>16</height>
                             </size>
                            </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <widget class="QComboBox" name="cmb_line_style">
-                           <property name="maximumSize">
-                            <size>
-                             <width>48</width>
-                             <height>16777215</height>
-                            </size>
+                           <property name="checkable">
+                            <bool>true</bool>
+                           </property>
+                           <property name="flat">
+                            <bool>true</bool>
                            </property>
                           </widget>
                          </item>
@@ -2357,109 +2338,131 @@
                        </item>
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout_18">
-                         <property name="spacing">
-                          <number>5</number>
-                         </property>
                          <item>
-                          <widget class="QLabel" name="label_5">
-                           <property name="text">
-                            <string>Marker size:</string>
-                           </property>
-                          </widget>
+                          <layout class="QVBoxLayout" name="verticalLayout_23">
+                           <item>
+                            <widget class="QLabel" name="label_8">
+                             <property name="text">
+                              <string>Marker:</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QLabel" name="label_9">
+                             <property name="text">
+                              <string>Line:</string>
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
                          </item>
                          <item>
-                          <widget class="QDoubleSpinBox" name="sb_marker_size">
-                           <property name="sizePolicy">
-                            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                             <horstretch>0</horstretch>
-                             <verstretch>0</verstretch>
-                            </sizepolicy>
-                           </property>
-                           <property name="minimumSize">
-                            <size>
-                             <width>0</width>
-                             <height>0</height>
-                            </size>
-                           </property>
-                           <property name="maximumSize">
-                            <size>
-                             <width>48</width>
-                             <height>16777215</height>
-                            </size>
-                           </property>
-                           <property name="toolTip">
-                            <string>Symbol size</string>
-                           </property>
-                           <property name="buttonSymbols">
-                            <enum>QAbstractSpinBox::NoButtons</enum>
-                           </property>
-                           <property name="decimals">
-                            <number>1</number>
-                           </property>
-                           <property name="minimum">
-                            <double>0.000000000000000</double>
-                           </property>
-                           <property name="singleStep">
-                            <double>5.000000000000000</double>
-                           </property>
-                           <property name="value">
-                            <double>1.000000000000000</double>
-                           </property>
-                          </widget>
-                         </item>
-                        </layout>
-                       </item>
-                       <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_24">
-                         <property name="spacing">
-                          <number>5</number>
-                         </property>
-                         <item>
-                          <widget class="QLabel" name="label_11">
-                           <property name="text">
-                            <string>Line width:</string>
-                           </property>
-                          </widget>
+                          <layout class="QVBoxLayout" name="verticalLayout_22">
+                           <item>
+                            <widget class="QComboBox" name="cmb_marker_style">
+                             <property name="maximumSize">
+                              <size>
+                               <width>48</width>
+                               <height>16777215</height>
+                              </size>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QComboBox" name="cmb_line_style">
+                             <property name="maximumSize">
+                              <size>
+                               <width>48</width>
+                               <height>16777215</height>
+                              </size>
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
                          </item>
                          <item>
-                          <widget class="QDoubleSpinBox" name="sb_line_width">
-                           <property name="sizePolicy">
-                            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                             <horstretch>0</horstretch>
-                             <verstretch>0</verstretch>
-                            </sizepolicy>
-                           </property>
-                           <property name="minimumSize">
-                            <size>
-                             <width>0</width>
-                             <height>0</height>
-                            </size>
-                           </property>
-                           <property name="maximumSize">
-                            <size>
-                             <width>48</width>
-                             <height>16777215</height>
-                            </size>
-                           </property>
-                           <property name="toolTip">
-                            <string>Line width</string>
-                           </property>
-                           <property name="buttonSymbols">
-                            <enum>QAbstractSpinBox::NoButtons</enum>
-                           </property>
-                           <property name="decimals">
-                            <number>1</number>
-                           </property>
-                           <property name="minimum">
-                            <double>0.100000000000000</double>
-                           </property>
-                           <property name="singleStep">
-                            <double>0.100000000000000</double>
-                           </property>
-                           <property name="value">
-                            <double>1.000000000000000</double>
-                           </property>
-                          </widget>
+                          <layout class="QVBoxLayout" name="verticalLayout_21">
+                           <item>
+                            <widget class="QDoubleSpinBox" name="sb_marker_size">
+                             <property name="sizePolicy">
+                              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                               <horstretch>0</horstretch>
+                               <verstretch>0</verstretch>
+                              </sizepolicy>
+                             </property>
+                             <property name="minimumSize">
+                              <size>
+                               <width>0</width>
+                               <height>0</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>48</width>
+                               <height>16777215</height>
+                              </size>
+                             </property>
+                             <property name="toolTip">
+                              <string>Symbol size</string>
+                             </property>
+                             <property name="buttonSymbols">
+                              <enum>QAbstractSpinBox::NoButtons</enum>
+                             </property>
+                             <property name="decimals">
+                              <number>1</number>
+                             </property>
+                             <property name="minimum">
+                              <double>0.000000000000000</double>
+                             </property>
+                             <property name="singleStep">
+                              <double>5.000000000000000</double>
+                             </property>
+                             <property name="value">
+                              <double>1.000000000000000</double>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QDoubleSpinBox" name="sb_line_width">
+                             <property name="sizePolicy">
+                              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                               <horstretch>0</horstretch>
+                               <verstretch>0</verstretch>
+                              </sizepolicy>
+                             </property>
+                             <property name="minimumSize">
+                              <size>
+                               <width>0</width>
+                               <height>0</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>48</width>
+                               <height>16777215</height>
+                              </size>
+                             </property>
+                             <property name="toolTip">
+                              <string>Line width</string>
+                             </property>
+                             <property name="buttonSymbols">
+                              <enum>QAbstractSpinBox::NoButtons</enum>
+                             </property>
+                             <property name="decimals">
+                              <number>1</number>
+                             </property>
+                             <property name="minimum">
+                              <double>0.100000000000000</double>
+                             </property>
+                             <property name="singleStep">
+                              <double>0.100000000000000</double>
+                             </property>
+                             <property name="value">
+                              <double>1.000000000000000</double>
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
                          </item>
                         </layout>
                        </item>
