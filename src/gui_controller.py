@@ -307,8 +307,6 @@ class GuiController(QObject):
 
         # Setting popup
         self.ui.pb_ts_settings.clicked.connect(self.settingsWidgetPopup)
-        # map
-        self.connectMapSignals()
 
     def connectMapSignals(self):
         self.ui.cb_select_field.currentTextChanged.connect(self.selectVectorFieldChanged)
@@ -346,7 +344,7 @@ class GuiController(QObject):
         self.initializeUiParams()
 
     def onSettingDialogChanged(self):
-        self.choose_point_click_handler.plot_ts.plotTs()
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
 
     def setSymbologyUpperRange(self):
         self.ui.sb_symbol_lower_range.blockSignals(True)
@@ -482,25 +480,21 @@ class GuiController(QObject):
             self.msg_signal.emit(msg, "i", 0)
 
         self.timeseriesPlotResiduals()
-
-        self.choose_point_click_handler.plot_ts.fitModel()
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
 
     def residualPlotClicked(self, status):
         # disable hold on when residuals are plotted
-        self.ui.cb_hold_on_plot.setChecked(False)
         if self.ui.pb_plot_residuals.isChecked() and self.ui.pb_ts_nofit.isChecked():
             self.ui.pb_ts_fit_poly1.setChecked(True)
         self.timeseriesPlotFit()
         if status:
-            self.msg_signal.emit("Residual plot enabled: measurement − fit.",
-                                 "i", 0)
+            self.msg_signal.emit("Residual plot enabled: measurement − fit.", "i", 0)
         else:
             self.msg_signal.emit("Residual plot disabled.", "i", 0)
 
     def timeseriesPlotResiduals(self):
         self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.pb_plot_residuals.isChecked()
                                                                        and not self.ui.pb_ts_nofit.isChecked())
-        self.choose_point_click_handler.plot_ts.plotTs()
 
     def holdOnPlot(self, status):
         self.choose_point_click_handler.plot_ts.hold_on_flag = status
@@ -510,7 +504,11 @@ class GuiController(QObject):
             self.msg_signal.emit("Hold on plot disabled.", "i", 0)
 
     def removeLastPlotClicked(self):
-        self.choose_point_click_handler.plot_ts.removeLastPlot()
+        # TODO: remove the last plot and show the previous plot polygon/point highlight
+        self.choose_point_click_handler.removeLastPlot()
+        # TODO: move polygon drawing methods to PolygonDrawingTool class
+        self.removePolygonDrawingTool(reference=False)
+        self.removePolygonDrawingTool(reference=True)
 
     def markerSizeValueChanged(self, value):
         value = float(value)
@@ -601,7 +599,7 @@ class GuiController(QObject):
             self.msg_signal.emit("Y-axis range set adaptively: less range change when plotting new time series.", "i",
                                  0)
 
-        self.choose_point_click_handler.plot_ts.plotTs()
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
 
     def timeseriesReplica(self):
         if self.ui.pb_ts_replica.isChecked():
@@ -613,7 +611,7 @@ class GuiController(QObject):
         else:
             self.choose_point_click_handler.plot_ts.replicate_flag = False
             self.msg_signal.emit("Replica disabled.", "i", 0)
-        self.choose_point_click_handler.plot_ts.plotTs()
+        self.choose_point_click_handler.plot_ts.plotTs(update=True)
 
     def handleUiClose(self, visible):
         if not visible:
@@ -630,7 +628,6 @@ class GuiController(QObject):
         self.ui.pb_set_reference.setChecked(False)
         self.ui.pb_choose_polygon.setChecked(False)
         self.ui.pb_set_reference_polygon.setChecked(False)
-        self.disableHoldOn(not status)
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
@@ -642,7 +639,6 @@ class GuiController(QObject):
         self.ui.pb_choose_point.setChecked(False)
         self.ui.pb_choose_polygon.setChecked(False)
         self.ui.pb_set_reference_polygon.setChecked(False)
-        self.disableHoldOn(not status)
         if status:
             self.initializeClickTool()
             self.iface.mapCanvas().setMapTool(self.click_tool)
@@ -651,20 +647,10 @@ class GuiController(QObject):
             self.ui.pb_set_reference.setChecked(False)
             self.removeClickTool()
 
-    def disableHoldOn(self, status):
-        if status:
-            self.ui.cb_hold_on_plot.setChecked(False)
-            self.ui.cb_hold_on_plot.setEnabled(False)
-            self.ui.cb_remove_last_plot.setEnabled(False)
-        else:
-            self.ui.cb_hold_on_plot.setEnabled(True)
-            self.ui.cb_remove_last_plot.setEnabled(True)
-
     def activatePolygonSelection(self, status):
         self.ui.pb_choose_point.setChecked(False)
         self.ui.pb_set_reference.setChecked(False)
         self.ui.pb_set_reference_polygon.setChecked(False)
-        self.disableHoldOn(status)
         if status:
             self.initializePolygonDrawingTool()
             self.msg_signal.emit("Click multiple points to draw polygon; right‑click to close polygon and plot time "

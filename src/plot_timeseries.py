@@ -18,21 +18,18 @@ class PlotTs():
         self.ts_values = 0
         self.ref_values = 0
         self.plot_values = None
-        self.plot_all_values = None
+        self.plot_multiple_values = None
         self.min_plot_values = None
         self.max_plot_values = None
         self.residuals_values = None
         script_path = os.path.abspath(__file__)
         json_file = "config.json"
         self.config_file = os.path.join(os.path.dirname(script_path), 'config', json_file)
+        self.plot_data_list = []
         self.plot_list = []
-        self.plot_line_list = []
-        self.fit_plot_list = []
         self.fit_models = []
         self.fit_seasonal_flag = False
         self.replicate_flag = False
-        self.plot_replica_up = []
-        self.plot_replica_dn = []
         self.plot_y_axis = "from_data"
         self.replicate_value = 5.6 / 2
         self.ax_residuals = None
@@ -58,16 +55,19 @@ class PlotTs():
         parms['font size'] = parms_ts.get(["time series plot", "font size"]) or 12
         parms['marker'] = parms_ts.get(["time series plot", "marker"]) or "."
         parms['marker color'] = parms_ts.get(["time series plot", "marker color"]) or None
+        parms['marker alpha'] = parms_ts.get(["time series plot", "marker alpha"]) or 1.0
         parms['marker edge color'] = parms_ts.get(["time series plot", "marker edge color"]) or None
         parms['marker size'] = parms_ts.get(["time series plot", "marker size"])
         parms['line style'] = parms_ts.get(["time series plot", "line style"]) or ''
         parms['line color'] = parms_ts.get(["time series plot", "line color"]) or None
+        parms['line alpha'] = parms_ts.get(["time series plot", "line alpha"]) or 1.0
         parms['line width'] = parms_ts.get(["time series plot", "line width"]) or 1
 
         parms['series fill color'] = parms_ts.get(["time series plot", "series fill color"]) or 'blue'
         parms['series fill alpha'] = parms_ts.get(["time series plot", "series fill alpha"]) or 0.2
         parms['series line style'] = parms_ts.get(["time series plot", "series line style"]) or ''
         parms['series line color'] = parms_ts.get(["time series plot", "series line color"]) or None
+        parms['series line alpha'] = parms_ts.get(["time series plot", "series line alpha"]) or 1.0
         parms['series line width'] = parms_ts.get(["time series plot", "series line width"]) or 0.2
 
         parms['ymin'] = parms_ts.get(["time series plot", "ymin"])
@@ -79,6 +79,7 @@ class PlotTs():
         # replica
         parms['replica color 1'] = parms_ts.get(["time series plot", "replica color 1"]) or 'gray'
         parms['replica color 2'] = parms_ts.get(["time series plot", "replica color 2"]) or 'gray'
+        parms['replica alpha'] = parms_ts.get(["time series plot", "replica alpha"]) or 1.0
         parms['replica marker size'] = parms_ts.get(["time series plot", "replica marker size"]) or 5
         parms['replica marker'] = parms_ts.get(["time series plot", "replica marker"]) or 'o'
         parms['number of up replicas'] = parms_ts.get(["time series plot", "number of up replicas"])
@@ -106,10 +107,12 @@ class PlotTs():
         parms['ylabel'] = parms_ts.get(["residual plot", "ylabel"]) or ""
         parms['marker'] = parms_ts.get(["residual plot", "marker"]) or "."
         parms['marker color'] = parms_ts.get(["residual plot", "marker color"]) or None
+        parms['marker alpha'] = parms_ts.get(["residual plot", "marker alpha"]) or 1.0
         parms['marker edge color'] = parms_ts.get(["residual plot", "marker edge color"]) or None
         parms['marker size'] = parms_ts.get(["residual plot", "marker size"])
         parms['line style'] = parms_ts.get(["residual plot", "line style"]) or ''
         parms['line color'] = parms_ts.get(["residual plot", "line color"]) or None
+        parms['line alpha'] = parms_ts.get(["residual plot", "line alpha"]) or 1.0
         parms['line width'] = parms_ts.get(["residual plot", "line width"])
         parms['ymin'] = parms_ts.get(["residual plot", "ymin"])
         parms['ymax'] = parms_ts.get(["residual plot", "ymax"])
@@ -125,6 +128,11 @@ class PlotTs():
         if not self.hold_on_flag:
             self.ui.figure.clear()
         self.ui.canvas.draw()
+        self.dates = None
+        self.ts_values = 0
+        self.ref_values = 0
+        self.plot_list = []
+        self.plot_data_list = []
 
     def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
         if dates is not None:
@@ -163,14 +171,14 @@ class PlotTs():
             # based on std
             # self.min_plot_values = np.mean(plot_values, axis=1) - np.std(plot_values, axis=1)
             # self.max_plot_values = np.mean(plot_values, axis=1) + np.std(plot_values, axis=1)
-            self.plot_all_values = plot_values
+            self.plot_multiple_values = plot_values
         else:
             self.min_plot_values = None
             self.max_plot_values = None
-            self.plot_all_values = None
+            self.plot_multiple_values = None
         self.plot_values = np.mean(self.ts_values, axis=1) - np.mean(self.ref_values, axis=1)
 
-    def initializeAxes(self, update=False):
+    def initializeAxes(self):
         """
         Initialize the axes for the plot.
         :param update: bool
@@ -178,25 +186,50 @@ class PlotTs():
         """
         if not self.hold_on_flag:
             self.ui.figure.clear()
+            self.ax = None
+            self.ax_residuals = None
             self.plot_list = []
-            self.plot_line_list = []
+            self.plot_data_list = []
+            self.plot_residuals_list = []
 
-        if update:
-            # remove current plot
-            self.removeLastPlot()
-
-        self.updateSettings()
         if self.plot_residuals_flag:
-            self.ax = self.ui.figure.add_subplot(211)
-            self.ax_residuals = self.ui.figure.add_subplot(212)
+            if self.ax and not self.ax_residuals:
+                # convert ax from subplot(111) to subplot(211) and preserve content
+                self.ui.figure.clear()
+                self.ax = self.ui.figure.add_subplot(211)
+                self.ax_residuals = self.ui.figure.add_subplot(212)
+            else:
+                if not self.ax:
+                    self.ax = self.ui.figure.add_subplot(211)
+                if not self.ax_residuals:
+                    self.ax_residuals = self.ui.figure.add_subplot(212)
         else:
-            self.ax = self.ui.figure.add_subplot(111)
+            if self.ax and self.ax_residuals:
+                # convert ax from subplot(211) to subplot(111) and preserve content
+                self.ui.figure.clear()
+                self.ax = self.ui.figure.add_subplot(111)
+                self.ax_residuals = None
+            elif not self.ax:
+                self.ax = self.ui.figure.add_subplot(111)
 
     def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, update=False):
         # update: flag incicating if the plot should be updated or a new one created
-        self.initializeAxes(update=update)
+
+        plot_dict = {}
+        self.updateSettings()
+
+        if update:
+            if len(self.plot_list) == 0:
+                return
+            self.removeLastPlot(update=update)
+            random_marker_color_flag = False
+        else:
+            random_marker_color_flag = self.random_marker_color_flag
+
+        self.initializeAxes()
 
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
+
         if self.dates is None:
             return
 
@@ -205,13 +238,21 @@ class PlotTs():
         if np.sum(np.isfinite(plot_values)) == 0:
             return
 
+        if random_marker_color_flag:
+            rand_color = np.random.rand(3, )
+            self.parms['time series plot']['marker color'] = self.parms['time series plot']['line color'] = rand_color
+        plot_data_dict = {'dates': self.dates, 'ts_values': self.ts_values, 'ref_values': self.ref_values,
+                          'param': self.parms}
+
         parms = self.parms['time series plot']
         marker = parms['marker']
         marker_size = parms['marker size']
         marker_color = parms['marker color']
+        marker_alpha = parms['marker alpha']
         edge_color = parms['marker edge color']
         line_style = parms['line style']
         line_color = parms['line color']
+        line_alpha = parms['line alpha']
         line_width = parms['line width']
 
         if plot_multiple and self.min_plot_values is not None:
@@ -219,79 +260,142 @@ class PlotTs():
             upper_bound = self.max_plot_values
             series_fill_color = parms['series fill color']
             series_fill_alpha = parms['series fill alpha']
-            self.ax.fill_between(self.dates, lower_bound, upper_bound, color=series_fill_color, alpha=series_fill_alpha)
-        if self.plot_all_values is not None:
+            plot_fill_between = self.ax.fill_between(self.dates, lower_bound, upper_bound, color=series_fill_color,
+                                                     alpha=series_fill_alpha)
+        else:
+            plot_fill_between = None
+        plot_dict['plot_multiple_fill'] = plot_fill_between
+
+        if self.plot_multiple_values is not None:
             series_line_style = parms['series line style']
             series_line_color = parms['series line color']
+            series_line_alpha = parms['series line alpha']
             series_line_width = parms['series line width']
             if series_line_style:
-                self.ax.plot(self.dates, self.plot_all_values, series_line_style, color=series_line_color,
-                             linewidth=series_line_width)
-
-        if self.random_marker_color_flag:
-            marker_color = line_color = np.random.rand(3,)
+                plot_multiple_lines = self.ax.plot(self.dates, self.plot_multiple_values, series_line_style,
+                                                   color=series_line_color, linewidth=series_line_width,
+                                                   alpha=series_line_alpha)
+            else:
+                plot_multiple_lines = [None]
+        else:
+            plot_multiple_lines = [None]
+        plot_dict['plot_multiple_lines'] = plot_multiple_lines
 
         if marker_size > 0:
             plot = self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
-                                   edgecolors=edge_color, linewidth=0.2)
+                                   alpha=marker_alpha, edgecolors=edge_color, linewidth=0.2)
         else:
             plot = None
-        self.plot_list.append(plot)
+        plot_dict['scatter'] = plot
 
         # update ylim for hold on
         self.updateYlim(ax=self.ax, y_data=self.plot_values)
 
         if line_style != '':
-            plot_line = self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
+            plot_line = self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width,
+                                     alpha=line_alpha)
         else:
             plot_line = [None]
-        self.plot_line_list.append(plot_line[0])
+        plot_dict['line'] = plot_line[0]
 
         if self.replicate_flag:
-            self.plotReplicas()
+            replicate_up_list, replicate_dn_list = self.plotReplicas()
         else:
-            self.plot_replica_up.append([None])
-            self.plot_replica_dn.append([None])
+            replicate_up_list, replicate_dn_list = [None], [None]
+        plot_dict['replicate_up'] = replicate_up_list
+        plot_dict['replicate_dn'] = replicate_dn_list
 
         self.decoratePlot(parms=parms)
-        self.fitModel()
+        fit_plot_list = self.fitModel()
+        plot_dict['fit_plot_list'] = fit_plot_list
 
         parms_figure = self.parms['figure']
         self.decorateFigure(parms=parms_figure)
 
+        self.plot_data_list.append(plot_data_dict)
+        self.plot_list.append(plot_dict)
+
         self.ui.canvas.draw()
 
-    def removeLastPlot(self, n=1):
+    def removeLastPlot(self, n=1, update=False):
+        if update or len(self.plot_list) == 1:
+            idx = -n
+        else:
+            idx = -n - 1
+
+        if len(self.plot_list) < n:
+            return False
+
+        plot_data_dict = self.plot_data_list[idx]
+        params = plot_data_dict['param'] or None
+        if len(plot_data_dict['dates']) == 1:
+            dates = None
+            ts_values = 0
+            ref_values = 0
+        else:
+            dates = plot_data_dict['dates']
+            ts_values = plot_data_dict['ts_values']
+            ref_values = plot_data_dict['ref_values']
+
+        self.dates = dates
+        self.ts_values = ts_values
+        self.ref_values = ref_values
+        self.parms = params
+
         for _ in range(n):
             if len(self.plot_list) > 0:
-                plot = self.plot_list[-1]
+                plot_dict = self.plot_list[-1]
+                self.plot_list.pop()
+                plot = plot_dict.get('scatter', None)
                 if plot:
                     plot.remove()
-                self.plot_list.pop()
 
-                plot_line = self.plot_line_list[-1]
+                plot_line = plot_dict.get('line', None)
                 if plot_line:
                     plot_line.remove()
-                self.plot_line_list.pop()
 
-                plot_replica_up = self.plot_replica_up[-1]
+                plot_multiple_fill = plot_dict.get('plot_multiple_fill', None)
+                if plot_multiple_fill:
+                    plot_multiple_fill.remove()
+
+                plot_multiple_lines = plot_dict.get('plot_multiple_lines', None)
+                for plot in plot_multiple_lines:
+                    if plot:
+                        plot.remove()
+
+                plot_replica_up = plot_dict.get('replicate_up', None)
                 for plot in plot_replica_up:
                     if plot:
                         plot.remove()
-                self.plot_replica_up.pop()
 
-                plot_replica_dn = self.plot_replica_dn[-1]
+                plot_replica_dn = plot_dict.get('replicate_dn', None)
                 for plot in plot_replica_dn:
                     if plot:
                         plot.remove()
-                self.plot_replica_dn.pop()
+
+                fit_plot_list = plot_dict.get('fit_plot_list', None)
+                if fit_plot_list:
+                    fit_plot_list.remove()
+
+                res_plots = self.plot_residuals_list[-1]
+                residual_scatter = res_plots['residual_scatter']
+                residual_line = res_plots['residual_line']
+                if residual_scatter:
+                    residual_scatter.remove()
+                if residual_line:
+                    residual_line.remove()
+                self.plot_residuals_list.pop()
+
+                self.plot_data_list.pop()
 
         self.ui.canvas.draw()
+        return True
 
     def plotReplicas(self):
         parms = self.parms['time series plot']
         marker_color_1 = parms['replica color 1']  # replica up
         marker_color_2 = parms['replica color 2']  # replica down
+        marker_alpha = parms['replica alpha']
         marker_size_replica = parms['replica marker size']
         marker_replica = parms['replica marker']
         number_of_up_replicas = parms['number of up replicas']
@@ -307,10 +411,9 @@ class PlotTs():
             else:
                 marker_replica_color = marker_color_2
 
-            replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value,
-                                           marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+            replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value, marker=marker_replica,
+                                           c=marker_replica_color, s=marker_size_replica, alpha=marker_alpha)
             replicate_up_list.append(replicate_up)
-        self.plot_replica_up.append(replicate_up_list)
 
         self.updateYlim(ax=self.ax, y_data=self.plot_values + replicate_value)
 
@@ -323,59 +426,66 @@ class PlotTs():
             else:
                 marker_replica_color = marker_color_1
 
-            replicate_dn = self.ax.scatter(self.dates, self.plot_values - replicate_value,
-                                           marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+            replicate_dn = self.ax.scatter(self.dates, self.plot_values - replicate_value, marker=marker_replica,
+                                           c=marker_replica_color, s=marker_size_replica, alpha=marker_alpha)
             replicate_dn_list.append(replicate_dn)
 
-        self.plot_replica_dn.append(replicate_dn_list)
         self.updateYlim(ax=self.ax, y_data=self.plot_values - replicate_value)
 
+        return replicate_up_list, replicate_dn_list
+
     def fitModel(self):
-        [plot.remove() for plot in self.fit_plot_list]
-        self.ui.canvas.draw_idle()
-        self.fit_plot_list = []
         if self.plot_values is None:
             return
         if self.dates is None:
             return
         if self.fit_models is []:
+            self.plot_residuals_list.append({'residual_scatter': None, 'residual_line': None})
             return
 
         fit_line_type = '--'
         fit_line_color = 'black'
         fit_seasonal = self.fit_seasonal_flag
-        for fit_model in self.fit_models:
+        if len(self.fit_models) != 1:
+            self.plot_residuals_list.append({'residual_scatter': None, 'residual_line': None})
+            return
+        else:
+            fit_model = self.fit_models[0]
             model_values, model_x, model_y = (
                 FittingModels(self.dates, self.plot_values, model=fit_model).fit(seasonal=fit_seasonal))
-            plot = self.ax.plot(model_x, model_y, fit_line_type, color=fit_line_color)
-            self.fit_plot_list.append(plot[0])
+            fit_plot = self.ax.plot(model_x, model_y, fit_line_type, color=fit_line_color)
             self.ui.canvas.draw_idle()
 
             self.residuals_values = self.plot_values - model_values
             self.plotResiduals()
 
+        return fit_plot[0]
+
     def plotResiduals(self):
-        [plot.remove() for plot in self.plot_residuals_list]
-        self.plot_residuals_list = []
+        plot_dict = {'residual_scatter': None, 'residual_line': None}
         if self.plot_residuals_flag:
             parms = self.parms['residual plot']
             marker = parms['marker']
             marker_size = parms['marker size']
             marker_color = parms['marker color']
+            marker_alpha = parms['marker alpha']
             edge_color = parms['marker edge color']
             line_style = parms['line style']
             line_color = parms['line color']
+            line_alpha = parms['line alpha']
             line_width = parms['line width']
 
-            plot_residual = self.ax_residuals.scatter(self.dates, self.residuals_values, marker=marker,
-                                                      c=marker_color, s=marker_size, edgecolors=edge_color)
-            self.plot_residuals_list.append(plot_residual)
+            plot_residual = self.ax_residuals.scatter(self.dates, self.residuals_values, marker=marker, c=marker_color,
+                                                      s=marker_size, edgecolors=edge_color, alpha=marker_alpha)
+            plot_dict['residual_scatter'] = plot_residual
             if line_style:
                 plot_residual_line = self.ax_residuals.plot(self.dates, self.residuals_values, line_style,
-                                                            color=line_color, linewidth=line_width)
-                self.plot_residuals_list.append(plot_residual_line[0])
+                                                            color=line_color, linewidth=line_width, alpha=line_alpha)
+                plot_dict['residual_line'] = plot_residual_line[0]
             self.decoratePlot(ax=self.ax_residuals, parms=parms)
             self.ui.canvas.draw_idle()
+
+        self.plot_residuals_list.append(plot_dict)
 
     def decorateFigure(self, parms={}):
         self.setFigureStyle(parms=parms)

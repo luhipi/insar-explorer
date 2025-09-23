@@ -1,5 +1,16 @@
 ### History
 
+v2.1.0-dev
+- Add opacity setting for time series plots.
+- Enhance UI.
+- Make the colormap in the UI larger.
+- Reverse Turbo default colormap to have red for low and blue for high values.
+- Set default checked for applying symbology on the fly.
+- Fix: reverse colorbar in UI.
+- Fix: hold on plot on windows.
+- Enable hold on plots for polygons.
+- Fix: resolved error during time series curve fitting.
+
 v2.0.0
 - Fix: Sort time series data by date before plotting.
 - Introduce new time series setting in the UI.
