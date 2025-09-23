@@ -136,7 +136,7 @@
                <string/>
               </property>
               <property name="currentIndex">
-               <number>0</number>
+               <number>1</number>
               </property>
               <widget class="QWidget" name="tab_map">
                <attribute name="title">
@@ -1090,8 +1090,8 @@
                              </property>
                              <property name="maximumSize">
                               <size>
-                               <width>40</width>
-                               <height>40</height>
+                               <width>30</width>
+                               <height>30</height>
                               </size>
                              </property>
                              <property name="toolTip">
@@ -1144,8 +1144,8 @@
                              </property>
                              <property name="maximumSize">
                               <size>
-                               <width>40</width>
-                               <height>40</height>
+                               <width>30</width>
+                               <height>30</height>
                               </size>
                              </property>
                              <property name="toolTip">
@@ -2180,8 +2180,8 @@
                            </property>
                            <property name="iconSize">
                             <size>
-                             <width>20</width>
-                             <height>20</height>
+                             <width>16</width>
+                             <height>16</height>
                             </size>
                            </property>
                            <property name="checkable">
@@ -2211,8 +2211,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>40</width>
-                             <height>40</height>
+                             <width>30</width>
+                             <height>30</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -2233,6 +2233,9 @@
                              <width>20</width>
                              <height>20</height>
                             </size>
+                           </property>
+                           <property name="shortcut">
+                            <string>Ctrl+S</string>
                            </property>
                            <property name="checkable">
                             <bool>false</bool>
@@ -2261,8 +2264,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>40</width>
-                             <height>40</height>
+                             <width>30</width>
+                             <height>30</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -2304,10 +2307,24 @@
                           </widget>
                          </item>
                          <item>
-                          <widget class="QComboBox" name="cmb_marker_style"/>
+                          <widget class="QComboBox" name="cmb_marker_style">
+                           <property name="maximumSize">
+                            <size>
+                             <width>32</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
+                          </widget>
                          </item>
                          <item>
-                          <widget class="QComboBox" name="cmb_line_style"/>
+                          <widget class="QComboBox" name="cmb_line_style">
+                           <property name="maximumSize">
+                            <size>
+                             <width>32</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
+                          </widget>
                          </item>
                         </layout>
                        </item>
