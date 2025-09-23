@@ -1,6 +1,6 @@
 ### History
 
-v2.1.0-dev
+v2.1.0
 - Add opacity setting for time series plots.
 - Enhance UI.
 - Make the colormap in the UI larger.
