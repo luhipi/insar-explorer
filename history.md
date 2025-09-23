@@ -1,7 +1,8 @@
 ### History
 
 v2.1.0-dev
-- set default checked for applying symbology on the fly.
+- Reverse Turbo default colormap to have red for low and blue for high values.
+- Set default checked for applying symbology on the fly.
 - Fix: reverse colorbar in UI.
 - Fix: hold on plot on windows.
 - Enable hold on plots for polygons.

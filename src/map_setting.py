@@ -147,7 +147,7 @@ class InsarMap:
             interval = (self.max_value - self.min_value) / self.num_classes
 
             color_map_dict = {
-                'Turbo': color_maps.Turbo,
+                'Turbo_r': color_maps.TurboR,
                 'Roma': color_maps.Roma,
                 'Vik': color_maps.Vik,
                 'Gray': color_maps.Gray}

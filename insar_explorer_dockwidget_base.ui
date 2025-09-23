@@ -539,11 +539,11 @@
                            </item>
                            <item>
                             <property name="text">
-                             <string>Turbo</string>
+                             <string>Turbo_r</string>
                             </property>
                             <property name="icon">
                              <iconset>
-                              <normaloff>:/colormaps/icons/colormaps/turbo.png</normaloff>:/colormaps/icons/colormaps/turbo.png</iconset>
+                              <normaloff>:/colormaps/icons/colormaps/turbo_r.png</normaloff>:/colormaps/icons/colormaps/turbo_r.png</iconset>
                             </property>
                            </item>
                            <item>
