@@ -55,16 +55,19 @@ class PlotTs():
         parms['font size'] = parms_ts.get(["time series plot", "font size"]) or 12
         parms['marker'] = parms_ts.get(["time series plot", "marker"]) or "."
         parms['marker color'] = parms_ts.get(["time series plot", "marker color"]) or None
+        parms['marker alpha'] = parms_ts.get(["time series plot", "marker alpha"]) or 1.0
         parms['marker edge color'] = parms_ts.get(["time series plot", "marker edge color"]) or None
         parms['marker size'] = parms_ts.get(["time series plot", "marker size"])
         parms['line style'] = parms_ts.get(["time series plot", "line style"]) or ''
         parms['line color'] = parms_ts.get(["time series plot", "line color"]) or None
+        parms['line alpha'] = parms_ts.get(["time series plot", "line alpha"]) or 1.0
         parms['line width'] = parms_ts.get(["time series plot", "line width"]) or 1
 
         parms['series fill color'] = parms_ts.get(["time series plot", "series fill color"]) or 'blue'
         parms['series fill alpha'] = parms_ts.get(["time series plot", "series fill alpha"]) or 0.2
         parms['series line style'] = parms_ts.get(["time series plot", "series line style"]) or ''
         parms['series line color'] = parms_ts.get(["time series plot", "series line color"]) or None
+        parms['series line alpha'] = parms_ts.get(["time series plot", "series line alpha"]) or 1.0
         parms['series line width'] = parms_ts.get(["time series plot", "series line width"]) or 0.2
 
         parms['ymin'] = parms_ts.get(["time series plot", "ymin"])
@@ -76,6 +79,7 @@ class PlotTs():
         # replica
         parms['replica color 1'] = parms_ts.get(["time series plot", "replica color 1"]) or 'gray'
         parms['replica color 2'] = parms_ts.get(["time series plot", "replica color 2"]) or 'gray'
+        parms['replica alpha'] = parms_ts.get(["time series plot", "replica alpha"]) or 1.0
         parms['replica marker size'] = parms_ts.get(["time series plot", "replica marker size"]) or 5
         parms['replica marker'] = parms_ts.get(["time series plot", "replica marker"]) or 'o'
         parms['number of up replicas'] = parms_ts.get(["time series plot", "number of up replicas"])
@@ -103,10 +107,12 @@ class PlotTs():
         parms['ylabel'] = parms_ts.get(["residual plot", "ylabel"]) or ""
         parms['marker'] = parms_ts.get(["residual plot", "marker"]) or "."
         parms['marker color'] = parms_ts.get(["residual plot", "marker color"]) or None
+        parms['marker alpha'] = parms_ts.get(["residual plot", "marker alpha"]) or 1.0
         parms['marker edge color'] = parms_ts.get(["residual plot", "marker edge color"]) or None
         parms['marker size'] = parms_ts.get(["residual plot", "marker size"])
         parms['line style'] = parms_ts.get(["residual plot", "line style"]) or ''
         parms['line color'] = parms_ts.get(["residual plot", "line color"]) or None
+        parms['line alpha'] = parms_ts.get(["residual plot", "line alpha"]) or 1.0
         parms['line width'] = parms_ts.get(["residual plot", "line width"])
         parms['ymin'] = parms_ts.get(["residual plot", "ymin"])
         parms['ymax'] = parms_ts.get(["residual plot", "ymax"])
@@ -242,9 +248,11 @@ class PlotTs():
         marker = parms['marker']
         marker_size = parms['marker size']
         marker_color = parms['marker color']
+        marker_alpha = parms['marker alpha']
         edge_color = parms['marker edge color']
         line_style = parms['line style']
         line_color = parms['line color']
+        line_alpha = parms['line alpha']
         line_width = parms['line width']
 
         if plot_multiple and self.min_plot_values is not None:
@@ -261,10 +269,12 @@ class PlotTs():
         if self.plot_multiple_values is not None:
             series_line_style = parms['series line style']
             series_line_color = parms['series line color']
+            series_line_alpha = parms['series line alpha']
             series_line_width = parms['series line width']
             if series_line_style:
                 plot_multiple_lines = self.ax.plot(self.dates, self.plot_multiple_values, series_line_style,
-                                                   color=series_line_color, linewidth=series_line_width)
+                                                   color=series_line_color, linewidth=series_line_width,
+                                                   alpha=series_line_alpha)
             else:
                 plot_multiple_lines = [None]
         else:
@@ -273,7 +283,7 @@ class PlotTs():
 
         if marker_size > 0:
             plot = self.ax.scatter(self.dates, self.plot_values, marker=marker, s=marker_size, c=marker_color,
-                                   edgecolors=edge_color, linewidth=0.2)
+                                   alpha=marker_alpha, edgecolors=edge_color, linewidth=0.2)
         else:
             plot = None
         plot_dict['scatter'] = plot
@@ -282,7 +292,8 @@ class PlotTs():
         self.updateYlim(ax=self.ax, y_data=self.plot_values)
 
         if line_style != '':
-            plot_line = self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width)
+            plot_line = self.ax.plot(self.dates, self.plot_values, line_style, color=line_color, linewidth=line_width,
+                                     alpha=line_alpha)
         else:
             plot_line = [None]
         plot_dict['line'] = plot_line[0]
@@ -384,6 +395,7 @@ class PlotTs():
         parms = self.parms['time series plot']
         marker_color_1 = parms['replica color 1']  # replica up
         marker_color_2 = parms['replica color 2']  # replica down
+        marker_alpha = parms['replica alpha']
         marker_size_replica = parms['replica marker size']
         marker_replica = parms['replica marker']
         number_of_up_replicas = parms['number of up replicas']
@@ -399,8 +411,8 @@ class PlotTs():
             else:
                 marker_replica_color = marker_color_2
 
-            replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value,
-                                           marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+            replicate_up = self.ax.scatter(self.dates, self.plot_values + replicate_value, marker=marker_replica,
+                                           c=marker_replica_color, s=marker_size_replica, alpha=marker_alpha)
             replicate_up_list.append(replicate_up)
 
         self.updateYlim(ax=self.ax, y_data=self.plot_values + replicate_value)
@@ -414,8 +426,8 @@ class PlotTs():
             else:
                 marker_replica_color = marker_color_1
 
-            replicate_dn = self.ax.scatter(self.dates, self.plot_values - replicate_value,
-                                           marker=marker_replica, c=marker_replica_color, s=marker_size_replica)
+            replicate_dn = self.ax.scatter(self.dates, self.plot_values - replicate_value, marker=marker_replica,
+                                           c=marker_replica_color, s=marker_size_replica, alpha=marker_alpha)
             replicate_dn_list.append(replicate_dn)
 
         self.updateYlim(ax=self.ax, y_data=self.plot_values - replicate_value)
@@ -456,17 +468,19 @@ class PlotTs():
             marker = parms['marker']
             marker_size = parms['marker size']
             marker_color = parms['marker color']
+            marker_alpha = parms['marker alpha']
             edge_color = parms['marker edge color']
             line_style = parms['line style']
             line_color = parms['line color']
+            line_alpha = parms['line alpha']
             line_width = parms['line width']
 
-            plot_residual = self.ax_residuals.scatter(self.dates, self.residuals_values, marker=marker,
-                                                      c=marker_color, s=marker_size, edgecolors=edge_color)
+            plot_residual = self.ax_residuals.scatter(self.dates, self.residuals_values, marker=marker, c=marker_color,
+                                                      s=marker_size, edgecolors=edge_color, alpha=marker_alpha)
             plot_dict['residual_scatter'] = plot_residual
             if line_style:
                 plot_residual_line = self.ax_residuals.plot(self.dates, self.residuals_values, line_style,
-                                                            color=line_color, linewidth=line_width)
+                                                            color=line_color, linewidth=line_width, alpha=line_alpha)
                 plot_dict['residual_line'] = plot_residual_line[0]
             self.decoratePlot(ax=self.ax_residuals, parms=parms)
             self.ui.canvas.draw_idle()
