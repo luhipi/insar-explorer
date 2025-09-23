@@ -307,8 +307,6 @@ class GuiController(QObject):
 
         # Setting popup
         self.ui.pb_ts_settings.clicked.connect(self.settingsWidgetPopup)
-        # map
-        self.connectMapSignals()
 
     def connectMapSignals(self):
         self.ui.cb_select_field.currentTextChanged.connect(self.selectVectorFieldChanged)
