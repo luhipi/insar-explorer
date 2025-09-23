@@ -136,7 +136,7 @@
                <string/>
               </property>
               <property name="currentIndex">
-               <number>0</number>
+               <number>2</number>
               </property>
               <widget class="QWidget" name="tab_map">
                <attribute name="title">
@@ -211,7 +211,7 @@
                      <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_9">
                        <property name="spacing">
-                        <number>1</number>
+                        <number>5</number>
                        </property>
                        <item>
                         <widget class="QDoubleSpinBox" name="sb_symbol_lower_range">
@@ -223,6 +223,9 @@
                          </property>
                          <property name="toolTip">
                           <string>Min symbology value</string>
+                         </property>
+                         <property name="buttonSymbols">
+                          <enum>QAbstractSpinBox::NoButtons</enum>
                          </property>
                          <property name="decimals">
                           <number>1</number>
@@ -306,6 +309,9 @@
                          <property name="toolTip">
                           <string>Max symbology value</string>
                          </property>
+                         <property name="buttonSymbols">
+                          <enum>QAbstractSpinBox::NoButtons</enum>
+                         </property>
                          <property name="decimals">
                           <number>1</number>
                          </property>
@@ -344,6 +350,9 @@
                          </property>
                          <property name="toolTip">
                           <string>Offset the values</string>
+                         </property>
+                         <property name="buttonSymbols">
+                          <enum>QAbstractSpinBox::NoButtons</enum>
                          </property>
                          <property name="decimals">
                           <number>2</number>
@@ -500,7 +509,7 @@
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout">
                          <property name="spacing">
-                          <number>1</number>
+                          <number>5</number>
                          </property>
                          <item>
                           <widget class="QComboBox" name="cmb_colormap">
@@ -623,6 +632,9 @@
                            <property name="toolTip">
                             <string>Number of classes</string>
                            </property>
+                           <property name="buttonSymbols">
+                            <enum>QAbstractSpinBox::NoButtons</enum>
+                           </property>
                            <property name="minimum">
                             <number>1</number>
                            </property>
@@ -655,6 +667,9 @@
                            </property>
                            <property name="toolTip">
                             <string>Symbol size</string>
+                           </property>
+                           <property name="buttonSymbols">
+                            <enum>QAbstractSpinBox::NoButtons</enum>
                            </property>
                            <property name="decimals">
                             <number>1</number>
@@ -691,6 +706,9 @@
                            </property>
                            <property name="toolTip">
                             <string>Symbol opacity</string>
+                           </property>
+                           <property name="buttonSymbols">
+                            <enum>QAbstractSpinBox::NoButtons</enum>
                            </property>
                            <property name="maximum">
                             <number>100</number>
@@ -752,7 +770,7 @@
                      <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_7">
                        <property name="spacing">
-                        <number>1</number>
+                        <number>5</number>
                        </property>
                        <item>
                         <spacer name="horizontalSpacer_9">
@@ -2013,6 +2031,9 @@
                          <property name="toolTip">
                           <string>Replica distance (wavelength/2)</string>
                          </property>
+                         <property name="buttonSymbols">
+                          <enum>QAbstractSpinBox::NoButtons</enum>
+                         </property>
                          <property name="minimum">
                           <number>1</number>
                          </property>
@@ -2134,6 +2155,9 @@
                       <layout class="QVBoxLayout" name="verticalLayout_2">
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout_21">
+                         <property name="spacing">
+                          <number>5</number>
+                         </property>
                          <item>
                           <widget class="QLabel" name="label_8">
                            <property name="text">
@@ -2230,8 +2254,8 @@
                            </property>
                            <property name="iconSize">
                             <size>
-                             <width>20</width>
-                             <height>20</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="shortcut">
@@ -2264,8 +2288,8 @@
                            </property>
                            <property name="maximumSize">
                             <size>
-                             <width>30</width>
-                             <height>30</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="toolTip">
@@ -2283,8 +2307,8 @@
                            </property>
                            <property name="iconSize">
                             <size>
-                             <width>20</width>
-                             <height>20</height>
+                             <width>24</width>
+                             <height>24</height>
                             </size>
                            </property>
                            <property name="checkable">
@@ -2299,6 +2323,9 @@
                        </item>
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout_22">
+                         <property name="spacing">
+                          <number>5</number>
+                         </property>
                          <item>
                           <widget class="QLabel" name="label_9">
                            <property name="text">
@@ -2310,7 +2337,7 @@
                           <widget class="QComboBox" name="cmb_marker_style">
                            <property name="maximumSize">
                             <size>
-                             <width>32</width>
+                             <width>48</width>
                              <height>16777215</height>
                             </size>
                            </property>
@@ -2320,7 +2347,7 @@
                           <widget class="QComboBox" name="cmb_line_style">
                            <property name="maximumSize">
                             <size>
-                             <width>32</width>
+                             <width>48</width>
                              <height>16777215</height>
                             </size>
                            </property>
@@ -2331,7 +2358,7 @@
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout_18">
                          <property name="spacing">
-                          <number>1</number>
+                          <number>5</number>
                          </property>
                          <item>
                           <widget class="QLabel" name="label_5">
@@ -2348,8 +2375,23 @@
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>0</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>48</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
                            <property name="toolTip">
                             <string>Symbol size</string>
+                           </property>
+                           <property name="buttonSymbols">
+                            <enum>QAbstractSpinBox::NoButtons</enum>
                            </property>
                            <property name="decimals">
                             <number>1</number>
@@ -2369,6 +2411,9 @@
                        </item>
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout_24">
+                         <property name="spacing">
+                          <number>5</number>
+                         </property>
                          <item>
                           <widget class="QLabel" name="label_11">
                            <property name="text">
@@ -2384,8 +2429,23 @@
                              <verstretch>0</verstretch>
                             </sizepolicy>
                            </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>0</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>48</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
                            <property name="toolTip">
                             <string>Line width</string>
+                           </property>
+                           <property name="buttonSymbols">
+                            <enum>QAbstractSpinBox::NoButtons</enum>
                            </property>
                            <property name="decimals">
                             <number>1</number>
@@ -2465,8 +2525,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>30</width>
-                           <height>30</height>
+                           <width>24</width>
+                           <height>24</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -2525,8 +2585,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>30</width>
-                           <height>30</height>
+                           <width>24</width>
+                           <height>24</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -2585,8 +2645,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>30</width>
-                           <height>30</height>
+                           <width>24</width>
+                           <height>24</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -2694,6 +2754,9 @@
                      </property>
                      <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_17">
+                       <property name="spacing">
+                        <number>5</number>
+                       </property>
                        <item>
                         <widget class="QPushButton" name="cb_hold_on_plot">
                          <property name="enabled">
@@ -2707,8 +2770,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>30</width>
-                           <height>30</height>
+                           <width>24</width>
+                           <height>24</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -2767,8 +2830,8 @@
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>30</width>
-                           <height>30</height>
+                           <width>24</width>
+                           <height>24</height>
                           </size>
                          </property>
                          <property name="toolTip">
@@ -2835,7 +2898,7 @@
                     </property>
                     <layout class="QGridLayout" name="gridLayout_7">
                      <property name="leftMargin">
-                      <number>0</number>
+                      <number>12</number>
                      </property>
                      <property name="topMargin">
                       <number>0</number>
@@ -2846,7 +2909,10 @@
                      <property name="bottomMargin">
                       <number>0</number>
                      </property>
-                     <property name="spacing">
+                     <property name="horizontalSpacing">
+                      <number>5</number>
+                     </property>
+                     <property name="verticalSpacing">
                       <number>0</number>
                      </property>
                      <item row="0" column="3">
@@ -2859,8 +2925,8 @@
                        </property>
                        <property name="maximumSize">
                         <size>
-                         <width>30</width>
-                         <height>30</height>
+                         <width>24</width>
+                         <height>24</height>
                         </size>
                        </property>
                        <property name="toolTip">
@@ -2894,8 +2960,8 @@
                       <widget class="QPushButton" name="pb_ts_settings">
                        <property name="maximumSize">
                         <size>
-                         <width>30</width>
-                         <height>30</height>
+                         <width>24</width>
+                         <height>24</height>
                         </size>
                        </property>
                        <property name="toolTip">
