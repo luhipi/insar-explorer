@@ -92,7 +92,7 @@ class ColorPicker(QWidget):
         if self.use_native_flag:
             color = color_dialog.getColor(initial_color)
         else:
-            color = color_dialog.getColor(initial_color, options=QColorDialog.DontUseNativeDialog)
+            color = color_dialog.getColor(initial_color, options=QColorDialog.ColorDialogOption.DontUseNativeDialog)
 
         if color.isValid():
             self.color = color.name()
@@ -145,14 +145,14 @@ class ObjectWithCheckbox(QWidget):
             self.checkbox.stateChanged.connect(self.toggleObject)
             self.layout.addWidget(self.checkbox)
             self.layout.addWidget(self.checkbox)
-            self.checkbox.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+            self.checkbox.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         else:
             self.checkbox = None
 
         self.layout.addWidget(self.wobject)
         self.setLayout(self.layout)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  # Adjust size policy
-        self.wobject.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)  # Adjust size policy
+        self.wobject.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setEnabled(flag)
 
     def setEnabled(self, flag):

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 
 
 class MessageBox:
@@ -11,13 +11,13 @@ class MessageBox:
         self.wgt.setText(f"<html><body>{self.message}</body></html>")
         self.addButtons()
         self.setStyle()
-        self.wgt.exec_()
+        self.wgt.exec()
 
     def setStyle(self):
-        self.wgt.setIcon(QMessageBox.Information)
+        self.wgt.setIcon(QMessageBox.Icon.Information)
 
     def addButtons(self):
-        self.wgt.setStandardButtons(QMessageBox.Ok)
+        self.wgt.setStandardButtons(QMessageBox.StandardButton.Ok)
 
 
 class InfoBox(MessageBox):
@@ -25,7 +25,7 @@ class InfoBox(MessageBox):
         super().__init__(message, title=title)
 
     def setStyle(self):
-        self.wgt.setIcon(QMessageBox.Information)
+        self.wgt.setIcon(QMessageBox.Icon.Information)
 
 
 class ErrorBox(MessageBox):
@@ -33,7 +33,7 @@ class ErrorBox(MessageBox):
         super().__init__(message, title=title)
 
     def setStyle(self):
-        self.wgt.setIcon(QMessageBox.Critical)
+        self.wgt.setIcon(QMessageBox.Icon.Critical)
 
 
 class WarningBox(MessageBox):
@@ -41,4 +41,4 @@ class WarningBox(MessageBox):
         super().__init__(message, title=title)
 
     def setStyle(self):
-        self.wgt.setIcon(QMessageBox.Warning)
+        self.wgt.setIcon(QMessageBox.Icon.Warning)

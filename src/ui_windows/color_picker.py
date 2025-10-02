@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QColorDialog
+from qgis.PyQt.QtWidgets import QColorDialog
 from qgis.PyQt.QtGui import QColor
 
 
@@ -50,7 +50,7 @@ class ColorPicker:
         if self.use_native_flag:
             color = color_dialog.getColor(initial_color)
         else:
-            color = color_dialog.getColor(initial_color, options=QColorDialog.DontUseNativeDialog)
+            color = color_dialog.getColor(initial_color, options=QColorDialog.ColorDialogOption.DontUseNativeDialog)
 
         if color.isValid():
             self.color = color.name()

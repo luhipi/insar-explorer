@@ -175,7 +175,7 @@ class InsarMap:
 
         shader = QgsRasterShader()
         color_ramp_shader = QgsColorRampShader()
-        color_ramp_shader.setColorRampType(QgsColorRampShader.Interpolated)
+        color_ramp_shader.setColorRampType(QgsColorRampShader.Type.Interpolated)
 
         color_ramp_items = []
         for i in range(self.num_classes):
@@ -200,7 +200,7 @@ class InsarMap:
                 color_ramp_items.append(QgsColorRampShader.ColorRampItem(adjusted_value, color, label))
 
         color_ramp_shader.setColorRampItemList(color_ramp_items)
-        color_ramp_shader.setColorRampType(QgsColorRampShader.Discrete)
+        color_ramp_shader.setColorRampType(QgsColorRampShader.Type.Discrete)
         shader.setRasterShaderFunction(color_ramp_shader)
 
         renderer = QgsSingleBandPseudoColorRenderer(layer.dataProvider(), 1, shader)

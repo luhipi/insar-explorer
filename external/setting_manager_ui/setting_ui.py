@@ -124,7 +124,7 @@ class SettingsTabWidget(QTableWidget):
     def addParameterName(self, *, row_idx, param_name, advanced, column_color, column_color2):
         """ Adds the parameter name to the table. """
         param_item = QTableWidgetItem(param_name)
-        param_item.setFlags(param_item.flags() & ~Qt.ItemIsEditable)
+        param_item.setFlags(param_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
         self.setItem(row_idx, 0, param_item)
         param_item.setBackground(column_color if advanced else column_color2)
 
@@ -173,7 +173,7 @@ class SettingsTabWidget(QTableWidget):
                 param_default_to_show = 'manual'
 
         default_item = QTableWidgetItem(str(param_default_to_show))
-        default_item.setFlags(default_item.flags() & ~Qt.ItemIsEditable)
+        default_item.setFlags(default_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
         self.setItem(row_idx, 2, default_item)
         default_item.setBackground(column_color if advanced else column_color2)
 

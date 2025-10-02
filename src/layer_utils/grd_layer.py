@@ -11,7 +11,7 @@ def checkGrdLayer(layer):
     elif not layer.isValid():
         message = '<span style="color:red;">Invalid Layer: Please select a valid raster layer.</span>'
         return False, message
-    elif (layer.type() == QgsMapLayer.VectorLayer):
+    elif (layer.type() == QgsMapLayer.LayerType.VectorLayer):
         message = ('<span style="color:red;">This is a vector layers. Please select a raster layer.'
                    '</span>')
         return False, message

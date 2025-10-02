@@ -1,9 +1,9 @@
 import os
 
 from qgis.gui import QgsMapToolEmitPoint
-from PyQt5.QtWidgets import QFileDialog, QMenu, QComboBox
-from PyQt5.QtCore import QObject, QTimer, QVariant, pyqtSignal
-from PyQt5.QtGui import QIcon, QTransform
+from qgis.PyQt.QtWidgets import QFileDialog, QMenu, QComboBox
+from qgis.PyQt.QtCore import QObject, QTimer, QVariant, pyqtSignal
+from qgis.PyQt.QtGui import QIcon, QTransform
 
 from . import map_click_handler as cph
 from . import setup_frames

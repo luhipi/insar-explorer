@@ -7,7 +7,7 @@ class PolygonMarker(QgsMapTool):
     def __init__(self, canvas) -> None:
         super().__init__(canvas)
         self.canvas = canvas
-        self.rubber_band = QgsRubberBand(self.canvas, QgsWkbTypes.PolygonGeometry)
+        self.rubber_band = QgsRubberBand(self.canvas, QgsWkbTypes.GeometryType.PolygonGeometry)
         self.points = []
 
         self.setStyle()
@@ -24,7 +24,7 @@ class PolygonMarker(QgsMapTool):
 
     def reset(self):
         self.points = []
-        self.rubber_band.reset(QgsWkbTypes.PolygonGeometry)
+        self.rubber_band.reset(QgsWkbTypes.GeometryType.PolygonGeometry)
 
     def stopDrawing(self):
         self.points = []

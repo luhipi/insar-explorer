@@ -14,7 +14,7 @@ def checkVectorLayer(layer):
     elif not layer.isValid():
         message = '<span style="color:red;">Invalid Layer: Please select a valid vector layer.</span>'
         return False, message
-    elif not (layer.type() == QgsMapLayer.VectorLayer):
+    elif not (layer.type() == QgsMapLayer.LayerType.VectorLayer):
         message = '<span style="color:red;">This is not a vector layer: Please select a valid vector layer.</span>'
         return False, message
     elif not (layer.geometryType() == 0):

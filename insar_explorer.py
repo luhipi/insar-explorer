@@ -234,7 +234,7 @@ class InsarExplorer:
 
             # show the dockwidget
             # TODO: fix to allow choice of dock location
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dockwidget)
+            self.iface.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
             if self.gui_controller is None:
                 self.gui_controller = GuiController(self)
