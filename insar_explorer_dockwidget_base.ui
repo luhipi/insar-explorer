@@ -794,7 +794,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Apply on the fly</string>
+                          <string>Apply symbology automatically</string>
                          </property>
                          <property name="autoFillBackground">
                           <bool>false</bool>
