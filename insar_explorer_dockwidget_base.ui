@@ -794,7 +794,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>Apply on the fly</string>
+                          <string>Apply symbology automatically</string>
                          </property>
                          <property name="autoFillBackground">
                           <bool>false</bool>
@@ -822,7 +822,7 @@
                           <bool>true</bool>
                          </property>
                          <property name="checked">
-                          <bool>true</bool>
+                          <bool>false</bool>
                          </property>
                          <property name="autoDefault">
                           <bool>false</bool>
@@ -2204,7 +2204,7 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>Draw polygon for reference points</string>
+                            <string>Select marker color</string>
                            </property>
                            <property name="styleSheet">
                             <string notr="true">QPushButton:hover {
@@ -2257,7 +2257,7 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>Draw polygon for reference points</string>
+                            <string>Select line color</string>
                            </property>
                            <property name="styleSheet">
                             <string notr="true">QPushButton:hover {
