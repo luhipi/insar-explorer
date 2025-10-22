@@ -1,5 +1,9 @@
 ### History
 
+v2.1.1
+- Disable automatic symbology application when opening the plugin.
+- Update tooltips of GUI elements.
+
 v2.1.0
 - Add opacity setting for time series plots.
 - Enhance UI.
