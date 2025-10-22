@@ -2204,7 +2204,7 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>Draw polygon for reference points</string>
+                            <string>Select marker color</string>
                            </property>
                            <property name="styleSheet">
                             <string notr="true">QPushButton:hover {
@@ -2257,7 +2257,7 @@
                             </size>
                            </property>
                            <property name="toolTip">
-                            <string>Draw polygon for reference points</string>
+                            <string>Select line color</string>
                            </property>
                            <property name="styleSheet">
                             <string notr="true">QPushButton:hover {
