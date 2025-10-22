@@ -246,8 +246,8 @@ pep8:
 
 # Linting
 lint:
-	flake8 --config=.flake8 . > ./test/linting/flake8.log || \
+	flake8 --config=./test/flake8.ini . > ./test/linting/flake8.log || \
 		(cat ./test/linting/flake8.log && exit 1)
-	pycodestyle  --config=.pycodestyle . > ./test/linting/pycodestyle.log || \
+	pycodestyle  --config=./test/pycodestyle.ini . > ./test/linting/pycodestyle.log || \
 		(cat ./test/linting/pycodestyle.log && exit 1)
 
