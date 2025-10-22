@@ -1,6 +1,6 @@
 about = """
         <h3>InSAR Explorer</h3>
-        <p>  v2.1.0 (2025.09.23) </p>
+        <p>  v2.1.1 (2025.10.22) </p>
         <p style="text-align: justify;">
             <span style="margin-left: 10em;">InSAR Explorer is developed by Mahmud Haghighi at the
             Institute of Photogrammetry and GeoInformation, Leibniz University Hannover.&nbsp;
