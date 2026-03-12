@@ -36,5 +36,6 @@
     <file>icons/fit__add_seasonal.svg</file>
     <file>icons/replica.svg</file>
     <file>icons/data_range.svg</file>
+    <file>icons/export.svg</file>
   </qresource>
 </RCC>
