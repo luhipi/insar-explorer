@@ -2894,7 +2894,7 @@
                      <string/>
                     </property>
                     <property name="title">
-                     <string>Settings and Export</string>
+                     <string>Export</string>
                     </property>
                     <property name="flat">
                      <bool>true</bool>
@@ -2918,6 +2918,22 @@
                      <property name="verticalSpacing">
                       <number>0</number>
                      </property>
+                     <item row="0" column="0">
+                      <spacer name="horizontalSpacer_7">
+                       <property name="toolTip">
+                        <string/>
+                       </property>
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
                      <item row="0" column="3">
                       <widget class="QPushButton" name="pb_ts_save">
                        <property name="sizePolicy">
@@ -2933,7 +2949,7 @@
                         </size>
                        </property>
                        <property name="toolTip">
-                        <string>Export plot</string>
+                        <string>Save plot</string>
                        </property>
                        <property name="toolTipDuration">
                         <number>-1</number>
@@ -2997,21 +3013,46 @@
                        </property>
                       </widget>
                      </item>
-                     <item row="0" column="0">
-                      <spacer name="horizontalSpacer_7">
+                     <item row="0" column="4">
+                      <widget class="QPushButton" name="pb_ts_export">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>24</width>
+                         <height>24</height>
+                        </size>
+                       </property>
                        <property name="toolTip">
+                        <string>Export values</string>
+                       </property>
+                       <property name="toolTipDuration">
+                        <number>-1</number>
+                       </property>
+                       <property name="text">
                         <string/>
                        </property>
-                       <property name="orientation">
-                        <enum>Qt::Horizontal</enum>
+                       <property name="icon">
+                        <iconset>
+                         <normaloff>:/icons/icons/export.svg</normaloff>:/icons/icons/export.svg</iconset>
                        </property>
-                       <property name="sizeHint" stdset="0">
+                       <property name="iconSize">
                         <size>
-                         <width>40</width>
+                         <width>20</width>
                          <height>20</height>
                         </size>
                        </property>
-                      </spacer>
+                       <property name="checkable">
+                        <bool>false</bool>
+                       </property>
+                       <property name="flat">
+                        <bool>false</bool>
+                       </property>
+                      </widget>
                      </item>
                     </layout>
                    </widget>
