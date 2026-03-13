@@ -755,3 +755,28 @@ class GuiController(QObject):
         For polygon selections, mean(ts_values) computes the average across points in polygon.
         """
         self.msg_signal.emit("", "", 0)
+
+        suggested_path = os.path.join(self.last_save_path, self.last_export_ts_name)
+        base, ext = os.path.splitext(suggested_path)
+
+        ext_to_filter = {
+            '.csv': "CSV files (*.csv)",
+            '.txt': "Text files (*.txt)",
+        }
+        filters = ";;".join(ext_to_filter.values())
+        default = ext_to_filter.get(ext.lower(), "CSV files (*.csv)")
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self.ui,
+            "Export time series data",
+            suggested_path,
+            filters,
+            default,
+        )
+
+        if not file_path:
+            return
+
+        base, ext = os.path.splitext(file_path)
+        if ext == '':
+            file_path = base + '.csv'
