@@ -1,5 +1,8 @@
 ### History
 
+dev
+- Show a list of available formats for saving time series plot.
+
 v2.1.1
 - Disable automatic symbology application when opening the plugin.
 - Update tooltips of GUI elements.

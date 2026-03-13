@@ -31,7 +31,8 @@ class GuiController(QObject):
         self.initializeSelection()
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
-        self.last_saved_ts_path = "ts_plot.png"
+        self.last_save_path = ""
+        self.last_save_ts_name = "ts_plot.png"
         self.initializeUiParams()
         self.connectUiSignals()
         # make point selection active by default
@@ -712,13 +713,36 @@ class GuiController(QObject):
 
     def saveTsPlot(self):
         self.msg_signal.emit("", "", 0)
+
+        suggested_path = os.path.join(self.last_save_path, self.last_save_ts_name)
+        base, ext = os.path.splitext(suggested_path)
+
+        ext_to_filter = {
+            '.png': "PNG (*.png)",
+            '.svg': "SVG (*.svg)",
+            '.jpg': "JPG (*.jpg)",
+            '.jpeg': "JPEG (*.jpeg)",
+            '.pdf': "PDF (*.pdf)"
+        }
+        filters = ";;".join(ext_to_filter.values())
+        default = ext_to_filter.get(ext.lower(), "PNG (*.png)")
+
         file_path, _ = QFileDialog.getSaveFileName(
             self.ui,
             "Save plot as image",
-            self.last_saved_ts_path,
-            "Images (*.png *.jpg *.svg *.pdf)"
+            suggested_path,
+            filters,
+            default,
         )
 
-        if file_path:
-            self.last_saved_ts_path = file_path
-            self.choose_point_click_handler.plot_ts.savePlotAsImage(file_path)
+        if not file_path:
+            return
+
+        base, ext = os.path.splitext(file_path)
+        if ext == '':
+            file_path = base + '.png'
+
+        self.last_save_path = os.path.dirname(file_path)
+        self.last_save_ts_name = os.path.basename(file_path)
+
+        self.choose_point_click_handler.plot_ts.savePlotAsImage(file_path)
