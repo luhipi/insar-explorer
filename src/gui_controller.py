@@ -780,3 +780,9 @@ class GuiController(QObject):
         base, ext = os.path.splitext(file_path)
         if ext == '':
             file_path = base + '.csv'
+
+
+        self.last_save_path = os.path.dirname(file_path)
+        self.last_export_ts_name = os.path.basename(file_path)
+
+        self.msg_signal.emit(f'Time series exported: {file_path}', 'done', 3000)
