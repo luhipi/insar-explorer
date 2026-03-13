@@ -750,11 +750,12 @@ class GuiController(QObject):
         self.choose_point_click_handler.plot_ts.savePlotAsImage(file_path)
 
     def exportTs(self):
-        """Export the latest plotted time series to CSV or TXT.
-        First column: date (YYYY-MM-DD). Second column: value = mean(ts_values) - mean(ref_values)
-        For polygon selections, mean(ts_values) computes the average across points in polygon.
-        """
+        """Export the latest plotted time series to CSV or TXT."""
         self.msg_signal.emit("", "", 0)
+
+        if self.choose_point_click_handler.plot_ts.dates is None:
+            self.msg_signal.emit('No time series to export.', 'w', 0)
+            return
 
         suggested_path = os.path.join(self.last_save_path, self.last_export_ts_name)
         base, ext = os.path.splitext(suggested_path)
@@ -781,6 +782,7 @@ class GuiController(QObject):
         if ext == '':
             file_path = base + '.csv'
 
+        self.choose_point_click_handler.plot_ts.exportAscii(file_path)
 
         self.last_save_path = os.path.dirname(file_path)
         self.last_export_ts_name = os.path.basename(file_path)

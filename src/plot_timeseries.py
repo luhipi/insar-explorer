@@ -703,6 +703,23 @@ class PlotTs():
             self.ui.figure.set_size_inches(fig_size)
             self.ui.canvas.draw()
 
+    def _dateStrings(self):
+        date_strings = []
+        for d in self.dates:
+            date_strings.append(d.strftime('%Y-%m-%d'))
+        return date_strings
+
+    def exportAscii(self, filename=None):
+        if filename is None:
+            return
+        if self.dates is None or self.plot_values is None:
+            return
+
+        data_to_save = np.column_stack((self._dateStrings(), self.plot_values))
+
+        header = 'date,ts_value'
+        np.savetxt(filename, data_to_save, fmt='%s', delimiter=',', header=header, comments='# ')
+
 # import plotly.graph_objs as go
 # import plotly.io as pio
 #
