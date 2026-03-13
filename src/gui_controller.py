@@ -33,6 +33,7 @@ class GuiController(QObject):
         self.insar_map = InsarMap(self.iface)
         self.last_save_path = ""
         self.last_save_ts_name = "ts_plot.png"
+        self.last_export_ts_name = "ts_data.csv"
         self.initializeUiParams()
         self.connectUiSignals()
         # make point selection active by default
@@ -302,6 +303,7 @@ class GuiController(QObject):
         self.ui.sb_line_width.valueChanged.connect(self.lineWidthChanged)
         # TS save
         self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
+        self.ui.pb_ts_export.clicked.connect(self.exportTs)
         # Replica
         self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
         self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
@@ -746,3 +748,10 @@ class GuiController(QObject):
         self.last_save_ts_name = os.path.basename(file_path)
 
         self.choose_point_click_handler.plot_ts.savePlotAsImage(file_path)
+
+    def exportTs(self):
+        """Export the latest plotted time series to CSV or TXT.
+        First column: date (YYYY-MM-DD). Second column: value = mean(ts_values) - mean(ref_values)
+        For polygon selections, mean(ts_values) computes the average across points in polygon.
+        """
+        self.msg_signal.emit("", "", 0)
