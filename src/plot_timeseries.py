@@ -739,11 +739,12 @@ class PlotTs():
         separator = "\n*********************************************************************************************\n"
         header_lines = [separator]
         header_lines.append("InSAR Explorer - Time Series Export\n")
-        header_lines.append("This file contains a time series produced with InSAR Explorer. InSAR Explorer is a free ")
-        header_lines.append("QGIS plugin for interactive InSAR time-series analysis and visualization. "
-                            "Visit the project")
-        header_lines.append("website for installation, documentation, and examples: "
-                            "https://luhipi.github.io/insar-explorer")
+        header_lines.append("This file contains a time series produced with InSAR Explorer. InSAR Explorer is a free "
+                            "QGIS \nplugin for interactive visualization and analysis of InSAR time-series. "
+                            "Visit the project website \nfor installation, documentation, license, and examples: "
+                            "https://luhipi.github.io/insar-explorer\n"
+                            "If you use InSAR Explorer, please cite the paper: "
+                            "https://doi.org/10.1109/IGARSS55030.2025.11313961")
         header_lines.append(separator)
 
         # we either have point or polygons.
