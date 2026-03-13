@@ -39,6 +39,8 @@ class PlotTs():
         self.random_marker_color_flag = False
         self.parms = {}
         self.updateSettings()
+        self.coords = None
+        self.ref_coords = None
 
     def modifySettings(self, block_key, value):
         params = JsonSettings(self.config_file)
@@ -212,7 +214,8 @@ class PlotTs():
             elif not self.ax:
                 self.ax = self.ui.figure.add_subplot(111)
 
-    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, update=False):
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, coords=None, ref_coords=None,
+               update=False):
         # update: flag incicating if the plot should be updated or a new one created
 
         plot_dict = {}
@@ -228,6 +231,12 @@ class PlotTs():
 
         self.initializeAxes()
 
+        # coords
+        if ts_values is not None:
+            self.coords = coords
+        if ref_values is not None:
+            self.ref_coords = ref_coords
+
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
 
         if self.dates is None:
@@ -242,7 +251,7 @@ class PlotTs():
             rand_color = np.random.rand(3, )
             self.parms['time series plot']['marker color'] = self.parms['time series plot']['line color'] = rand_color
         plot_data_dict = {'dates': self.dates, 'ts_values': self.ts_values, 'ref_values': self.ref_values,
-                          'param': self.parms}
+                          'param': self.parms, 'coords': self.coords, 'ref_coords': self.ref_coords}
 
         parms = self.parms['time series plot']
         marker = parms['marker']
@@ -332,14 +341,21 @@ class PlotTs():
             dates = None
             ts_values = 0
             ref_values = 0
+            coords = None
+            ref_coords = None
         else:
             dates = plot_data_dict['dates']
             ts_values = plot_data_dict['ts_values']
             ref_values = plot_data_dict['ref_values']
+            coords = plot_data_dict['coords']
+            ref_coords = plot_data_dict['ref_coords']
 
         self.dates = dates
         self.ts_values = ts_values
         self.ref_values = ref_values
+        self.coords = coords
+        self.ref_coords = ref_coords
+
         self.parms = params
 
         for _ in range(n):

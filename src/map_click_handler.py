@@ -1,8 +1,9 @@
+from dataclasses import dataclass
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsPointXY, QgsGeometry, QgsMapLayer, QgsRectangle, QgsFeatureRequest, QgsSettings, Qgis
 from qgis.gui import QgsHighlight
-from qgis.core import QgsProject, QgsCoordinateTransform
+from qgis.core import QgsProject, QgsCoordinateTransform, QgsCoordinateReferenceSystem
 from PyQt5.QtGui import QCursor
 
 import numpy as np
@@ -12,6 +13,82 @@ from . import plot_timeseries as pts
 from .layer_utils import vector_layer as vector_layer_utils
 from .layer_utils import grd_layer as grd_layer_utils
 from .layer_utils import raster_layer as raster_layer_utils
+
+
+@dataclass
+class Coordinates:
+    x: float
+    y: float
+    crs: QgsCoordinateReferenceSystem
+
+    def __repr__(self):
+        return f"Coordinates(CRS={self.crs.authid()}, {self.as_wkt()})"
+
+    def crs_str(self):
+        if not self.crs.isValid():
+            return "CRS=Unknown"
+        return f"CRS={self.crs.authid()}"
+
+    def to_wgs84(self) -> "Coordinates":
+        if self.crs.authid() == 'EPSG:4326':
+            return self
+        src = self.crs
+        dst = QgsCoordinateReferenceSystem('EPSG:4326')
+        transform = QgsCoordinateTransform(src, dst, QgsProject.instance())
+        pt = QgsGeometry.fromPointXY(QgsPointXY(self.x, self.y))
+        geom = QgsGeometry(pt)  # copy
+        geom.transform(transform)
+        p = geom.asPoint()
+        return Coordinates(float(p.x()), float(p.y()), dst)
+
+    def to_crs(self, target_crs) -> "Coordinates":
+        if isinstance(target_crs, str):
+            target_crs = QgsCoordinateReferenceSystem(target_crs)
+        if self.crs.authid() == target_crs.authid():
+            return self
+        transform = QgsCoordinateTransform(self.crs, target_crs, QgsProject.instance())
+        geom = QgsGeometry.fromPointXY(QgsPointXY(self.x, self.y))
+        geom.transform(transform)
+        p = geom.asPoint()
+        return Coordinates(float(p.x()), float(p.y()), target_crs)
+
+    def as_wkt(self) -> str:
+        return f"POINT ({self.x} {self.y})"
+
+    def as_wkt_wgs84(self) -> str:
+        c = self.to_wgs84()
+        return f"POINT ({c.x} {c.y})"
+
+
+@dataclass
+class PolygonGeometry:
+    geom: QgsGeometry
+    crs: QgsCoordinateReferenceSystem
+
+    def __repr__(self):
+        return f"PolygonGeometry(crs={self.crs.authid()}, wkt={self.geom.asWkt()})"
+
+    def crs_str(self):
+        if not self.crs.isValid():
+            return "CRS=Unknown"
+        return f"CRS={self.crs.authid()}"
+
+    def to_crs(self, target_crs) -> "PolygonGeometry":
+        if isinstance(target_crs, str):
+            target_crs = QgsCoordinateReferenceSystem(target_crs)
+        if self.crs.authid() == target_crs.authid():
+            return PolygonGeometry(QgsGeometry(self.geom), self.crs)
+        transform = QgsCoordinateTransform(self.crs, target_crs, QgsProject.instance())
+        g = QgsGeometry(self.geom)  # copy
+        g.transform(transform)
+        return PolygonGeometry(g, target_crs)
+
+    def as_wkt(self) -> str:
+        return self.geom.asWkt()
+
+    def as_wkt_wgs84(self) -> str:
+        wgs84_geom = self.to_crs('EPSG:4326').geom
+        return wgs84_geom.asWkt()
 
 
 class MapClickHandler:
@@ -219,20 +296,27 @@ class TSClickHandler(MapClickHandler):
             return
 
         if feature:
+            crds = Coordinates(x=feature.geometry().asPoint().x(), y=feature.geometry().asPoint().y(), crs=layer.crs())
+            coords = None
+            ref_coords = None
+
             attributes = vector_layer_utils.getFeatureAttributes(feature)
             date_values = vector_layer_utils.extractDateValueAttributes(attributes)
             if not ref:
                 ts_values = date_values[:, 1]
                 ref_values = None
+                coords = crds
             else:
                 ref_values = date_values[:, 1]
                 if self.selected_field_name:
                     self.map_reference_clicked_value = (
                         vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name))
                 ts_values = None
+                ref_coords = crds
 
             dates = date_values[:, 0]
-            self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values)
+            self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values,
+                                coords=coords, ref_coords=ref_coords)
 
     def choosePointClickedRaster(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         status, message = grd_layer_utils.checkGrdTimeseries(layer)
@@ -251,16 +335,23 @@ class TSClickHandler(MapClickHandler):
         else:
             self.highlightSelectedReferenceFeature(clicked_point)
 
+        crds = Coordinates(x=clicked_point.asPoint().x(), y=clicked_point.asPoint().y(), crs=layer.crs())
+        coords = None
+        ref_coords = None
+
         if not ref:
             ts_values = date_values[:, 1]
             ref_values = None
+            coords = crds
         else:
             ref_values = date_values[:, 1]
             self.map_reference_clicked_value = self.raster_layer.getClickedPixelValue(layer, point=point)
             ts_values = None
+            ref_coords = crds
 
         dates = date_values[:, 0]
-        self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values)
+        self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values,
+                            coords=coords, ref_coords=ref_coords)
 
     def resetReferencePoint(self):
         self.clearReferenceFeatureHighlight()
@@ -348,18 +439,25 @@ class PolygonClickHandler(MapClickHandler):
             values_column = [arr[:, 1] for arr in date_values]
             values = np.stack(values_column, axis=1)
 
+            crds = PolygonGeometry(geom=polygon, crs=layer.crs())
+            coords = None
+            ref_coords = None
+
             if not ref:
                 ts_values = values
                 ref_values = None
+                coords = crds
             else:
                 ref_values = values
                 ts_values = None
+                ref_coords = crds
 
                 if self.selected_field_name:
                     clicked_values = vector_layer_utils.getFeatureFieldValue(attributes, self.selected_field_name)
                     self.map_reference_clicked_value = np.mean(clicked_values)
 
-            self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values, plot_multiple=True)
+            self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values, coords=coords,
+                                ref_coords=ref_coords, plot_multiple=True)
 
 
 class ClickHandler(TSClickHandler, PolygonClickHandler):
