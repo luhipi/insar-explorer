@@ -733,8 +733,47 @@ class PlotTs():
 
         data_to_save = np.column_stack((self._dateStrings(), self.plot_values))
 
-        header = 'date,ts_value'
-        np.savetxt(filename, data_to_save, fmt='%s', delimiter=',', header=header, comments='# ')
+        coords = self.coords
+        ref_coords = self.ref_coords
+
+        separator = "\n*********************************************************************************************\n"
+        header_lines = [separator]
+        header_lines.append("InSAR Explorer - Time Series Export\n")
+        header_lines.append("This file contains a time series produced with InSAR Explorer. InSAR Explorer is a free ")
+        header_lines.append("QGIS plugin for interactive InSAR time-series analysis and visualization. "
+                            "Visit the project")
+        header_lines.append("website for installation, documentation, and examples: "
+                            "https://luhipi.github.io/insar-explorer")
+        header_lines.append(separator)
+
+        # we either have point or polygons.
+        coords_type = "polygon" if hasattr(coords, "geom") else "point"
+        ref_coords_type = "polygon" if hasattr(ref_coords, "geom") else "point"
+        wgs84 = "CRS=EPSG:4326"
+
+        header_lines.append("Layer CRS\n")
+        header_lines.append(f"Time series {coords_type}:")
+        header_lines.append(f"{coords.crs_str() if coords else 'None'}")
+        header_lines.append(f"{coords.as_wkt() if coords else 'None'}\n")
+        header_lines.append(f"Reference {ref_coords_type}:")
+        header_lines.append(f"{ref_coords.crs_str() if ref_coords else 'None'}")
+        header_lines.append(f"{ref_coords.as_wkt() if ref_coords else 'None'}")
+
+        header_lines.append(separator)
+        header_lines.append("WGS84 Lon/Lat\n")
+        header_lines.append(f"Time series {coords_type}:")
+        header_lines.append(f"{wgs84 if coords else 'None'}")
+        header_lines.append(f"{coords.as_wkt_wgs84() if coords else 'None'}\n")
+        header_lines.append(f"Reference {ref_coords_type}:")
+        header_lines.append(f"{wgs84 if ref_coords else 'None'}")
+        header_lines.append(f"{ref_coords.as_wkt_wgs84() if ref_coords else 'None'}")
+        header_lines.append(separator)
+
+        header_lines.append("Time series data")
+        header_lines.append("date, ts_value")
+
+        header = "\n".join(header_lines)
+        np.savetxt(filename, data_to_save, fmt="%s", delimiter=",", header=header, comments="# ")
 
 # import plotly.graph_objs as go
 # import plotly.io as pio
