@@ -770,7 +770,7 @@ class PlotTs():
         header_lines.append(f"{ref_coords.as_wkt_wgs84() if ref_coords else 'None'}")
         header_lines.append(separator)
 
-        header_lines.append("Time series data")
+        header_lines.append("Time series data\n")
         header_lines.append("date, ts_value")
 
         header = "\n".join(header_lines)
