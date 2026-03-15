@@ -23,6 +23,9 @@
  This script initializes the plugin, making it known to QGIS.
 """
 
+__version__ = "dev"
+__date__ = "2026.xx.xx"
+
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
