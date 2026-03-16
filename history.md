@@ -1,5 +1,8 @@
 ### History
 
+dev
+- Improve grd file handling.
+
 v2.1.1
 - Disable automatic symbology application when opening the plugin.
 - Update tooltips of GUI elements.

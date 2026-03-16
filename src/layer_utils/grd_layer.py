@@ -39,10 +39,18 @@ def checkGrdTimeseries(layer):
         return status, message
 
     file_path = layer.source()
+
+    # remove NETCDF: wrapper if present and get an actual filesystem path
+    file_path = _unwrap_netcdf_path(file_path)
+
     directory = os.path.dirname(file_path)
     pattern = re.compile(r'^\d{8}_.*\.grd$|timeseries-\d{8}.*\.grd$')
 
-    grd_files = [f for f in os.listdir(directory) if pattern.match(f)]
+    try:
+        grd_files = [f for f in os.listdir(directory) if pattern.match(f)]
+    except Exception:
+        # directory might not exist or not be accessible
+        grd_files = []
 
     count = len(grd_files)
 
@@ -61,6 +69,16 @@ def getGrdInfo(directory) -> (list, list):
     Get the list of grd time series files and their dates
     """
     pattern = re.compile(r'^\d{8}_.*\.grd$|timeseries-\d{8}.*\.grd$')
+
+    # remove NETCDF: wrapper if present and get actual filesystem path
+    directory = _unwrap_netcdf_path(directory)
+
+    # If a file path was passed instead of a directory, use its containing directory
+    if os.path.isfile(directory):
+        directory = os.path.dirname(directory)
+
+    if not os.path.isdir(directory):
+        return [], []
 
     grd_files = sorted([f for f in os.listdir(directory) if pattern.match(f)])
     if not grd_files:
@@ -88,3 +106,46 @@ def getGrdInfo(directory) -> (list, list):
 def removeTimeseriesPrefix(filename):
     pattern = re.compile(r'^timeseries-')
     return re.sub(pattern, '', filename)
+
+
+def _unwrap_netcdf_path(uri: str) -> str:
+    """
+    If uri is a GDAL NETCDF-style string (e.g. NETCDF:"/path/to/file.nc":var),
+    return the inner path (/path/to/file.nc). Otherwise return uri unchanged.
+
+    Also handles simple NETCDF:/path/without/quotes fallback and Windows paths.
+    """
+    if not isinstance(uri, str):
+        return uri
+
+    prefix = 'NETCDF:'
+    if not uri.startswith(prefix):
+        return uri
+
+    # remainder after the NETCDF: prefix
+    remainder = uri[len(prefix):]
+
+    # Quoted form: NETCDF:"/path/to/file.nc":var
+    if remainder.startswith('"'):
+        # find the closing quote after the opening one
+        end = remainder.find('"', 1)
+        if end != -1:
+            return remainder[1:end]
+        # malformed quoted string: drop the leading quote and proceed with remainder
+        remainder = remainder[1:]
+
+    # Now remainder is unquoted, e.g. /path/to/file.nc:var or C:/path/to/file.nc:var
+    # If there's no colon, it's just a path
+    last_colon = remainder.rfind(':')
+    if last_colon == -1:
+        return remainder
+
+    # Decide if the last colon separates a subdataset/variable (e.g. /file.nc:var)
+    # or is part of the path (e.g. Windows drive 'C:/...'). If the last colon occurs
+    # after the last path separator, it's likely a separator for a subdataset/variable.
+    last_slash = max(remainder.rfind('/'), remainder.rfind('\\'))
+    if last_colon > last_slash:
+        return remainder[:last_colon]
+
+    # Otherwise the colon is part of the path (e.g. drive letter). Return whole remainder
+    return remainder
