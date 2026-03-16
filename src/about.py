@@ -19,7 +19,10 @@ about = """
                             "SARvey and InSAR Explorer: Open-source tools for InSAR data processing and visualization,"
                             in
                             <em>Proc.&nbsp;2025 IEEE Int.&nbsp;Geosci.&nbsp;Remote Sens.&nbsp;Symp.&nbsp;(IGARSS)</em>,
-                            Brisbane,&nbsp;Australia, 2025, pp.&nbsp;9414–9417.
+                            Brisbane,&nbsp;Australia, 2025, pp.&nbsp;9414–9417.&nbsp;
+                            <a href="https://ieeexplore.ieee.org/abstract/document/11313961"> 
+                                doi: 10.1109/IGARSS55030.2025.11313961 
+                            </a>
                         </cite>
                     </li>
             </p>

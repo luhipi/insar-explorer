@@ -2,6 +2,7 @@
 
 dev
 - Improve grd file handling.
+- Update reference paper details.
 
 v2.1.1
 - Disable automatic symbology application when opening the plugin.
