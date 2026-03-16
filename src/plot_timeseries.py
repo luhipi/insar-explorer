@@ -1,4 +1,5 @@
 import os
+import sys
 
 import numpy as np
 import matplotlib.dates as mdates
@@ -7,6 +8,12 @@ from datetime import timedelta
 
 from .model_fitting import FittingModels
 from ..external.setting_manager_ui.json_settings import JsonSettings
+
+sys.path.insert(0, os.path.abspath('../..'))
+try:
+    from insar_explorer import __version__
+except ImportError:
+    __version__ = "xx.xx.xx"
 
 
 class PlotTs():
@@ -738,7 +745,7 @@ class PlotTs():
 
         separator = "\n*********************************************************************************************\n"
         header_lines = [separator]
-        header_lines.append("InSAR Explorer - Time Series Export\n")
+        header_lines.append(f"InSAR Explorer (v{__version__}) - Time Series Export\n")
         header_lines.append("This file contains a time series produced with InSAR Explorer. InSAR Explorer is a free "
                             "QGIS \nplugin for interactive visualization and analysis of InSAR time-series. "
                             "Visit the project website \nfor installation, documentation, license, and examples: "
