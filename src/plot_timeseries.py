@@ -140,6 +140,8 @@ class PlotTs():
         self.dates = None
         self.ts_values = 0
         self.ref_values = 0
+        self.coords = None
+        self.ref_coords = None
         self.plot_list = []
         self.plot_data_list = []
 
