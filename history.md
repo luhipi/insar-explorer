@@ -4,6 +4,8 @@ dev
 - Improve grd file handling.
 - Update reference paper details.
 - Centralize version and date in project init.
+- Show a list of available formats for saving time series plot.
+- Add push button to export time series as ascii file.
 
 v2.1.1
 - Disable automatic symbology application when opening the plugin.

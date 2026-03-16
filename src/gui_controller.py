@@ -31,7 +31,9 @@ class GuiController(QObject):
         self.initializeSelection()
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
-        self.last_saved_ts_path = "ts_plot.png"
+        self.last_save_path = ""
+        self.last_save_ts_name = "ts_plot.png"
+        self.last_export_ts_name = "ts_data.csv"
         self.initializeUiParams()
         self.connectUiSignals()
         # make point selection active by default
@@ -301,6 +303,7 @@ class GuiController(QObject):
         self.ui.sb_line_width.valueChanged.connect(self.lineWidthChanged)
         # TS save
         self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
+        self.ui.pb_ts_export.clicked.connect(self.exportTs)
         # Replica
         self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
         self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
@@ -712,13 +715,76 @@ class GuiController(QObject):
 
     def saveTsPlot(self):
         self.msg_signal.emit("", "", 0)
+
+        suggested_path = os.path.join(self.last_save_path, self.last_save_ts_name)
+        base, ext = os.path.splitext(suggested_path)
+
+        ext_to_filter = {
+            '.png': "PNG (*.png)",
+            '.svg': "SVG (*.svg)",
+            '.jpg': "JPG (*.jpg)",
+            '.jpeg': "JPEG (*.jpeg)",
+            '.pdf': "PDF (*.pdf)"
+        }
+        filters = ";;".join(ext_to_filter.values())
+        default = ext_to_filter.get(ext.lower(), "PNG (*.png)")
+
         file_path, _ = QFileDialog.getSaveFileName(
             self.ui,
             "Save plot as image",
-            self.last_saved_ts_path,
-            "Images (*.png *.jpg *.svg *.pdf)"
+            suggested_path,
+            filters,
+            default,
         )
 
-        if file_path:
-            self.last_saved_ts_path = file_path
-            self.choose_point_click_handler.plot_ts.savePlotAsImage(file_path)
+        if not file_path:
+            return
+
+        base, ext = os.path.splitext(file_path)
+        if ext == '':
+            file_path = base + '.png'
+
+        self.last_save_path = os.path.dirname(file_path)
+        self.last_save_ts_name = os.path.basename(file_path)
+
+        self.choose_point_click_handler.plot_ts.savePlotAsImage(file_path)
+
+    def exportTs(self):
+        """Export the latest plotted time series to CSV or TXT."""
+        self.msg_signal.emit("", "", 0)
+
+        if self.choose_point_click_handler.plot_ts.dates is None:
+            self.msg_signal.emit('No time series to export.', 'w', 0)
+            return
+
+        suggested_path = os.path.join(self.last_save_path, self.last_export_ts_name)
+        base, ext = os.path.splitext(suggested_path)
+
+        ext_to_filter = {
+            '.csv': "CSV files (*.csv)",
+            '.txt': "Text files (*.txt)",
+        }
+        filters = ";;".join(ext_to_filter.values())
+        default = ext_to_filter.get(ext.lower(), "CSV files (*.csv)")
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self.ui,
+            "Export time series data",
+            suggested_path,
+            filters,
+            default,
+        )
+
+        if not file_path:
+            return
+
+        base, ext = os.path.splitext(file_path)
+        if ext == '':
+            file_path = base + '.csv'
+
+        self.choose_point_click_handler.plot_ts.exportAscii(file_path)
+
+        self.last_save_path = os.path.dirname(file_path)
+        self.last_export_ts_name = os.path.basename(file_path)
+
+        self.msg_signal.emit(f'Time series exported: {file_path}', 'done', 3000)

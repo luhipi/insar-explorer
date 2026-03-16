@@ -1,4 +1,5 @@
 import os
+import sys
 
 import numpy as np
 import matplotlib.dates as mdates
@@ -7,6 +8,12 @@ from datetime import timedelta
 
 from .model_fitting import FittingModels
 from ..external.setting_manager_ui.json_settings import JsonSettings
+
+sys.path.insert(0, os.path.abspath('../..'))
+try:
+    from insar_explorer import __version__
+except ImportError:
+    __version__ = "xx.xx.xx"
 
 
 class PlotTs():
@@ -39,6 +46,8 @@ class PlotTs():
         self.random_marker_color_flag = False
         self.parms = {}
         self.updateSettings()
+        self.coords = None
+        self.ref_coords = None
 
     def modifySettings(self, block_key, value):
         params = JsonSettings(self.config_file)
@@ -131,6 +140,8 @@ class PlotTs():
         self.dates = None
         self.ts_values = 0
         self.ref_values = 0
+        self.coords = None
+        self.ref_coords = None
         self.plot_list = []
         self.plot_data_list = []
 
@@ -212,7 +223,8 @@ class PlotTs():
             elif not self.ax:
                 self.ax = self.ui.figure.add_subplot(111)
 
-    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, update=False):
+    def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, coords=None, ref_coords=None,
+               update=False):
         # update: flag incicating if the plot should be updated or a new one created
 
         plot_dict = {}
@@ -228,6 +240,12 @@ class PlotTs():
 
         self.initializeAxes()
 
+        # coords
+        if ts_values is not None:
+            self.coords = coords
+        if ref_values is not None:
+            self.ref_coords = ref_coords
+
         self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
 
         if self.dates is None:
@@ -242,7 +260,7 @@ class PlotTs():
             rand_color = np.random.rand(3, )
             self.parms['time series plot']['marker color'] = self.parms['time series plot']['line color'] = rand_color
         plot_data_dict = {'dates': self.dates, 'ts_values': self.ts_values, 'ref_values': self.ref_values,
-                          'param': self.parms}
+                          'param': self.parms, 'coords': self.coords, 'ref_coords': self.ref_coords}
 
         parms = self.parms['time series plot']
         marker = parms['marker']
@@ -332,14 +350,21 @@ class PlotTs():
             dates = None
             ts_values = 0
             ref_values = 0
+            coords = None
+            ref_coords = None
         else:
             dates = plot_data_dict['dates']
             ts_values = plot_data_dict['ts_values']
             ref_values = plot_data_dict['ref_values']
+            coords = plot_data_dict['coords']
+            ref_coords = plot_data_dict['ref_coords']
 
         self.dates = dates
         self.ts_values = ts_values
         self.ref_values = ref_values
+        self.coords = coords
+        self.ref_coords = ref_coords
+
         self.parms = params
 
         for _ in range(n):
@@ -702,6 +727,63 @@ class PlotTs():
                                    pad_inches=pad)
             self.ui.figure.set_size_inches(fig_size)
             self.ui.canvas.draw()
+
+    def _dateStrings(self):
+        date_strings = []
+        for d in self.dates:
+            date_strings.append(d.strftime('%Y-%m-%d'))
+        return date_strings
+
+    def exportAscii(self, filename=None):
+        if filename is None:
+            return
+        if self.dates is None or self.plot_values is None:
+            return
+
+        data_to_save = np.column_stack((self._dateStrings(), self.plot_values))
+
+        coords = self.coords
+        ref_coords = self.ref_coords
+
+        separator = "\n*********************************************************************************************\n"
+        header_lines = [separator]
+        header_lines.append(f"InSAR Explorer (v{__version__}) - Time Series Export\n")
+        header_lines.append("This file contains a time series produced with InSAR Explorer. InSAR Explorer is a free "
+                            "QGIS \nplugin for interactive visualization and analysis of InSAR time-series. "
+                            "Visit the project website \nfor installation, documentation, license, and examples: "
+                            "https://luhipi.github.io/insar-explorer\n"
+                            "If you use InSAR Explorer, please cite the paper: "
+                            "https://doi.org/10.1109/IGARSS55030.2025.11313961")
+        header_lines.append(separator)
+
+        # we either have point or polygons.
+        coords_type = "polygon" if hasattr(coords, "geom") else "point"
+        ref_coords_type = "polygon" if hasattr(ref_coords, "geom") else "point"
+        wgs84 = "CRS=EPSG:4326"
+
+        header_lines.append("Layer CRS\n")
+        header_lines.append(f"Time series {coords_type}:")
+        header_lines.append(f"{coords.crs_str() if coords else 'None'}")
+        header_lines.append(f"{coords.as_wkt() if coords else 'None'}\n")
+        header_lines.append(f"Reference {ref_coords_type}:")
+        header_lines.append(f"{ref_coords.crs_str() if ref_coords else 'None'}")
+        header_lines.append(f"{ref_coords.as_wkt() if ref_coords else 'None'}")
+
+        header_lines.append(separator)
+        header_lines.append("WGS84 Lon/Lat\n")
+        header_lines.append(f"Time series {coords_type}:")
+        header_lines.append(f"{wgs84 if coords else 'None'}")
+        header_lines.append(f"{coords.as_wkt_wgs84() if coords else 'None'}\n")
+        header_lines.append(f"Reference {ref_coords_type}:")
+        header_lines.append(f"{wgs84 if ref_coords else 'None'}")
+        header_lines.append(f"{ref_coords.as_wkt_wgs84() if ref_coords else 'None'}")
+        header_lines.append(separator)
+
+        header_lines.append("Time series data\n")
+        header_lines.append("date, ts_value")
+
+        header = "\n".join(header_lines)
+        np.savetxt(filename, data_to_save, fmt="%s", delimiter=",", header=header, comments="# ")
 
 # import plotly.graph_objs as go
 # import plotly.io as pio
