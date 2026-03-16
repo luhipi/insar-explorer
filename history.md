@@ -1,6 +1,7 @@
 ### History
 
 dev
+- Improve grd file handling.
 - Update reference paper details.
 
 v2.1.1
