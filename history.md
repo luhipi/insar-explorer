@@ -1,6 +1,8 @@
 ### History
 
 dev
+- Improve grd file handling.
+- Update reference paper details.
 - Centralize version and date in project init.
 
 v2.1.1
