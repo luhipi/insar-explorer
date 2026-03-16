@@ -1,6 +1,16 @@
-about = """
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath('../..'))
+try:
+    from insar_explorer import __version__, __date__
+except ImportError:
+    __version__ = "xx.xx.xx"
+    __date__ = "2026.xx.xx"
+
+about = f"""
         <h3>InSAR Explorer</h3>
-        <p>  v2.1.1 (2025.10.22) </p>
+        <p>  {__version__} ({__date__}) </p>
         <p style="text-align: justify;">
             <span style="margin-left: 10em;">InSAR Explorer is developed by Mahmud Haghighi at the
             Institute of Photogrammetry and GeoInformation, Leibniz University Hannover.&nbsp;
@@ -19,7 +29,10 @@ about = """
                             "SARvey and InSAR Explorer: Open-source tools for InSAR data processing and visualization,"
                             in
                             <em>Proc.&nbsp;2025 IEEE Int.&nbsp;Geosci.&nbsp;Remote Sens.&nbsp;Symp.&nbsp;(IGARSS)</em>,
-                            Brisbane,&nbsp;Australia, 2025, pp.&nbsp;9414–9417.
+                            Brisbane,&nbsp;Australia, 2025, pp.&nbsp;9414–9417.&nbsp;
+                            <a href="https://ieeexplore.ieee.org/abstract/document/11313961"> 
+                                doi: 10.1109/IGARSS55030.2025.11313961 
+                            </a>
                         </cite>
                     </li>
             </p>

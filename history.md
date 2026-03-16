@@ -1,6 +1,9 @@
 ### History
 
 dev
+- Improve grd file handling.
+- Update reference paper details.
+- Centralize version and date in project init.
 - Show a list of available formats for saving time series plot.
 
 v2.1.1
