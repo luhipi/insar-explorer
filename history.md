@@ -1,6 +1,10 @@
 ### History
 
-2.2.0
+
+v2.3.0
+- Migrate from Matplotlib to PyQtGraph for time series plotting.
+
+v2.2.0
 - Improve grd file handling.
 - Update reference paper details.
 - Centralize version and date in project init.
