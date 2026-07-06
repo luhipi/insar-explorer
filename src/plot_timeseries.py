@@ -155,6 +155,14 @@ class PlotTs():
         parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
         self.parms['residual plot'] = parms
 
+        # fit model
+        parms = {}
+        parms['line style'] = parms_ts.get(["model fit", "line style"]) or '--'
+        parms['line color'] = parms_ts.get(["model fit", "line color"]) or 'black'
+        parms['line alpha'] = parms_ts.get(["model fit", "line alpha"]) or 1.0
+        parms['line width'] = parms_ts.get(["model fit", "line width"]) or 2.0
+        self.parms['model fit'] = parms
+
     def clear(self):
         if not self.hold_on_flag:
             self._clearPlotWidget()
@@ -500,8 +508,11 @@ class PlotTs():
             self.plot_residuals_list.append({'residual_scatter': None, 'residual_line': None})
             return
 
-        fit_line_type = '--'
-        fit_line_color = 'black'
+        parms = self.parms['model fit']
+        fit_line_type = parms['line style']
+        fit_line_color = parms['line color']
+        fit_line_alpha = parms['line alpha']
+        fit_line_width = parms['line width']
         fit_seasonal = self.fit_seasonal_flag
         if len(self.fit_models) != 1:
             self.plot_residuals_list.append({'residual_scatter': None, 'residual_line': None})
@@ -513,7 +524,7 @@ class PlotTs():
             fit_plot = self.ax.plot(
                 self._datesToX(model_x),
                 model_y,
-                pen=self._pen(fit_line_color, 1, 1.0, fit_line_type)
+                pen=self._pen(fit_line_color, fit_line_width, fit_line_alpha, fit_line_type)
             )
             self.residuals_values = self.plot_values - model_values
             self.plotResiduals()

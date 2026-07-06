@@ -273,6 +273,46 @@
                 "advanced": true
             }
         },
+        "model fit": {
+            "line style": {
+                "type": "dropdown",
+                "value": "--",
+                "options": [
+                    "-",
+                    "--",
+                    "-.",
+                    ":"
+                ],
+                "default": "--",
+                "advanced": true
+            },
+            "line color": {
+                "type": "color",
+                "value": "black",
+                "default": "black",
+                "advanced": true
+            },
+            "line alpha": {
+                "type": "float",
+                "value": 1.0,
+                "default": 1.0,
+                "range": [
+                    0,
+                    1
+                ],
+                "advanced": true
+            },
+            "line width": {
+                "type": "float",
+                "value": 5.0,
+                "default": 5.0,
+                "range": [
+                    0,
+                    100
+                ],
+                "advanced": true
+            }
+        },
         "residual plot": {
             "title": {
                 "type": "string",

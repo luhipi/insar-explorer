@@ -2,6 +2,7 @@
 
 
 v2.3.0
+- Add a tab for fit model style in settings.
 - Migrate from Matplotlib to PyQtGraph for time series plotting.
 
 v2.2.0
