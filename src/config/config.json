@@ -415,16 +415,6 @@
                 ],
                 "default": "300",
                 "advanced": true
-            },
-            "pad": {
-                "type": "float",
-                "value": 0.1,
-                "default": 0.1,
-                "range": [
-                    0,
-                    1
-                ],
-                "advanced": true
             }
         }
     },
