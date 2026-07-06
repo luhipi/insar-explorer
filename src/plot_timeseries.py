@@ -128,7 +128,6 @@ class PlotTs():
         # export settings
         parms = {}
         parms['dpi'] = parms_ts.get(["export", "dpi"]) or 300
-        parms['pad'] = parms_ts.get(["export", "pad"]) or 0.1
 
         self.parms['export'] = parms
 
@@ -697,15 +696,28 @@ class PlotTs():
         self.ui.plot_widget.setBackground(background_color)
 
     def savePlotAsImage(self, filename=None):
+        if filename is None:
+            return
+
         parms = self.parms["export"]
         dpi = int(parms["dpi"])
-        pad = parms["pad"]
         fig_size_export = (12, 6) if self.plot_residuals_flag else (12, 3)
-        fig_size = self.ui.figure.get_size_inches()
-        if filename:
-            exporter = exporters.ImageExporter(self.ui.plot_widget.scene())
-            exporter.parameters()['width'] = 2400
-            exporter.export(filename)
+        export_width = int(fig_size_export[0] * dpi)
+        export_height = int(fig_size_export[1] * dpi)
+
+        export_item = getattr(self.ui.plot_widget, 'ci', None) or self.ui.plot_widget.scene()
+
+        suffix = os.path.splitext(filename)[1].lower()
+
+        if suffix == '.svg':
+            exporter = exporters.SVGExporter(export_item)
+        else:
+            exporter = exporters.ImageExporter(export_item)
+            exporter.parameters()['width'] = export_width
+            if 'height' in exporter.parameters():
+                exporter.parameters()['height'] = export_height
+
+        exporter.export(filename)
 
     def _addPlot(self, row=0):
         axis = FormattedDateAxisItem(orientation='bottom', date_format=self.parms['time series plot'].get('date format'))
