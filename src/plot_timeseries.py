@@ -230,21 +230,13 @@ class PlotTs():
             self.plot_list = []
             self.plot_data_list = []
             self.plot_residuals_list = []
+            self._clearPlotWidget()
 
             if self.plot_residuals_flag:
-                if self.ax is not None and self.ax_residuals is not None:
-                    self._clearPlotItems()
-                else:
-                    self._clearPlotWidget()
-                    self.ax = self._addPlot(row=0)
-                    self.ax_residuals = self._addPlot(row=1)
-                    self.ax_residuals.setXLink(self.ax)
-                return
-
-            if self.ax is not None and self.ax_residuals is None:
-                self._clearPlotItems()
+                self.ax = self._addPlot(row=0)
+                self.ax_residuals = self._addPlot(row=1)
+                self.ax_residuals.setXLink(self.ax)
             else:
-                self._clearPlotWidget()
                 self.ax = self._addPlot(row=0)
                 self.ax_residuals = None
             return
