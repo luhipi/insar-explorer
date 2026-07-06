@@ -284,13 +284,13 @@
                     ":"
                 ],
                 "default": "--",
-                "advanced": true
+                "advanced": false
             },
             "line color": {
                 "type": "color",
                 "value": "black",
                 "default": "black",
-                "advanced": true
+                "advanced": false
             },
             "line alpha": {
                 "type": "float",
@@ -300,7 +300,7 @@
                     0,
                     1
                 ],
-                "advanced": true
+                "advanced": false
             },
             "line width": {
                 "type": "float",
@@ -310,7 +310,7 @@
                     0,
                     100
                 ],
-                "advanced": true
+                "advanced": false
             }
         },
         "residual plot": {
@@ -439,7 +439,7 @@
                 "type": "color",
                 "value": "white",
                 "default": "white",
-                "advanced": true
+                "advanced": false
             }
         },
         "export": {
@@ -454,7 +454,7 @@
                     "1200"
                 ],
                 "default": "300",
-                "advanced": true
+                "advanced": false
             }
         }
     },
