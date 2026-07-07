@@ -2,6 +2,8 @@
 
 
 v2.3.0
+- Remove pdf and jpeg from the list of supported export formats.
+- Add Aspect ratio for plot export.
 - Add a tab for fit model style in settings.
 - Migrate from Matplotlib to PyQtGraph for time series plotting.
 
