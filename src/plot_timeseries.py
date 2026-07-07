@@ -4,11 +4,11 @@ from datetime import datetime, timedelta
 
 import numpy as np
 from ..external import pyqtgraph as pg
-from ..external.pyqtgraph import exporters
 from qgis.PyQt.QtGui import QColor, QFont
 
 from .model_fitting import FittingModels
 from ..external.setting_manager_ui.json_settings import JsonSettings
+from .export_plot import TimeSeriesPlotExporter
 
 sys.path.insert(0, os.path.abspath('../..'))
 try:
@@ -128,6 +128,7 @@ class PlotTs():
         # export settings
         parms = {}
         parms['dpi'] = parms_ts.get(["export", "dpi"]) or 300
+        parms['aspect ratio'] = parms_ts.get(["export", "aspect ratio"]) or 4.0
 
         self.parms['export'] = parms
 
@@ -699,28 +700,7 @@ class PlotTs():
         self.ui.plot_widget.setBackground(background_color)
 
     def savePlotAsImage(self, filename=None):
-        if filename is None:
-            return
-
-        parms = self.parms["export"]
-        dpi = int(parms["dpi"])
-        fig_size_export = (12, 6) if self.plot_residuals_flag else (12, 3)
-        export_width = int(fig_size_export[0] * dpi)
-        export_height = int(fig_size_export[1] * dpi)
-
-        export_item = getattr(self.ui.plot_widget, 'ci', None) or self.ui.plot_widget.scene()
-
-        suffix = os.path.splitext(filename)[1].lower()
-
-        if suffix == '.svg':
-            exporter = exporters.SVGExporter(export_item)
-        else:
-            exporter = exporters.ImageExporter(export_item)
-            exporter.parameters()['width'] = export_width
-            if 'height' in exporter.parameters():
-                exporter.parameters()['height'] = export_height
-
-        exporter.export(filename)
+        TimeSeriesPlotExporter(self).export(filename)
 
     def _addPlot(self, row=0):
         axis = FormattedDateAxisItem(orientation='bottom', date_format=self.parms['time series plot'].get('date format'))

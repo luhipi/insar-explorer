@@ -74,7 +74,7 @@
             },
             "line style": {
                 "type": "dropdown",
-                "value": "",
+                "value": "-",
                 "options": [
                     "",
                     "-",
@@ -454,6 +454,16 @@
                     "1200"
                 ],
                 "default": "300",
+                "advanced": false
+            },
+            "aspect ratio": {
+                "type": "float",
+                "value": 4.0,
+                "default": 4.0,
+                "range": [
+                    1.0,
+                    10.0
+                ],
                 "advanced": false
             }
         }
