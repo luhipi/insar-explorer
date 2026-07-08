@@ -706,9 +706,38 @@ class PlotTs():
         axis = FormattedDateAxisItem(orientation='bottom', date_format=self.parms['time series plot'].get('date format'))
         plot_item = self.ui.plot_widget.addPlot(row=row, col=0, axisItems={'bottom': axis})
         self._stylePlotFrame(plot_item)
+        self._connectAutoButton(plot_item)
         plot_item.showButtons()
         self.ui.plot_widget.plot_items.append(plot_item)
         return plot_item
+
+    def _connectAutoButton(self, plot_item):
+        auto_button = getattr(plot_item, 'autoBtn', None)
+        if auto_button is None:
+            return
+        try:
+            auto_button.clicked.disconnect(plot_item.autoBtnClicked)
+        except (TypeError, RuntimeError):
+            pass
+        auto_button.clicked.connect(lambda *args, plot_item=plot_item: self._resetPlotView(plot_item))
+
+    def _resetPlotView(self, plot_item):
+        if self.dates is None:
+            return
+
+        self.updateSettings()
+        if self.ax is not None:
+            self.setXlims(ax=self.ax)
+
+        if plot_item is self.ax_residuals:
+            self.setYlims(ax=self.ax_residuals, parms=self.parms['residual plot'])
+        else:
+            self.setYlims(ax=self.ax, parms=self.parms['time series plot'])
+
+        auto_button = getattr(plot_item, 'autoBtn', None)
+        if auto_button is not None:
+            auto_button.hide()
+        self._draw()
 
     def _stylePlotFrame(self, plot_item):
         plot_item.showAxis('top')
