@@ -24,7 +24,7 @@
 """
 
 __version__ = "2.3.0"
-__date__ = "2026.06.08"
+__date__ = "2026.07.08"
 
 
 # noinspection PyPep8Naming
