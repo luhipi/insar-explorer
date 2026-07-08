@@ -1,6 +1,7 @@
 ### History
 
 v2.3.1
+- Remember the last export directory.
 - Fix missing polygon time series fill.
 - Fix incorrect plot scaling in SVG export.
 
