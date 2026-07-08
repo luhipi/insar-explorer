@@ -1,5 +1,7 @@
 ### History
 
+v2.4.0
+- Add credit text to exports.
 
 v2.3.0
 - Remove pdf and jpeg from the list of supported export formats.
