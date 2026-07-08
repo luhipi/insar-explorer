@@ -465,6 +465,12 @@
                     10.0
                 ],
                 "advanced": false
+            },
+            "credit": {
+                "type": "string",
+                "value": "Powered by InSAR Explorer",
+                "default": "Powered by InSAR Explorer",
+                "advanced": false
             }
         }
     },
