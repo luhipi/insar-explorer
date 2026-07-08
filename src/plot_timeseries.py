@@ -312,8 +312,8 @@ class PlotTs():
             upper_bound = self.max_plot_values
             series_fill_color = parms['series fill color']
             series_fill_alpha = parms['series fill alpha']
-            lower_line = pg.PlotDataItem(x, lower_bound, pen=None)
-            upper_line = pg.PlotDataItem(x, upper_bound, pen=None)
+            lower_line = pg.PlotCurveItem(x, lower_bound, pen=None)
+            upper_line = pg.PlotCurveItem(x, upper_bound, pen=None)
             fill = pg.FillBetweenItem(
                 lower_line,
                 upper_line,

@@ -1,6 +1,7 @@
 ### History
 
 v2.3.1
+- Fix missing polygon time series fill.
 - Fix incorrect plot scaling in SVG export.
 
 v2.3.0
