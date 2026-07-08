@@ -223,7 +223,7 @@ class PlotTs():
 
     def initializeAxes(self):
         """
-        Initialize the axes for the plot.
+        Initialize the pyqtgraph plot items.
         :param update: bool
             If True, clear the latest plot.
         """
@@ -256,7 +256,7 @@ class PlotTs():
 
     def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, coords=None, ref_coords=None,
                update=False):
-        # update: flag incicating if the plot should be updated or a new one created
+        # update: flag indicating if the plot should be updated or a new one created
 
         plot_dict = {}
         main_y_data = []
@@ -497,7 +497,7 @@ class PlotTs():
             return
         if self.dates is None:
             return
-        if self.fit_models is []:
+        if not self.fit_models:
             self.plot_residuals_list.append({'residual_scatter': None, 'residual_line': None})
             return
 
@@ -730,15 +730,6 @@ class PlotTs():
         self._y_data_ranges = {}
         self._last_replica_y_data = []
 
-    def _clearPlotItems(self):
-        for plot_item in getattr(self.ui.plot_widget, 'plot_items', []):
-            if plot_item is not None:
-                plot_item.clear()
-                plot_item.setTitle('')
-                plot_item.setLabel('bottom', '')
-                plot_item.setLabel('left', '')
-        self._y_data_ranges = {}
-
     def _draw(self):
         self.ui.plot_widget.update()
 
@@ -878,16 +869,3 @@ class PlotTs():
 
         header = "\n".join(header_lines)
         np.savetxt(filename, data_to_save, fmt="%s", delimiter=",", header=header, comments="# ")
-
-# import plotly.graph_objs as go
-# import plotly.io as pio
-#
-# def plotTs(ui):
-#     """
-#     Plot time series
-#     """
-#     fig = go.Figure(data=[go.Scatter(x=list(range(100)), y=np.random.random(100))])
-#     fig.update_layout(margin=dict(l=0.1, r=0.1, t=0.1, b=0.1))
-#     html = pio.to_html(fig, full_html=False)
-#     ui.web_view.setHtml(html)
-#
