@@ -82,15 +82,14 @@ class TimeSeriesPlotExporter:
             plot_widget.setFixedSize(QSize(width, height))
             plot_widget.resize(width, height)
             self._resizeCentralItem(plot_widget, width, height)
-            plot_widget.updateGeometry()
-            plot_widget.update()
-            QApplication.processEvents()
+            self._flushPlotGeometry(plot_widget)
             yield
         finally:
             plot_widget.setMinimumSize(old_min_size)
             plot_widget.setMaximumSize(old_max_size)
             plot_widget.resize(old_size)
             self._resizeCentralItem(plot_widget, old_size.width(), old_size.height())
+            self._flushPlotGeometry(plot_widget)
             plot_widget.setUpdatesEnabled(old_updates_enabled)
             plot_widget.updateGeometry()
             plot_widget.update()
@@ -110,6 +109,34 @@ class TimeSeriesPlotExporter:
                 scene.setSceneRect(0, 0, width, height)
             except TypeError:
                 pass
+
+    def _flushPlotGeometry(self, plot_widget):
+        """Force pyqtgraph layout and ViewBox transforms to match the export size."""
+        plot_widget.updateGeometry()
+        plot_widget.update()
+        QApplication.processEvents()
+
+        central_item = getattr(plot_widget, 'ci', None)
+        layout = getattr(central_item, 'layout', None)
+        if layout is not None:
+            try:
+                layout.activate()
+            except AttributeError:
+                pass
+
+        for plot_item in getattr(plot_widget, 'plot_items', []):
+            try:
+                view_box = plot_item.getViewBox()
+            except AttributeError:
+                continue
+            if hasattr(view_box, '_matrixNeedsUpdate'):
+                view_box._matrixNeedsUpdate = True
+            try:
+                view_box.updateMatrix()
+            except AttributeError:
+                pass
+
+        QApplication.processEvents()
 
     def _setExporterParameter(self, exporter, name, value):
         """Set a pyqtgraph exporter parameter across supported API variants."""

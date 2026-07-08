@@ -1,5 +1,7 @@
 ### History
 
+v2.3.1
+- Fix incorrect plot scaling in SVG export.
 
 v2.3.0
 - Remove pdf and jpeg from the list of supported export formats.
