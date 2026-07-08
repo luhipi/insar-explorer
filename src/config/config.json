@@ -288,13 +288,13 @@
             },
             "line color": {
                 "type": "color",
-                "value": "black",
+                "value": "#242424",
                 "default": "black",
                 "advanced": false
             },
             "line alpha": {
                 "type": "float",
-                "value": 1.0,
+                "value": 0.8,
                 "default": 1.0,
                 "range": [
                     0,
@@ -304,7 +304,7 @@
             },
             "line width": {
                 "type": "float",
-                "value": 5.0,
+                "value": 2.0,
                 "default": 5.0,
                 "range": [
                     0,
