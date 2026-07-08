@@ -723,8 +723,6 @@ class GuiController(QObject):
             '.png': "PNG (*.png)",
             '.svg': "SVG (*.svg)",
             '.jpg': "JPG (*.jpg)",
-            '.jpeg': "JPEG (*.jpeg)",
-            '.pdf': "PDF (*.pdf)"
         }
         filters = ";;".join(ext_to_filter.values())
         default = ext_to_filter.get(ext.lower(), "PNG (*.png)")
