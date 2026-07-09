@@ -1,5 +1,8 @@
 ### History
 
+v2.5.0
+Refactor time-series state management in backend.
+
 v2.4.0
 - Add credit text to exports.
 - Remember the last export directory and format.

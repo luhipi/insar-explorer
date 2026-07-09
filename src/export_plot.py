@@ -25,7 +25,7 @@ class TimeSeriesPlotExporter:
     def export(self, filename=None):
         if filename is None:
             return
-        if not self.plotter.plot_data_list:
+        if not self.plotter.series_history:
             return
 
         plot_widget = self.plotter.ui.plot_widget

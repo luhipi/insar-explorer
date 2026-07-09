@@ -1,6 +1,8 @@
 import os
 import sys
+from copy import deepcopy
 from datetime import datetime, timedelta
+from typing import List, Optional, Tuple
 
 import numpy as np
 from ..external import pyqtgraph as pg
@@ -9,6 +11,13 @@ from qgis.PyQt.QtGui import QColor, QFont
 from .model_fitting import FittingModels
 from ..external.setting_manager_ui.json_settings import JsonSettings
 from .export_plot import TimeSeriesPlotExporter
+from .models.time_series import (
+    TimeSeriesData,
+    TimeSeriesGraphics,
+    TimeSeriesSnapshot,
+    TimeSeriesStyle,
+    buildTimeSeriesData,
+)
 
 sys.path.insert(0, os.path.abspath('../..'))
 try:
@@ -53,8 +62,7 @@ class PlotTs():
         script_path = os.path.abspath(__file__)
         json_file = "config.json"
         self.config_file = os.path.join(os.path.dirname(script_path), 'config', json_file)
-        self.plot_data_list = []
-        self.plot_list = []
+        self.series_history: List[TimeSeriesSnapshot] = []
         self.fit_models = []
         self.fit_seasonal_flag = False
         self.replicate_flag = False
@@ -62,7 +70,6 @@ class PlotTs():
         self.replicate_value = 5.6 / 2
         self.ax_residuals = None
         self.plot_residuals_flag = False
-        self.plot_residuals_list = []
         self.hold_on_flag = False
         self.random_marker_color_flag = False
         self.parms = {}
@@ -171,58 +178,64 @@ class PlotTs():
         if not self.hold_on_flag:
             self._clearPlotWidget()
         self._draw()
-        self.dates = None
-        self.ts_values = 0
-        self.ref_values = 0
-        self.coords = None
-        self.ref_coords = None
-        self.plot_list = []
-        self.plot_data_list = []
-        self.plot_residuals_list = []
+        self.series_history = []
+        self._set_current_series(None)
 
-    def prepareTsValues(self, *, dates, ts_values=None, ref_values=None):
-        if dates is not None:
-            sort_idx = np.argsort(dates)
-            self.dates = dates[sort_idx]
-        else:
-            sort_idx = None
+    def preparePlotValues(self):
+        """Recompute plot values from the active arrays for compatibility callers."""
+        series = buildTimeSeriesData(
+            dates=self.dates,
+            ts_values=self.ts_values,
+            ref_values=self.ref_values,
+            coords=self.coords,
+            ref_coords=self.ref_coords,
+        )
+        self._set_current_series(series)
 
-        def prepareValues(values, sort_idx=None):
-            if values is not None:
-                values = np.array(values, dtype=float, ndmin=2)
-                if values.shape[0] == 1:
-                    values = values.T
-                if values.shape[0] > 1 and sort_idx is not None:
-                    values = values[sort_idx, :]
-            else:
-                values = np.zeros((len(self.dates), 1))
-            return values
-
+    def _buildTimeSeriesData(self, *, dates=None, ts_values=None, ref_values=None, coords=None, ref_coords=None) -> TimeSeriesData:
+        if dates is None:
+            dates = self.dates
         if ts_values is None:
             ts_values = self.ts_values
         if ref_values is None:
             ref_values = self.ref_values
+        if coords is None:
+            coords = self.coords
+        if ref_coords is None:
+            ref_coords = self.ref_coords
+        if dates is None:
+            raise ValueError("dates are required to build time-series data")
+        return buildTimeSeriesData(
+            dates=dates,
+            ts_values=ts_values,
+            ref_values=ref_values,
+            coords=coords,
+            ref_coords=ref_coords,
+        )
 
-        self.ts_values = prepareValues(ts_values, sort_idx)
-        self.ref_values = prepareValues(ref_values, sort_idx)
-        self.preparePlotValues()
-
-    def preparePlotValues(self):
-        plot_values = self.ts_values - np.mean(self.ref_values, axis=1, keepdims=True)
-
-        if np.shape(self.ts_values)[1] > 1:
-            # actual data range
-            self.min_plot_values = np.min(plot_values, axis=1)
-            self.max_plot_values = np.max(plot_values, axis=1)
-            # based on std
-            # self.min_plot_values = np.mean(plot_values, axis=1) - np.std(plot_values, axis=1)
-            # self.max_plot_values = np.mean(plot_values, axis=1) + np.std(plot_values, axis=1)
-            self.plot_multiple_values = plot_values
-        else:
+    def _set_current_series(self, series: Optional[TimeSeriesData]):
+        if series is None:
+            self.dates = None
+            self.ts_values = 0
+            self.ref_values = 0
+            self.plot_values = None
+            self.plot_multiple_values = None
             self.min_plot_values = None
             self.max_plot_values = None
-            self.plot_multiple_values = None
-        self.plot_values = np.mean(self.ts_values, axis=1) - np.mean(self.ref_values, axis=1)
+            self.residuals_values = None
+            self.coords = None
+            self.ref_coords = None
+            return
+        self.dates = series.dates
+        self.ts_values = series.ts_values
+        self.ref_values = series.ref_values
+        self.plot_values = series.plot_values
+        self.plot_multiple_values = series.plot_multiple_values
+        self.min_plot_values = series.min_plot_values
+        self.max_plot_values = series.max_plot_values
+        self.residuals_values = series.residuals_values
+        self.coords = series.coords
+        self.ref_coords = series.ref_coords
 
     def initializeAxes(self):
         """
@@ -231,9 +244,7 @@ class PlotTs():
             If True, clear the latest plot.
         """
         if not self.hold_on_flag:
-            self.plot_list = []
-            self.plot_data_list = []
-            self.plot_residuals_list = []
+            self.series_history = []
             self._clearPlotWidget()
 
             if self.plot_residuals_flag:
@@ -261,14 +272,23 @@ class PlotTs():
                update=False):
         # update: flag indicating if the plot should be updated or a new one created
 
-        plot_dict = {}
-        main_y_data = []
         self.updateSettings()
 
         if update:
-            if len(self.plot_list) == 0:
+            source_snapshot = self._remove_rendered_snapshot_for_update()
+            if source_snapshot is None:
                 return
-            self.removeLastPlot(update=update)
+            source_data = source_snapshot.data
+            if dates is None:
+                dates = source_data.dates
+            if ts_values is None:
+                ts_values = source_data.ts_values
+            if ref_values is None:
+                ref_values = source_data.ref_values
+            if coords is None:
+                coords = source_data.coords
+            if ref_coords is None:
+                ref_coords = source_data.ref_coords
             random_marker_color_flag = False
         else:
             random_marker_color_flag = self.random_marker_color_flag
@@ -281,23 +301,41 @@ class PlotTs():
         if ref_values is not None:
             self.ref_coords = ref_coords
 
-        self.prepareTsValues(dates=dates, ts_values=ts_values, ref_values=ref_values)
+        if dates is None and self.dates is None:
+            return
+
+        series = self._buildTimeSeriesData(
+            dates=dates,
+            ts_values=ts_values,
+            ref_values=ref_values,
+            coords=coords if coords is not None else self.coords,
+            ref_coords=ref_coords if ref_coords is not None else self.ref_coords,
+        )
+        self._set_current_series(series)
 
         if self.dates is None:
             return
 
-        # check if there is any finite value in the plot_values
-        plot_values = np.array(self.plot_values, dtype=np.float64)
-        if np.sum(np.isfinite(plot_values)) == 0:
+        if not series.hasFinitePlotValues():
             return
 
         if random_marker_color_flag:
             rand_color = np.random.rand(3, )
             self.parms['time series plot']['marker color'] = self.parms['time series plot']['line color'] = rand_color
-        plot_data_dict = {'dates': self.dates, 'ts_values': self.ts_values, 'ref_values': self.ref_values,
-                          'param': self.parms, 'coords': self.coords, 'ref_coords': self.ref_coords}
 
-        parms = self.parms['time series plot']
+        style = TimeSeriesStyle.fromParams(self.parms)
+        items, residuals_values = self._render_time_series(series, style, plot_multiple=plot_multiple)
+        if residuals_values is not None:
+            series = series.withResiduals(residuals_values)
+            self._set_current_series(series)
+        snapshot = TimeSeriesSnapshot(data=series, style=style, graphics=items)
+        self.add_series(snapshot)
+        self._draw()
+
+    def _render_time_series(self, series: TimeSeriesData, style: TimeSeriesStyle, *, plot_multiple=True) -> Tuple[TimeSeriesGraphics, Optional[np.ndarray]]:
+        items = TimeSeriesGraphics()
+        main_y_data = []
+        parms = style.params['time series plot']
         marker = parms['marker']
         marker_size = parms['marker size']
         marker_color = parms['marker color']
@@ -307,12 +345,11 @@ class PlotTs():
         line_color = parms['line color']
         line_alpha = parms['line alpha']
         line_width = parms['line width']
-        x = self._datesToX(self.dates)
+        x = self._datesToX(series.dates)
 
-        plot_dict['plot_multiple_fill'] = []
-        if plot_multiple and self.min_plot_values is not None:
-            lower_bound = self.min_plot_values
-            upper_bound = self.max_plot_values
+        if plot_multiple and series.min_plot_values is not None:
+            lower_bound = series.min_plot_values
+            upper_bound = series.max_plot_values
             series_fill_color = parms['series fill color']
             series_fill_alpha = parms['series fill alpha']
             lower_line = pg.PlotCurveItem(x, lower_bound, pen=None)
@@ -325,126 +362,82 @@ class PlotTs():
             self.ax.addItem(lower_line)
             self.ax.addItem(upper_line)
             self.ax.addItem(fill)
-            plot_dict['plot_multiple_fill'] = [lower_line, upper_line, fill]
+            items.plot_multiple_fill = [lower_line, upper_line, fill]
             main_y_data.extend([lower_bound, upper_bound])
 
-        plot_multiple_lines = []
-
-        if self.plot_multiple_values is not None:
+        if series.plot_multiple_values is not None:
             series_line_style = parms['series line style']
             series_line_color = parms['series line color']
             series_line_alpha = parms['series line alpha']
             series_line_width = parms['series line width']
-            for i in range(self.plot_multiple_values.shape[1]):
+            for i in range(series.plot_multiple_values.shape[1]):
                 item = self.ax.plot(
                     x,
-                    self.plot_multiple_values[:, i],
+                    series.plot_multiple_values[:, i],
                     pen=self._pen(series_line_color, series_line_width, series_line_alpha, series_line_style)
                 )
-                plot_multiple_lines.append(item)
-                main_y_data.append(self.plot_multiple_values[:, i])
-        plot_dict['plot_multiple_lines'] = plot_multiple_lines
+                items.plot_multiple_lines.append(item)
+                main_y_data.append(series.plot_multiple_values[:, i])
 
         if marker_size > 0:
-            plot = pg.ScatterPlotItem(x=x, y=self.plot_values, symbol=self._symbol(marker),
-                                      size=marker_size,
-                                      pen=self._pen(edge_color, 0.2, marker_alpha),
-                                      brush=self._brush(marker_color, marker_alpha))
-            self.ax.addItem(plot)
-        else:
-            plot = None
-        plot_dict['scatter'] = plot
+            items.scatter = pg.ScatterPlotItem(x=x, y=series.plot_values, symbol=self._symbol(marker),
+                                               size=marker_size,
+                                               pen=self._pen(edge_color, 0.2, marker_alpha),
+                                               brush=self._brush(marker_color, marker_alpha))
+            self.ax.addItem(items.scatter)
 
-        main_y_data.append(self.plot_values)
+        main_y_data.append(series.plot_values)
 
         if line_style != '':
-            plot_line = self.ax.plot(
+            items.line = self.ax.plot(
                 x,
-                self.plot_values,
+                series.plot_values,
                 pen=self._pen(line_color, line_width, line_alpha, line_style))
-        else:
-            plot_line = None
-        plot_dict['line'] = plot_line
 
         if self.replicate_flag:
-            replicate_up_list, replicate_dn_list = self.plotReplicas()
+            items.replicate_up, items.replicate_dn = self.plotReplicas(series, style)
         else:
-            replicate_up_list, replicate_dn_list = [None], [None]
-        plot_dict['replicate_up'] = replicate_up_list
-        plot_dict['replicate_dn'] = replicate_dn_list
+            items.replicate_up, items.replicate_dn = [None], [None]
 
-        # update ylim for hold on
-        main_y_data.extend([item['y'] for item in self._last_replica_y_data])
+        main_y_data.extend(self._last_replica_y_data)
         self._last_replica_y_data = []
-        plot_dict['main_y_data'] = main_y_data
+        items.main_y_data = main_y_data
         self.updateYlim(ax=self.ax, y_data=main_y_data)
 
         self.decoratePlot(parms=parms)
-        fit_plot_list = self.fitModel()
-        plot_dict['fit_plot_list'] = fit_plot_list
+        items.fit_plot, residuals_values = self.fitModel(series, style, items)
 
-        parms_figure = self.parms['figure']
+        parms_figure = style.params['figure']
         self.decorateFigure(parms=parms_figure)
-
-        self.plot_data_list.append(plot_data_dict)
-        self.plot_list.append(plot_dict)
-        self._draw()
+        return items, residuals_values
 
     def removeLastPlot(self, n=1, update=False):
-        if update or len(self.plot_list) == 1:
-            idx = -n
-        else:
-            idx = -n - 1
-
-        if len(self.plot_list) < n:
+        if update:
+            snapshot = self._remove_rendered_snapshot_for_update()
+            return snapshot is not None
+        if len(self.series_history) < n:
             return False
 
-        plot_data_dict = self.plot_data_list[idx]
-        params = plot_data_dict['param'] or None
-        if len(plot_data_dict['dates']) == 1:
-            dates = None
-            ts_values = 0
-            ref_values = 0
-            coords = None
-            ref_coords = None
-        else:
-            dates = plot_data_dict['dates']
-            ts_values = plot_data_dict['ts_values']
-            ref_values = plot_data_dict['ref_values']
-            coords = plot_data_dict['coords']
-            ref_coords = plot_data_dict['ref_coords']
-
-        self.dates = dates
-        self.ts_values = ts_values
-        self.ref_values = ref_values
-        self.coords = coords
-        self.ref_coords = ref_coords
-
-        self.parms = params
-
         for _ in range(n):
-            if len(self.plot_list) > 0:
-                plot_dict = self.plot_list.pop()
-                for key in ('scatter', 'line', 'fit_plot_list'):
-                    self._removeItem(self.ax, plot_dict.get(key, None))
-                for key in ('plot_multiple_fill', 'plot_multiple_lines', 'replicate_up', 'replicate_dn'):
-                    for item in plot_dict.get(key, []) or []:
-                        self._removeItem(self.ax, item)
+            snapshot = self.remove_series()
+            if snapshot is None:
+                break
+            self._remove_snapshot_graphics(snapshot)
 
-                if self.plot_residuals_list:
-                    res_plots = self.plot_residuals_list.pop()
-                    self._removeItem(self.ax_residuals, res_plots.get('residual_scatter', None))
-                    self._removeItem(self.ax_residuals, res_plots.get('residual_line', None))
-
-                self.plot_data_list.pop()
+        if self.series_history:
+            restored_snapshot = self.series_history[-1]
+            self._set_current_series(restored_snapshot.data)
+            self.parms = deepcopy(restored_snapshot.style.params)
+        else:
+            self._set_current_series(None)
 
         self._rebuildYDataRanges()
         self._draw()
         return True
 
-    def plotReplicas(self):
-        parms = self.parms['time series plot']
-        x = self._datesToX(self.dates)
+    def plotReplicas(self, series: TimeSeriesData, style: TimeSeriesStyle):
+        parms = style.params['time series plot']
+        x = self._datesToX(series.dates)
         marker_color_1 = parms['replica color 1']  # replica up
         marker_color_2 = parms['replica color 2']  # replica down
         marker_alpha = parms['replica alpha']
@@ -466,7 +459,7 @@ class PlotTs():
 
             replicate_up = pg.ScatterPlotItem(
                 x=x,
-                y=self.plot_values + replicate_value,
+                y=series.plot_values + replicate_value,
                 symbol=self._symbol(marker_replica),
                 size=marker_size_replica,
                 pen=None,
@@ -474,7 +467,7 @@ class PlotTs():
             )
             self.ax.addItem(replicate_up)
             replicate_up_list.append(replicate_up)
-            self._last_replica_y_data.append({'y': self.plot_values + replicate_value})
+            self._last_replica_y_data.append(series.plot_values + replicate_value)
 
         replicate_dn_list = []
         for i in range(number_of_down_replicas):
@@ -485,53 +478,54 @@ class PlotTs():
             else:
                 marker_replica_color = marker_color_1
 
-            replicate_dn = pg.ScatterPlotItem(x=x, y=self.plot_values - replicate_value,
+            replicate_dn = pg.ScatterPlotItem(x=x, y=series.plot_values - replicate_value,
                                               symbol=self._symbol(marker_replica), size=marker_size_replica,
                                               pen=None,
                                               brush=self._brush(marker_replica_color, marker_alpha))
             self.ax.addItem(replicate_dn)
             replicate_dn_list.append(replicate_dn)
-            self._last_replica_y_data.append({'y': self.plot_values - replicate_value})
+            self._last_replica_y_data.append(series.plot_values - replicate_value)
 
         return replicate_up_list, replicate_dn_list
 
-    def fitModel(self):
-        if self.plot_values is None:
-            return
-        if self.dates is None:
-            return
+    def fitModel(self, series: TimeSeriesData, style: TimeSeriesStyle, graphics=None):
+        if series.plot_values is None:
+            return None, None
+        if series.dates is None:
+            return None, None
         if not self.fit_models:
-            self.plot_residuals_list.append({'residual_scatter': None, 'residual_line': None})
-            return
+            return None, None
 
-        parms = self.parms['model fit']
+        parms = style.params['model fit']
         fit_line_type = parms['line style']
         fit_line_color = parms['line color']
         fit_line_alpha = parms['line alpha']
         fit_line_width = parms['line width']
         fit_seasonal = self.fit_seasonal_flag
         if len(self.fit_models) != 1:
-            self.plot_residuals_list.append({'residual_scatter': None, 'residual_line': None})
-            return
+            return None, None
         else:
             fit_model = self.fit_models[0]
             model_values, model_x, model_y = (
-                FittingModels(self.dates, self.plot_values, model=fit_model).fit(seasonal=fit_seasonal))
+                FittingModels(series.dates, series.plot_values, model=fit_model).fit(seasonal=fit_seasonal))
             fit_plot = self.ax.plot(
                 self._datesToX(model_x),
                 model_y,
                 pen=self._pen(fit_line_color, fit_line_width, fit_line_alpha, fit_line_type)
             )
-            self.residuals_values = self.plot_values - model_values
-            self.plotResiduals()
+            residuals_values = series.plot_values - model_values
+            self.plotResiduals(series, style, graphics, residuals_values)
             self._draw()
 
-        return fit_plot
+        return fit_plot, residuals_values
 
-    def plotResiduals(self):
-        plot_dict = {'residual_scatter': None, 'residual_line': None}
-        if self.plot_residuals_flag and self.ax_residuals is not None:
-            parms = self.parms['residual plot']
+    def plotResiduals(self, series: TimeSeriesData, style: TimeSeriesStyle, items=None, residuals_values=None):
+        if items is None:
+            items = TimeSeriesGraphics()
+        if residuals_values is None:
+            residuals_values = series.residuals_values
+        if self.plot_residuals_flag and self.ax_residuals is not None and residuals_values is not None:
+            parms = style.params['residual plot']
             marker = parms['marker']
             marker_size = parms['marker size']
             marker_color = parms['marker color']
@@ -542,32 +536,29 @@ class PlotTs():
             line_alpha = parms['line alpha']
             line_width = parms['line width']
 
-            x = self._datesToX(self.dates)
+            x = self._datesToX(series.dates)
             marker_size = marker_size or 0
             if marker_size > 0:
-                plot_residual = pg.ScatterPlotItem(
+                items.residual_scatter = pg.ScatterPlotItem(
                     x=x,
-                    y=self.residuals_values,
+                    y=residuals_values,
                     symbol=self._symbol(marker),
                     size=marker_size,
                     pen=self._pen(edge_color, 0.2, marker_alpha),
                     brush=self._brush(marker_color, marker_alpha)
                 )
-                self.ax_residuals.addItem(plot_residual)
-                plot_dict['residual_scatter'] = plot_residual
+                self.ax_residuals.addItem(items.residual_scatter)
             if line_style:
-                plot_residual_line = self.ax_residuals.plot(
+                items.residual_line = self.ax_residuals.plot(
                     x,
-                    self.residuals_values,
+                    residuals_values,
                     pen=self._pen(line_color, line_width, line_alpha, line_style)
                 )
-                plot_dict['residual_line'] = plot_residual_line
-            plot_dict['residual_y_data'] = [self.residuals_values]
-            self.updateYlim(ax=self.ax_residuals, y_data=plot_dict['residual_y_data'])
+            items.residual_y_data = [residuals_values]
+            self.updateYlim(ax=self.ax_residuals, y_data=items.residual_y_data)
             self.decoratePlot(ax=self.ax_residuals, parms=parms)
             self._draw()
 
-        self.plot_residuals_list.append(plot_dict)
 
     def decorateFigure(self, parms={}):
         self.setFigureStyle(parms=parms)
@@ -787,13 +778,46 @@ class PlotTs():
         merged = np.concatenate(finite_values)
         return float(np.nanmin(merged)), float(np.nanmax(merged))
 
+    def _remove_rendered_snapshot_for_update(self):
+        """Remove graphics for the active snapshot and return it for settings-driven re-rendering.
+
+        Unlike user-driven remove-last, settings-driven update must preserve the
+        freshly loaded settings in ``self.parms`` so the active/latest series is
+        re-rendered with the new style. Restoring the previous snapshot style
+        here makes settings changes apply only to future plots when hold-on mode
+        contains multiple series.
+        """
+        snapshot = self.remove_series()
+        if snapshot is None:
+            return None
+        self._remove_snapshot_graphics(snapshot)
+        if self.series_history:
+            self._set_current_series(self.series_history[-1].data)
+        else:
+            self._set_current_series(snapshot.data)
+        self._rebuildYDataRanges()
+        self._draw()
+        return snapshot
+
+    def _remove_snapshot_graphics(self, snapshot):
+        """Remove all plot items owned by a stored time-series snapshot."""
+        graphics = snapshot.graphics
+        for item in (graphics.scatter, graphics.line, graphics.fit_plot):
+            self._removeItem(self.ax, item)
+        for item in (graphics.residual_scatter, graphics.residual_line):
+            self._removeItem(self.ax_residuals, item)
+        for item_list in (graphics.plot_multiple_fill, graphics.plot_multiple_lines,
+                          graphics.replicate_up, graphics.replicate_dn):
+            for item in item_list or []:
+                self._removeItem(self.ax, item)
+
     def _rebuildYDataRanges(self):
         self._y_data_ranges = {}
-        for plot_dict in self.plot_list:
-            self.updateYlim(ax=self.ax, y_data=plot_dict.get('main_y_data', []))
+        for snapshot in self.series_history:
+            self.updateYlim(ax=self.ax, y_data=snapshot.graphics.main_y_data)
         if self.ax_residuals is not None:
-            for res_dict in self.plot_residuals_list:
-                self.updateYlim(ax=self.ax_residuals, y_data=res_dict.get('residual_y_data', []))
+            for snapshot in self.series_history:
+                self.updateYlim(ax=self.ax_residuals, y_data=snapshot.graphics.residual_y_data)
 
     def _applyDateFormat(self, ax=None, parms={}):
         if ax is None:
@@ -845,6 +869,22 @@ class PlotTs():
     def _brush(self, color=None, alpha=1.0):
         return pg.mkBrush(self._color(color, alpha))
 
+    def add_series(self, snapshot: TimeSeriesSnapshot) -> None:
+        """Store a plotted time-series snapshot."""
+        self.series_history.append(snapshot)
+
+    def current_series(self) -> Optional[TimeSeriesSnapshot]:
+        """Return the active stored time-series snapshot, if available."""
+        if self.series_history:
+            return self.series_history[-1]
+        return None
+
+    def remove_series(self, index: int = -1) -> Optional[TimeSeriesSnapshot]:
+        """Remove and return a plotted time-series snapshot."""
+        if not self.series_history:
+            return None
+        return self.series_history.pop(index)
+
     def _dateStrings(self):
         date_strings = []
         for d in self.dates:
@@ -854,13 +894,20 @@ class PlotTs():
     def exportAscii(self, filename=None):
         if filename is None:
             return
-        if self.dates is None or self.plot_values is None:
+        snapshot = self.current_series()
+        series = snapshot.data if snapshot is not None else None
+        if series is None:
+            if self.dates is None or self.plot_values is None:
+                return
+            series = self._buildTimeSeriesData(dates=self.dates, ts_values=self.ts_values, ref_values=self.ref_values,
+                                               coords=self.coords, ref_coords=self.ref_coords)
+        if series.dates is None or series.plot_values is None:
             return
 
-        data_to_save = np.column_stack((self._dateStrings(), self.plot_values))
+        data_to_save = np.column_stack((series.dateStrings(), series.plot_values))
 
-        coords = self.coords
-        ref_coords = self.ref_coords
+        coords = series.coords
+        ref_coords = series.ref_coords
 
         separator = "\n*********************************************************************************************\n"
         header_lines = [separator]
