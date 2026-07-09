@@ -1,7 +1,8 @@
 ### History
 
 v2.5.0
-Refactor time-series state management in backend.
+- Support for Qt6 for compatibility with QGIS 4.
+- Refactor time-series state management in backend.
 
 v2.4.0
 - Add credit text to exports.
