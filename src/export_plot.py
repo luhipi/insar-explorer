@@ -201,7 +201,8 @@ class TimeSeriesPlotExporter:
             return
 
         try:
-            svg_text = open(filename, 'r', encoding='utf-8').read()
+            with open(filename, 'r', encoding='utf-8') as f:
+                svg_text = f.read()
         except OSError:
             return
 
@@ -230,7 +231,8 @@ class TimeSeriesPlotExporter:
             return
         svg_text = svg_text[:insert_at] + footer + svg_text[insert_at:]
         try:
-            open(filename, 'w', encoding='utf-8').write(svg_text)
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(svg_text)
         except OSError:
             pass
 
