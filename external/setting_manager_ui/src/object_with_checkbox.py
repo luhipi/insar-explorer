@@ -1,31 +1,18 @@
-try:
-    from PySide6.QtWidgets import (
-        QWidget,
-        QPushButton,
-        QHBoxLayout,
-        QColorDialog,
-        QCheckBox,
-        QSpinBox,
-        QDoubleSpinBox,
-        QSizePolicy,
-        QLineEdit,
-        QComboBox
-    )
-    from PySide6.QtGui import QColor
-except ImportError:
-    from qgis.PyQt.QtWidgets import (
-        QWidget,
-        QPushButton,
-        QHBoxLayout,
-        QColorDialog,
-        QCheckBox,
-        QSpinBox,
-        QDoubleSpinBox,
-        QSizePolicy,
-        QLineEdit,
-        QComboBox
-    )
-    from qgis.PyQt.QtGui import QColor
+from ..qt_compat import (
+    QColor,
+    QColorDialog,
+    QCheckBox,
+    QComboBox,
+    QDoubleSpinBox,
+    QHBoxLayout,
+    QLineEdit,
+    QPushButton,
+    QSpinBox,
+    QWidget,
+    DONT_USE_NATIVE_DIALOG,
+    SIZE_POLICY_EXPANDING,
+    SIZE_POLICY_MINIMUM,
+)
 
 
 class ColorPicker(QWidget):
@@ -92,7 +79,7 @@ class ColorPicker(QWidget):
         if self.use_native_flag:
             color = color_dialog.getColor(initial_color)
         else:
-            color = color_dialog.getColor(initial_color, options=QColorDialog.DontUseNativeDialog)
+            color = color_dialog.getColor(initial_color, options=DONT_USE_NATIVE_DIALOG)
 
         if color.isValid():
             self.color = color.name()
@@ -145,14 +132,14 @@ class ObjectWithCheckbox(QWidget):
             self.checkbox.stateChanged.connect(self.toggleObject)
             self.layout.addWidget(self.checkbox)
             self.layout.addWidget(self.checkbox)
-            self.checkbox.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+            self.checkbox.setSizePolicy(SIZE_POLICY_MINIMUM, SIZE_POLICY_EXPANDING)
         else:
             self.checkbox = None
 
         self.layout.addWidget(self.wobject)
         self.setLayout(self.layout)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  # Adjust size policy
-        self.wobject.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setSizePolicy(SIZE_POLICY_EXPANDING, SIZE_POLICY_EXPANDING)  # Adjust size policy
+        self.wobject.setSizePolicy(SIZE_POLICY_EXPANDING, SIZE_POLICY_EXPANDING)
         self.setEnabled(flag)
 
     def setEnabled(self, flag):
