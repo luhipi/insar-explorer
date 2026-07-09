@@ -14,6 +14,7 @@ from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
 from ..external.setting_manager_ui.json_settings import JsonSettings
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 from .ui_windows.color_picker import ColorPicker
+from .qt_compat import RASTER_LAYER, VECTOR_LAYER
 
 
 class GuiController(QObject):
@@ -112,15 +113,15 @@ class GuiController(QObject):
             is_local_raster = (hasattr(layer, "dataProvider") and getattr(layer.dataProvider(), "name", lambda: "")()
                                in ["gdal"])  # "ogr"
 
-            if layer_type == layer.VectorLayer:
+            if layer_type == VECTOR_LAYER:
                 self.ui.pb_choose_polygon.setEnabled(True)
                 self.ui.pb_set_reference_polygon.setEnabled(True)
-            elif layer_type == layer.RasterLayer:
+            elif layer_type == RASTER_LAYER:
                 self.ui.tab_config_panel.setEnabled(False)
                 self.ui.pb_choose_polygon.setEnabled(False)
                 self.ui.pb_set_reference_polygon.setEnabled(False)
 
-            if layer_type == layer.RasterLayer and not is_local_raster:
+            if layer_type == RASTER_LAYER and not is_local_raster:
                 self.ui.tab_config_panel.setEnabled(False)
                 self.ui.pb_choose_point.setChecked(False)
                 message = "Unsupported layer selected. Please choose a layer compatible with InSAR Explorer."

@@ -861,8 +861,8 @@ class PlotTs():
             color = 'black'
         pen = pg.mkPen(self._color(color, alpha), width=width or 1)
         if line_style in ('--', ':', '-.'):
-            from qgis.PyQt.QtCore import Qt
-            styles = {'--': Qt.DashLine, ':': Qt.DotLine, '-.': Qt.DashDotLine}
+            from .qt_compat import PEN_STYLE_BY_NAME
+            styles = PEN_STYLE_BY_NAME
             pen.setStyle(styles[line_style])
         return pen
 

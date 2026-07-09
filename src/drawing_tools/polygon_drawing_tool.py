@@ -1,13 +1,15 @@
 from qgis.gui import QgsMapTool, QgsRubberBand
-from qgis.core import QgsGeometry, QgsWkbTypes
+from qgis.core import QgsGeometry
 from qgis.PyQt.QtGui import QColor as QgsColor
+
+from ..qt_compat import POLYGON_GEOMETRY
 
 
 class PolygonMarker(QgsMapTool):
     def __init__(self, canvas) -> None:
         super().__init__(canvas)
         self.canvas = canvas
-        self.rubber_band = QgsRubberBand(self.canvas, QgsWkbTypes.PolygonGeometry)
+        self.rubber_band = QgsRubberBand(self.canvas, POLYGON_GEOMETRY)
         self.points = []
 
         self.setStyle()
@@ -24,7 +26,7 @@ class PolygonMarker(QgsMapTool):
 
     def reset(self):
         self.points = []
-        self.rubber_band.reset(QgsWkbTypes.PolygonGeometry)
+        self.rubber_band.reset(POLYGON_GEOMETRY)
 
     def stopDrawing(self):
         self.points = []
@@ -83,7 +85,7 @@ class PolygonDrawingTool(QgsMapTool):
     def clear(self) -> None:
         """Reset points and rubber band"""
         # self.polygon_marker.points = []
-        # self.polygon_marker.rubber_band.reset(QgsWkbTypes.PolygonGeometry)
+        # self.polygon_marker.rubber_band.reset(POLYGON_GEOMETRY)
         self.polygon_marker.reset()
         self.deactivate()
 

@@ -3,9 +3,11 @@ import re
 from contextlib import contextmanager
 
 from ..external.pyqtgraph import exporters
-from qgis.PyQt.QtCore import QSize, Qt
+from qgis.PyQt.QtCore import QSize
 from qgis.PyQt.QtGui import QColor, QFont, QImage, QPainter
 from qgis.PyQt.QtWidgets import QApplication
+
+from .qt_compat import ALIGN_RIGHT_VCENTER
 
 
 class TimeSeriesPlotExporter:
@@ -187,7 +189,7 @@ class TimeSeriesPlotExporter:
                 plot_image.height(),
                 image.width() - 2 * margin,
                 footer_height,
-                Qt.AlignRight | Qt.AlignVCenter,
+                ALIGN_RIGHT_VCENTER,
                 credit
             )
         finally:
