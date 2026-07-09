@@ -37,3 +37,9 @@ def classFactory(iface):  # pylint: disable=invalid-name
     #
     from .insar_explorer import InsarExplorer
     return InsarExplorer(iface)
+
+
+# Initialize runtime compatibility patches for supported QGIS/Qt versions.
+# This must run before the plugin imports or uses patched components.
+from .src.pyqtgraph_compat import applyPyqtgraphCompatPatches
+applyPyqtgraphCompatPatches()
