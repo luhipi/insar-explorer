@@ -2,7 +2,7 @@ import os
 
 from qgis.gui import QgsMapToolEmitPoint
 from PyQt5.QtWidgets import QFileDialog, QMenu, QComboBox
-from PyQt5.QtCore import QObject, QTimer, QVariant, pyqtSignal
+from PyQt5.QtCore import QObject, QSettings, QStandardPaths, QTimer, QVariant, pyqtSignal
 from PyQt5.QtGui import QIcon, QTransform
 
 from . import map_click_handler as cph
@@ -31,9 +31,16 @@ class GuiController(QObject):
         self.initializeSelection()
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
-        self.last_save_path = ""
+        self.settings = QSettings()
+        self.last_save_path = self._initialExportDirectory()
         self.last_save_ts_name = "ts_plot.png"
         self.last_export_ts_name = "ts_data.csv"
+        self.last_plot_export_format = self.settings.value(
+            'insar_explorer/plot_export_format', 'png', type=str
+        )
+        self.last_ts_export_format = self.settings.value(
+            'insar_explorer/ts_export_format', 'csv', type=str
+        )
         self.initializeUiParams()
         self.connectUiSignals()
         # make point selection active by default
@@ -713,11 +720,79 @@ class GuiController(QObject):
         for layer in selected_layers:
             self.ui.lw_layers.takeItem(self.ui.lw_layers.row(layer))
 
+
+    def _initialExportDirectory(self):
+        """Return the initial directory used by plot and data export dialogs."""
+        saved_path = self.settings.value('insar_explorer/export_directory', '', type=str)
+        if saved_path and os.path.isdir(saved_path):
+            return saved_path
+
+        home_path = QStandardPaths.writableLocation(QStandardPaths.HomeLocation)
+        if home_path and os.path.isdir(home_path):
+            return home_path
+
+        return os.path.expanduser('~')
+
+    def _suggestedExportPath(self, filename):
+        """Return a full export path in a usable directory."""
+        export_dir = self.last_save_path
+        if not export_dir or not os.path.isdir(export_dir):
+            export_dir = self._initialExportDirectory()
+            self.last_save_path = export_dir
+        return os.path.join(export_dir, filename)
+
+    def _rememberExportPath(self, file_path):
+        """Remember the last directory used by plot and data export dialogs."""
+        export_dir = os.path.dirname(file_path)
+        if not export_dir:
+            return
+        self.last_save_path = export_dir
+        self.settings.setValue('insar_explorer/export_directory', export_dir)
+
+
+    @staticmethod
+    def _extensionFromFilter(selected_filter):
+        """Return the first file extension advertised by a QFileDialog filter."""
+        if not selected_filter:
+            return ""
+
+        start = selected_filter.find('*.')
+        if start == -1:
+            return ""
+
+        start += 1
+        end = selected_filter.find(')', start)
+        if end == -1:
+            end = len(selected_filter)
+
+        extension = selected_filter[start:end].split()[0].strip(';')
+        return extension.lower()
+
+    @staticmethod
+    def _withExtension(filename, extension):
+        """Return filename with extension applied to its suffix."""
+        if not extension:
+            return filename
+        if not extension.startswith('.'):
+            extension = f'.{extension}'
+
+        base, _ = os.path.splitext(filename)
+        return base + extension
+
+    def _rememberExportFormat(self, settings_key, file_path):
+        """Remember the extension used by an export dialog."""
+        _, extension = os.path.splitext(file_path)
+        if not extension:
+            return
+        self.settings.setValue(settings_key, extension.lstrip('.').lower())
+
     def saveTsPlot(self):
         self.msg_signal.emit("", "", 0)
 
-        suggested_path = os.path.join(self.last_save_path, self.last_save_ts_name)
-        base, ext = os.path.splitext(suggested_path)
+        plot_extension = self.last_plot_export_format.lower().lstrip('.')
+        suggested_name = self._withExtension(self.last_save_ts_name, plot_extension)
+        suggested_path = self._suggestedExportPath(suggested_name)
+        _, ext = os.path.splitext(suggested_path)
 
         ext_to_filter = {
             '.png': "PNG (*.png)",
@@ -727,7 +802,7 @@ class GuiController(QObject):
         filters = ";;".join(ext_to_filter.values())
         default = ext_to_filter.get(ext.lower(), "PNG (*.png)")
 
-        file_path, _ = QFileDialog.getSaveFileName(
+        file_path, selected_filter = QFileDialog.getSaveFileName(
             self.ui,
             "Save plot as image",
             suggested_path,
@@ -739,10 +814,15 @@ class GuiController(QObject):
             return
 
         base, ext = os.path.splitext(file_path)
-        if ext == '':
+        selected_extension = self._extensionFromFilter(selected_filter)
+        if ext == '' and selected_extension:
+            file_path = base + selected_extension
+        elif ext == '':
             file_path = base + '.png'
 
-        self.last_save_path = os.path.dirname(file_path)
+        self._rememberExportPath(file_path)
+        self._rememberExportFormat('insar_explorer/plot_export_format', file_path)
+        self.last_plot_export_format = os.path.splitext(file_path)[1].lstrip('.').lower()
         self.last_save_ts_name = os.path.basename(file_path)
 
         self.choose_point_click_handler.plot_ts.savePlotAsImage(file_path)
@@ -755,8 +835,10 @@ class GuiController(QObject):
             self.msg_signal.emit('No time series to export.', 'w', 0)
             return
 
-        suggested_path = os.path.join(self.last_save_path, self.last_export_ts_name)
-        base, ext = os.path.splitext(suggested_path)
+        ts_extension = self.last_ts_export_format.lower().lstrip('.')
+        suggested_name = self._withExtension(self.last_export_ts_name, ts_extension)
+        suggested_path = self._suggestedExportPath(suggested_name)
+        _, ext = os.path.splitext(suggested_path)
 
         ext_to_filter = {
             '.csv': "CSV files (*.csv)",
@@ -765,7 +847,7 @@ class GuiController(QObject):
         filters = ";;".join(ext_to_filter.values())
         default = ext_to_filter.get(ext.lower(), "CSV files (*.csv)")
 
-        file_path, _ = QFileDialog.getSaveFileName(
+        file_path, selected_filter = QFileDialog.getSaveFileName(
             self.ui,
             "Export time series data",
             suggested_path,
@@ -777,12 +859,17 @@ class GuiController(QObject):
             return
 
         base, ext = os.path.splitext(file_path)
-        if ext == '':
+        selected_extension = self._extensionFromFilter(selected_filter)
+        if ext == '' and selected_extension:
+            file_path = base + selected_extension
+        elif ext == '':
             file_path = base + '.csv'
 
         self.choose_point_click_handler.plot_ts.exportAscii(file_path)
 
-        self.last_save_path = os.path.dirname(file_path)
+        self._rememberExportPath(file_path)
+        self._rememberExportFormat('insar_explorer/ts_export_format', file_path)
+        self.last_ts_export_format = os.path.splitext(file_path)[1].lstrip('.').lower()
         self.last_export_ts_name = os.path.basename(file_path)
 
         self.msg_signal.emit(f'Time series exported: {file_path}', 'done', 3000)
