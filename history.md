@@ -1,7 +1,8 @@
 ### History
 
 v2.5.0
-Refactor time-series state management in backend.
+- Remove "." from marker options.
+- Refactor time-series state management in backend.
 
 v2.4.0
 - Add credit text to exports.
