@@ -130,6 +130,9 @@ class PlotTs():
         parms['dpi'] = parms_ts.get(["export", "dpi"]) or 300
         parms['aspect ratio'] = parms_ts.get(["export", "aspect ratio"]) or 4.0
 
+        credit = parms_ts.get(["export", "credit"])
+        parms['credit'] = credit if credit is not None else "Powered by InSAR Explorer"
+
         self.parms['export'] = parms
 
         # residual plot

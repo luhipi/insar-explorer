@@ -31,7 +31,7 @@ class InsarExplorerDialogTest(unittest.TestCase):
 
     def test_icon_png(self):
         """Test we can click OK."""
-        path = ':/plugins/InsarExplorer/icon.png'
+        path = ':/plugins/InsarExplorer/icon.svg'
         icon = QIcon(path)
         self.assertFalse(icon.isNull())
 

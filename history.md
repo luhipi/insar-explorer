@@ -1,6 +1,7 @@
 ### History
 
 v2.4.0
+- Add credit text to exports.
 - Remember the last export directory and format.
 - Fix missing polygon time series fill.
 - Fix incorrect plot scaling in SVG export.
