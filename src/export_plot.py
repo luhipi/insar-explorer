@@ -20,6 +20,7 @@ class TimeSeriesPlotExporter:
     DEFAULT_CREDIT_MARGIN = 8
     DEFAULT_CREDIT_FONT_SIZE = 9
     DEFAULT_CREDIT_FOOTER_HEIGHT = 22
+    DEFAULT_MIN_LOGICAL_WIDTH = 1200
 
     def __init__(self, plotter):
         self.plotter = plotter
@@ -81,7 +82,8 @@ class TimeSeriesPlotExporter:
 
     def _logicalExportSize(self, plot_widget, aspect_ratio):
         number_of_plots = 2 if self.plotter.plot_residuals_flag else 1
-        logical_width = max(1, int(round(plot_widget.width() or 1200)))
+        widget_width = int(round(plot_widget.width() or self.DEFAULT_MIN_LOGICAL_WIDTH))
+        logical_width = max(1, widget_width, self.DEFAULT_MIN_LOGICAL_WIDTH)
         logical_height = max(1, int(round(number_of_plots * logical_width / aspect_ratio)))
         return logical_width, logical_height
 
