@@ -4,7 +4,7 @@ from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsPointXY, QgsGeometry, QgsMapLayer, QgsRectangle, QgsFeatureRequest, QgsSettings, Qgis
 from qgis.gui import QgsHighlight
 from qgis.core import QgsProject, QgsCoordinateTransform, QgsCoordinateReferenceSystem
-from PyQt5.QtGui import QCursor
+from qgis.PyQt.QtGui import QCursor
 
 import numpy as np
 

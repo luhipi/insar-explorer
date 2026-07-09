@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QColorDialog
+from qgis.PyQt.QtWidgets import QColorDialog
 from qgis.PyQt.QtGui import QColor
 
 
