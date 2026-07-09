@@ -2,6 +2,9 @@
 
 v2.4.0
 - Add credit text to exports.
+- Remember the last export directory and format.
+- Fix missing polygon time series fill.
+- Fix incorrect plot scaling in SVG export.
 
 v2.3.0
 - Remove pdf and jpeg from the list of supported export formats.
