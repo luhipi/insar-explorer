@@ -1,9 +1,8 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath('../..'))
 try:
-    from insar_explorer import __version__, __date__
+    from .. import __version__, __date__
 except ImportError:
     __version__ = "xx.xx.xx"
     __date__ = "2026.xx.xx"

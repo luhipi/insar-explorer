@@ -19,9 +19,8 @@ from .models.time_series import (
     buildTimeSeriesData,
 )
 
-sys.path.insert(0, os.path.abspath('../..'))
 try:
-    from insar_explorer import __version__
+    from .. import __version__
 except ImportError:
     __version__ = "xx.xx.xx"
 
