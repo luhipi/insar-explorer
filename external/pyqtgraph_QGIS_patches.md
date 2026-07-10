@@ -34,3 +34,11 @@ The following components have been modified to address security scanner warnings
             "PySide UI compilation is disabled in this QGIS-vendored PyQtGraph. "
         )
       ```
+
+- `metaarray/MetaArray.py`
+  1. `import ast`
+  2. replace `ret = eval(meta)` with `ret = ast.literal_eval(meta)`
+  3. replace `inf = eval(line)` with `inf = ast.literal_eval(line)`
+  4. replace `val = eval(val)` with `val = ast.literal_eval(val)`
+  5. `subarr = pickle.loads(fd.read())  # nosec B301`
+  6. `data = pickle.loads(fd.read(inf["len"]))  # nosec B301` 

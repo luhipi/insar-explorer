@@ -13,6 +13,7 @@ import copy
 import os
 import pickle
 import warnings
+import ast
 
 import numpy as np
 
@@ -721,7 +722,7 @@ class MetaArray(object):
             if line == '':
                 break
             meta += line
-        ret = eval(meta)
+        ret = ast.literal_eval(meta)
         #print ret
         return ret
     
@@ -772,7 +773,7 @@ class MetaArray(object):
             if meta['type'] == 'object':
                 if mmap:
                     raise Exception('memmap not supported for arrays with dtype=object')
-                subarr = pickle.loads(fd.read())
+                subarr = pickle.loads(fd.read())  # nosec B301
             else:
                 if mmap:
                     subarr = np.memmap(fd, dtype=meta['type'], mode='r', shape=meta['shape'])
@@ -800,12 +801,12 @@ class MetaArray(object):
                     break
                     
                 ## evaluate line
-                inf = eval(line)
+                inf = ast.literal_eval(line)
                 
                 ## read data block
                 #print "read %d bytes as %s" % (inf['len'], meta['type'])
                 if meta['type'] == 'object':
-                    data = pickle.loads(fd.read(inf['len']))
+                    data = pickle.loads(fd.read(inf["len"]))  # nosec B301
                 else:
                     data = np.frombuffer(fd.read(inf['len']), dtype=meta['type'])
                 
@@ -930,7 +931,7 @@ class MetaArray(object):
                 val = val.decode()
             if isinstance(val, str):  ## strings need to be re-evaluated to their original types
                 try:
-                    val = eval(val)
+                    val = ast.literal_eval(val)
                 except:
                     raise Exception('Can not evaluate string: "%s"' % val)
             data[k] = val
