@@ -12,6 +12,10 @@ Insar Explorer and triggered unnecessary security scanner warnings:
 - `opengl`
 - `console`
 
+
+- Removed `multiprocess` and `widgets/RemoteGraphicsView.py` and removed `from .widgets.RemoteGraphicsView import RemoteGraphicsView` from `__init__.py`
+
+
 ## Modified
 The following components have been modified to address security scanner warnings:
 
