@@ -1,7 +1,7 @@
 import os
 import re
 from osgeo import gdal
-from qgis.core import QgsMapLayer
+from ..qt_compat import VECTOR_LAYER
 
 
 def checkGrdLayer(layer):
@@ -11,7 +11,7 @@ def checkGrdLayer(layer):
     elif not layer.isValid():
         message = '<span style="color:red;">Invalid Layer: Please select a valid raster layer.</span>'
         return False, message
-    elif (layer.type() == QgsMapLayer.VectorLayer):
+    elif layer.type() == VECTOR_LAYER:
         message = ('<span style="color:red;">This is a vector layers. Please select a raster layer.'
                    '</span>')
         return False, message

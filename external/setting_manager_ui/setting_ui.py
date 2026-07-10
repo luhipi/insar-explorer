@@ -1,39 +1,23 @@
-__version__ = '0.7.1'
+__version__ = '0.8.0'
 
 import sys
 
-try:
-    # pyside6
-    from PySide6.QtWidgets import (
-        QApplication,
-        QDialog,
-        QVBoxLayout,
-        QHBoxLayout,
-        QTableWidget,
-        QTableWidgetItem,
-        QTabWidget,
-        QCheckBox,
-        QMessageBox,
-        QPushButton
-    )
-    from PySide6.QtCore import Qt, Signal
-    from PySide6.QtGui import QColor, QBrush
-except ImportError:
-    # QGIS
-    from qgis.PyQt.QtWidgets import (
-        QApplication,
-        QDialog,
-        QVBoxLayout,
-        QHBoxLayout,
-        QTableWidget,
-        QTableWidgetItem,
-        QTabWidget,
-        QCheckBox,
-        QMessageBox,
-        QPushButton
-    )
-    from qgis.PyQt.QtCore import Qt, pyqtSignal as Signal
-    from qgis.PyQt.QtGui import QColor, QBrush
+from .qt_compat import (
+    QApplication,
+    QBrush,
+    QCheckBox,
+    QColor,
+    QDialog,
+    QHBoxLayout,
+    QMessageBox,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QVBoxLayout,
+    Signal,
+    ITEM_IS_EDITABLE,
+)
 
 from .json_settings import JsonSettings
 from .src.object_with_checkbox import (
@@ -124,7 +108,7 @@ class SettingsTabWidget(QTableWidget):
     def addParameterName(self, *, row_idx, param_name, advanced, column_color, column_color2):
         """ Adds the parameter name to the table. """
         param_item = QTableWidgetItem(param_name)
-        param_item.setFlags(param_item.flags() & ~Qt.ItemIsEditable)
+        param_item.setFlags(param_item.flags() & ~ITEM_IS_EDITABLE)
         self.setItem(row_idx, 0, param_item)
         param_item.setBackground(column_color if advanced else column_color2)
 
@@ -173,7 +157,7 @@ class SettingsTabWidget(QTableWidget):
                 param_default_to_show = 'manual'
 
         default_item = QTableWidgetItem(str(param_default_to_show))
-        default_item.setFlags(default_item.flags() & ~Qt.ItemIsEditable)
+        default_item.setFlags(default_item.flags() & ~ITEM_IS_EDITABLE)
         self.setItem(row_idx, 2, default_item)
         default_item.setBackground(column_color if advanced else column_color2)
 
@@ -380,8 +364,10 @@ class SettingsTableDialog(QDialog):
 
 
 if __name__ == "__main__":
+    # run the settings dialog as a standalone application for testing
+    # python -m setting_manager_ui.setting_ui
     app = QApplication(sys.argv)
-    JSON_FILE = "../tests/test.json"
+    JSON_FILE = "tests/test.json"
     dialog = SettingsTableDialog(JSON_FILE, "test setting")
     dialog.exec()
     sys.exit(app.exec())

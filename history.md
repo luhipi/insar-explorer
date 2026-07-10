@@ -1,6 +1,7 @@
 ### History
 
 v2.5.0
+- Support for Qt6 for compatibility with QGIS 4.
 - Remove "." from marker options.
 - Refactor time-series state management in backend.
 

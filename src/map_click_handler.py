@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from qgis.PyQt.QtWidgets import QApplication
-from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsPointXY, QgsGeometry, QgsMapLayer, QgsRectangle, QgsFeatureRequest, QgsSettings, Qgis
 from qgis.gui import QgsHighlight
 from qgis.core import QgsProject, QgsCoordinateTransform, QgsCoordinateReferenceSystem
-from PyQt5.QtGui import QCursor
+from qgis.PyQt.QtGui import QCursor
+
+from .qt_compat import RED, WAIT_CURSOR, YELLOW
 
 import numpy as np
 
@@ -179,7 +180,7 @@ class MapClickHandler:
             layer = self.iface.activeLayer()
         self.clearFeatureHighlight()
         self.highlight = QgsHighlight(self.iface.mapCanvas(), geometry, layer)
-        self.highlight.setColor(Qt.yellow)
+        self.highlight.setColor(YELLOW)
         self.highlight.show()
 
     def highlightSelectedReferenceFeature(self, geometry: QgsGeometry, layer: QgsMapLayer = None) -> None:
@@ -187,7 +188,7 @@ class MapClickHandler:
             layer = self.iface.activeLayer()
         self.clearReferenceFeatureHighlight()
         self.reference_highlight = QgsHighlight(self.iface.mapCanvas(), geometry, layer)
-        self.reference_highlight.setColor(Qt.red)
+        self.reference_highlight.setColor(RED)
         self.reference_highlight.show()
 
     def clearFeatureHighlight(self) -> None:
@@ -216,7 +217,7 @@ class MapClickHandler:
         :param only_ids: bool
         :return: closest feature or feature ID
         """
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        QApplication.setOverrideCursor(QCursor(WAIT_CURSOR))
         settings = QgsSettings()
         radius = settings.value("/Map/searchRadiusMM", Qgis.DEFAULT_SEARCH_RADIUS_MM, type=float)
         if radius <= 0:

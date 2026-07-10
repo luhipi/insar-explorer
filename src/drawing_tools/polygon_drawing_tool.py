@@ -1,13 +1,15 @@
 from qgis.gui import QgsMapTool, QgsRubberBand
-from qgis.core import QgsGeometry, QgsWkbTypes
+from qgis.core import QgsGeometry
 from qgis.PyQt.QtGui import QColor as QgsColor
+
+from ..qt_compat import POLYGON_GEOMETRY, LEFT_MOUSE_BUTTON, RIGHT_MOUSE_BUTTON
 
 
 class PolygonMarker(QgsMapTool):
     def __init__(self, canvas) -> None:
         super().__init__(canvas)
         self.canvas = canvas
-        self.rubber_band = QgsRubberBand(self.canvas, QgsWkbTypes.PolygonGeometry)
+        self.rubber_band = QgsRubberBand(self.canvas, POLYGON_GEOMETRY)
         self.points = []
 
         self.setStyle()
@@ -24,7 +26,7 @@ class PolygonMarker(QgsMapTool):
 
     def reset(self):
         self.points = []
-        self.rubber_band.reset(QgsWkbTypes.PolygonGeometry)
+        self.rubber_band.reset(POLYGON_GEOMETRY)
 
     def stopDrawing(self):
         self.points = []
@@ -42,7 +44,7 @@ class PolygonDrawingTool(QgsMapTool):
 
     def canvasPressEvent(self, event) -> None:
         """Add the clicked point to the polygon"""
-        if event.button() == 1:  # Left-click
+        if event.button() == LEFT_MOUSE_BUTTON:
             if self.first_point:
                 self.activate()
                 if self.start_callback:
@@ -58,7 +60,7 @@ class PolygonDrawingTool(QgsMapTool):
 
     def canvasReleaseEvent(self, event) -> None:
         """Check for right-click to finalize the polygon"""
-        if event.button() == 2:  # Right-click
+        if event.button() == RIGHT_MOUSE_BUTTON:
             if len(self.polygon_marker.points) > 2:  # A valid polygon requires at least 3 points
                 self.finalizePolygon()
                 self.last_point = True
@@ -83,7 +85,7 @@ class PolygonDrawingTool(QgsMapTool):
     def clear(self) -> None:
         """Reset points and rubber band"""
         # self.polygon_marker.points = []
-        # self.polygon_marker.rubber_band.reset(QgsWkbTypes.PolygonGeometry)
+        # self.polygon_marker.rubber_band.reset(POLYGON_GEOMETRY)
         self.polygon_marker.reset()
         self.deactivate()
 

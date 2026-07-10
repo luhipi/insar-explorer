@@ -1,7 +1,8 @@
 import re
 from datetime import datetime
 import numpy as np
-from qgis.core import QgsMapLayer, QgsFeature
+from qgis.core import QgsFeature
+from ..qt_compat import VECTOR_LAYER
 from qgis.PyQt.QtCore import QVariant
 
 
@@ -14,7 +15,7 @@ def checkVectorLayer(layer):
     elif not layer.isValid():
         message = '<span style="color:red;">Invalid Layer: Please select a valid vector layer.</span>'
         return False, message
-    elif not (layer.type() == QgsMapLayer.VectorLayer):
+    elif not (layer.type() == VECTOR_LAYER):
         message = '<span style="color:red;">This is not a vector layer: Please select a valid vector layer.</span>'
         return False, message
     elif not (layer.geometryType() == 0):

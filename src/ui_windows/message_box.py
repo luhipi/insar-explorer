@@ -1,4 +1,11 @@
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
+from ..qt_compat import (
+    MESSAGE_BUTTON_OK,
+    MESSAGE_ICON_CRITICAL,
+    MESSAGE_ICON_INFORMATION,
+    MESSAGE_ICON_WARNING,
+    exec_dialog,
+)
 
 
 class MessageBox:
@@ -11,13 +18,16 @@ class MessageBox:
         self.wgt.setText(f"<html><body>{self.message}</body></html>")
         self.addButtons()
         self.setStyle()
-        self.wgt.exec_()
+        self._exec()
+
+    def _exec(self):
+        exec_dialog(self.wgt)
 
     def setStyle(self):
-        self.wgt.setIcon(QMessageBox.Information)
+        self.wgt.setIcon(MESSAGE_ICON_INFORMATION)
 
     def addButtons(self):
-        self.wgt.setStandardButtons(QMessageBox.Ok)
+        self.wgt.setStandardButtons(MESSAGE_BUTTON_OK)
 
 
 class InfoBox(MessageBox):
@@ -25,7 +35,7 @@ class InfoBox(MessageBox):
         super().__init__(message, title=title)
 
     def setStyle(self):
-        self.wgt.setIcon(QMessageBox.Information)
+        self.wgt.setIcon(MESSAGE_ICON_INFORMATION)
 
 
 class ErrorBox(MessageBox):
@@ -33,7 +43,7 @@ class ErrorBox(MessageBox):
         super().__init__(message, title=title)
 
     def setStyle(self):
-        self.wgt.setIcon(QMessageBox.Critical)
+        self.wgt.setIcon(MESSAGE_ICON_CRITICAL)
 
 
 class WarningBox(MessageBox):
@@ -41,4 +51,4 @@ class WarningBox(MessageBox):
         super().__init__(message, title=title)
 
     def setStyle(self):
-        self.wgt.setIcon(QMessageBox.Warning)
+        self.wgt.setIcon(MESSAGE_ICON_WARNING)

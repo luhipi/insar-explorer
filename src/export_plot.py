@@ -3,9 +3,10 @@ import re
 from contextlib import contextmanager
 
 from ..external.pyqtgraph import exporters
-from qgis.PyQt.QtCore import QSize, Qt
 from qgis.PyQt.QtGui import QColor, QFont, QImage, QPainter
 from qgis.PyQt.QtWidgets import QApplication
+
+from .qt_compat import ALIGN_RIGHT_VCENTER
 
 
 class TimeSeriesPlotExporter:
@@ -18,6 +19,7 @@ class TimeSeriesPlotExporter:
     DEFAULT_CREDIT_MARGIN = 8
     DEFAULT_CREDIT_FONT_SIZE = 9
     DEFAULT_CREDIT_FOOTER_HEIGHT = 22
+    DEFAULT_MIN_LOGICAL_WIDTH = 1200
 
     def __init__(self, plotter):
         self.plotter = plotter
@@ -39,9 +41,12 @@ class TimeSeriesPlotExporter:
         export_height = max(1, int(round(logical_height * dpi / self.BASE_DPI)))
         suffix = os.path.splitext(filename)[1].lower()
 
-        with self._temporaryPlotSize(plot_widget, logical_width, logical_height):
+        with self._temporaryExportGeometry(plot_widget, logical_width, logical_height):
             if suffix == '.svg':
-                exporters.SVGExporter(export_item).export(filename)
+                exporter = exporters.SVGExporter(export_item)
+                self._setExporterParameter(exporter, 'width', logical_width)
+                self._setExporterParameter(exporter, 'height', logical_height)
+                exporter.export(filename)
                 self._addCreditToSvg(filename, logical_width, logical_height, credit)
                 return
 
@@ -79,34 +84,37 @@ class TimeSeriesPlotExporter:
 
     def _logicalExportSize(self, plot_widget, aspect_ratio):
         number_of_plots = 2 if self.plotter.plot_residuals_flag else 1
-        logical_width = max(1, int(round(plot_widget.width() or 1200)))
+        widget_width = int(round(plot_widget.width() or self.DEFAULT_MIN_LOGICAL_WIDTH))
+        logical_width = max(1, widget_width, self.DEFAULT_MIN_LOGICAL_WIDTH)
         logical_height = max(1, int(round(number_of_plots * logical_width / aspect_ratio)))
         return logical_width, logical_height
 
     @contextmanager
-    def _temporaryPlotSize(self, plot_widget, width, height):
-        old_size = plot_widget.size()
-        old_min_size = plot_widget.minimumSize()
-        old_max_size = plot_widget.maximumSize()
+    def _temporaryExportGeometry(self, plot_widget, width, height):
+        central_item = getattr(plot_widget, 'ci', None)
+        old_central_size = central_item.size() if central_item is not None else None
+        scene = plot_widget.scene()
+        old_scene_rect = scene.sceneRect() if scene is not None else None
         old_updates_enabled = plot_widget.updatesEnabled()
 
         try:
             plot_widget.setUpdatesEnabled(False)
-            plot_widget.setFixedSize(QSize(width, height))
-            plot_widget.resize(width, height)
             self._resizeCentralItem(plot_widget, width, height)
             self._flushPlotGeometry(plot_widget)
             yield
         finally:
-            plot_widget.setMinimumSize(old_min_size)
-            plot_widget.setMaximumSize(old_max_size)
-            plot_widget.resize(old_size)
-            self._resizeCentralItem(plot_widget, old_size.width(), old_size.height())
+            if old_central_size is not None:
+                try:
+                    central_item.resize(old_central_size)
+                except (AttributeError, TypeError):
+                    central_item.resize(
+                        old_central_size.width(), old_central_size.height()
+                    )
+            if scene is not None and old_scene_rect is not None:
+                scene.setSceneRect(old_scene_rect)
             self._flushPlotGeometry(plot_widget)
             plot_widget.setUpdatesEnabled(old_updates_enabled)
-            plot_widget.updateGeometry()
             plot_widget.update()
-            QApplication.processEvents()
 
     def _resizeCentralItem(self, plot_widget, width, height):
         central_item = getattr(plot_widget, 'ci', None)
@@ -175,7 +183,9 @@ class TimeSeriesPlotExporter:
         image.fill(self._figureBackgroundColor())
 
         font = QFont()
-        font.setPixelSize(max(1, int(round(self.DEFAULT_CREDIT_FONT_SIZE * scale))))
+        font.setPixelSize(max(
+            1, int(round(self.DEFAULT_CREDIT_FONT_SIZE * scale))
+        ))
 
         painter = QPainter(image)
         try:
@@ -187,11 +197,16 @@ class TimeSeriesPlotExporter:
                 plot_image.height(),
                 image.width() - 2 * margin,
                 footer_height,
-                Qt.AlignRight | Qt.AlignVCenter,
+                ALIGN_RIGHT_VCENTER,
                 credit
             )
         finally:
             painter.end()
+
+        # QImage uses dots per metre for physical resolution metadata.
+        dots_per_metre = max(1, int(round(float(dpi) / 0.0254)))
+        image.setDotsPerMeterX(dots_per_metre)
+        image.setDotsPerMeterY(dots_per_metre)
         image.save(filename)
 
     def _addCreditToSvg(self, filename, width, height, credit):
@@ -199,7 +214,8 @@ class TimeSeriesPlotExporter:
             return
 
         try:
-            svg_text = open(filename, 'r', encoding='utf-8').read()
+            with open(filename, 'r', encoding='utf-8') as f:
+                svg_text = f.read()
         except OSError:
             return
 
@@ -228,7 +244,8 @@ class TimeSeriesPlotExporter:
             return
         svg_text = svg_text[:insert_at] + footer + svg_text[insert_at:]
         try:
-            open(filename, 'w', encoding='utf-8').write(svg_text)
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(svg_text)
         except OSError:
             pass
 

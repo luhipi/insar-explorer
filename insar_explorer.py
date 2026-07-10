@@ -21,7 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
@@ -30,6 +30,7 @@ from .insar_explorer_dockwidget import InsarExplorerDockWidget
 import os.path
 
 from .src.gui_controller import GuiController
+from .src.qt_compat import BOTTOM_DOCK_WIDGET_AREA
 
 # Initialize Qt resources from file resources.py
 from .resources import qInitResources
@@ -234,7 +235,7 @@ class InsarExplorer:
 
             # show the dockwidget
             # TODO: fix to allow choice of dock location
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.dockwidget)
+            self.iface.addDockWidget(BOTTOM_DOCK_WIDGET_AREA, self.dockwidget)
             self.dockwidget.show()
             if self.gui_controller is None:
                 self.gui_controller = GuiController(self)
