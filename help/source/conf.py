@@ -47,7 +47,7 @@ copyright = u'2024-2026, Mahmud Haghighi'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../../..'))
 try:
     from insar_explorer import __version__
 except ImportError:
