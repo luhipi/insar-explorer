@@ -280,7 +280,6 @@ from .widgets.PathButton import *
 from .widgets.PlotWidget import *
 from .widgets.ProgressDialog import *
 from .widgets.RawImageWidget import *
-from .widgets.RemoteGraphicsView import RemoteGraphicsView
 from .widgets.ScatterPlotWidget import *
 from .widgets.SpinBox import *
 from .widgets.TableWidget import *
