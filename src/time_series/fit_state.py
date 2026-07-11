@@ -1,0 +1,32 @@
+"""UI-independent state for time-series model fitting."""
+
+from dataclasses import dataclass
+
+
+FIT_MODELS = ("poly-1", "poly-2", "poly-3", "exp")
+DEFAULT_FIT_MODEL = "poly-1"
+
+
+@dataclass
+class TimeSeriesFitState:
+    """Represent fitting state independently from any concrete UI widgets."""
+
+    fit_enabled: bool = False
+    selected_fit_model: str = DEFAULT_FIT_MODEL
+    seasonal_enabled: bool = False
+    residual_enabled: bool = False
+
+    def __post_init__(self):
+        """Normalize invalid model identifiers to the default model."""
+        if self.selected_fit_model not in FIT_MODELS:
+            self.selected_fit_model = DEFAULT_FIT_MODEL
+
+    def setFitEnabled(self, enabled):
+        """Enable or disable fitting without discarding the selected model."""
+        self.fit_enabled = bool(enabled)
+
+    def setSelectedModel(self, model):
+        """Select an actual fit model without implicitly enabling fitting."""
+        if model not in FIT_MODELS:
+            raise ValueError(f"Unsupported fit model: {model}")
+        self.selected_fit_model = model

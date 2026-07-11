@@ -15,6 +15,7 @@ from ..external.setting_manager_ui.json_settings import JsonSettings
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 from .ui_windows.color_picker import ColorPicker
 from .qt_compat import RASTER_LAYER, VECTOR_LAYER
+from .time_series.fit_state import TimeSeriesFitState
 
 
 class GuiController(QObject):
@@ -29,6 +30,7 @@ class GuiController(QObject):
         self.drawing_tool = None  # for polygon drawing
         self.drawing_tool_reference = None  # for reference polygon drawing
         self.selection_type = "point"  # "point" or "polygon" or "reference polygon"
+        self.time_series_fit_state = TimeSeriesFitState()
         self.initializeSelection()
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
@@ -479,12 +481,17 @@ class GuiController(QObject):
                             self.ui.pb_ts_fit_exp: "exp", }
 
         if self.ui.pb_ts_nofit.isChecked():
+            self.time_series_fit_state.setFitEnabled(False)
             self.choose_point_click_handler.plot_ts.fit_models = []
             self.msg_signal.emit("No fit model selected.", "i", 0)
         else:
             fit_models = [check_box_lookup[button] for button in selected_buttons]
+            if fit_models:
+                self.time_series_fit_state.setSelectedModel(fit_models[0])
+            self.time_series_fit_state.setFitEnabled(True)
             self.choose_point_click_handler.plot_ts.fit_models = fit_models
             seasonal_flag = self.ui.pb_ts_fit_seasonal.isChecked()
+            self.time_series_fit_state.seasonal_enabled = seasonal_flag
             self.choose_point_click_handler.plot_ts.fit_seasonal_flag = seasonal_flag
             msg = f"Fit model selected: {', '.join(fit_models)}"
             msg = msg + " Seasonal component will be added." if seasonal_flag else msg
@@ -504,8 +511,10 @@ class GuiController(QObject):
             self.msg_signal.emit("Residual plot disabled.", "i", 0)
 
     def timeseriesPlotResiduals(self):
-        self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.pb_plot_residuals.isChecked()
-                                                                       and not self.ui.pb_ts_nofit.isChecked())
+        residual_enabled = (self.ui.pb_plot_residuals.isChecked()
+                            and not self.ui.pb_ts_nofit.isChecked())
+        self.time_series_fit_state.residual_enabled = residual_enabled
+        self.choose_point_click_handler.plot_ts.plot_residuals_flag = residual_enabled
 
     def holdOnPlot(self, status):
         self.choose_point_click_handler.plot_ts.hold_on_flag = status
