@@ -790,6 +790,10 @@ class GuiController(QObject):
     def saveTsPlot(self):
         self.msg_signal.emit("", "", 0)
 
+        if self.choose_point_click_handler.plot_ts.current_series() is None:
+            self.msg_signal.emit('No time-series plot to export.', 'w', 0)
+            return
+
         plot_extension = self.last_plot_export_format.lower().lstrip('.')
         suggested_name = self._withExtension(self.last_save_ts_name, plot_extension)
         suggested_path = self._suggestedExportPath(suggested_name)
