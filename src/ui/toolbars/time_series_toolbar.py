@@ -11,7 +11,7 @@ from ...qt_compat import (
     SIZE_POLICY_PREFERRED,
     TOOL_BUTTON_INSTANT_POPUP,
 )
-from ..styles import apply_command_toolbar_style
+from ..styles import apply_command_toolbar_style, set_toolbar_control_role
 
 
 class TimeSeriesToolbar(QToolBar):
@@ -45,6 +45,7 @@ class TimeSeriesToolbar(QToolBar):
 
         self.fit_model_button = QToolButton(self)
         self.fit_model_button.setObjectName("tool_ts_fit_model")
+        set_toolbar_control_role(self.fit_model_button, "selector")
         self.fit_model_button.setPopupMode(TOOL_BUTTON_INSTANT_POPUP)
         self.fit_model_menu = QMenu(self.fit_model_button)
         self.fit_model_menu.setObjectName("menu_ts_fit_model")
@@ -118,6 +119,19 @@ class TimeSeriesToolbar(QToolBar):
         self.addAction(self.plot_export_action)
         self.addAction(self.data_export_action)
 
+        for action in (
+            self.fit_enabled_action,
+            self.seasonal_action,
+            self.residual_action,
+        ):
+            self._setActionControlRole(action, "toggle")
+        for action in (
+            self.settings_action,
+            self.plot_export_action,
+            self.data_export_action,
+        ):
+            self._setActionControlRole(action, "command")
+
         self.settings_action.triggered.connect(self.settingsRequested.emit)
         self.plot_export_action.triggered.connect(self.plotExportRequested.emit)
         self.data_export_action.triggered.connect(self.dataExportRequested.emit)
@@ -168,6 +182,12 @@ class TimeSeriesToolbar(QToolBar):
         previous = self.residual_action.blockSignals(True)
         self.residual_action.setChecked(bool(enabled))
         self.residual_action.blockSignals(previous)
+
+    def _setActionControlRole(self, action, role):
+        """Assign a semantic role to the tool button generated for an action."""
+        button = self.widgetForAction(action)
+        if isinstance(button, QToolButton):
+            set_toolbar_control_role(button, role)
 
     def _createAction(self, icon_path, text, tooltip, object_name):
         """Create a non-checkable command action with stable metadata."""

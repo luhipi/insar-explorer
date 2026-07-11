@@ -36,3 +36,14 @@ QToolButton:disabled {
 def apply_command_toolbar_style(toolbar):
     """Apply the shared style for code-created command toolbars."""
     toolbar.setStyleSheet(COMMAND_TOOLBAR_STYLESHEET)
+
+
+def set_toolbar_control_role(widget, role):
+    """Assign a reusable visual role to a code-created toolbar control."""
+    if role not in {"toggle", "command", "selector"}:
+        raise ValueError(f"Unsupported toolbar control role: {role}")
+    widget.setProperty("controlRole", role)
+    style = widget.style()
+    style.unpolish(widget)
+    style.polish(widget)
+    widget.update()
