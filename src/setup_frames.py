@@ -12,5 +12,7 @@ def setupTsFrame(ui):
     ui.time_series_toolbar = TimeSeriesToolbar(ui.frame_plot_ts)
 
     ui.frame_plot_layout = QVBoxLayout(ui.frame_plot_ts)
+    ui.frame_plot_layout.setContentsMargins(0, 0, 0, 0)
+    ui.frame_plot_layout.setSpacing(1)
     ui.frame_plot_layout.addWidget(ui.plot_widget)
     ui.frame_plot_layout.addWidget(ui.time_series_toolbar)
