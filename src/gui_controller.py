@@ -108,6 +108,7 @@ class GuiController(QObject):
             layer = self.iface.activeLayer()
         if layer:
             self.choose_point_click_handler.reset()
+            self._restoreTimeSeriesFitState()
             self.insar_map.reset()
             self.setVectorFields()
 
@@ -301,7 +302,7 @@ class GuiController(QObject):
         self.ui.time_series_toolbar.fitModelChanged.connect(self.setTimeSeriesFitModel)
         self.ui.time_series_toolbar.seasonalEnabledChanged.connect(self.setTimeSeriesSeasonalEnabled)
         self.ui.time_series_toolbar.residualEnabledChanged.connect(self.setTimeSeriesResidualEnabled)
-        self._syncTimeSeriesFitControls()
+        self._restoreTimeSeriesFitState()
         # Plot setting
         self.ui.gb_y_axis.buttonClicked.connect(self.plotYAxis)
         self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
@@ -461,6 +462,18 @@ class GuiController(QObject):
                 transform = QTransform().scale(-1, 1)  # fip horizontally
                 flipped_pixmap = pixmap.transformed(transform)
                 combo_box.setItemIcon(index, QIcon(flipped_pixmap))
+
+    def _restoreTimeSeriesFitState(self):
+        """Restore session fit state after UI, plotter, or layer lifecycle changes."""
+        state = self.time_series_fit_state
+        state.setSelectedModel(state.selected_fit_model)
+        self._applyTimeSeriesFitState(refresh=False)
+
+    def resetTimeSeriesFitState(self):
+        """Reset fit activity while retaining a valid selected model for this session."""
+        self.time_series_fit_state.setFitEnabled(False)
+        self.time_series_fit_state.residual_enabled = False
+        self._applyTimeSeriesFitState(refresh=False)
 
     def _syncTimeSeriesFitControls(self):
         """Synchronize the code-created toolbar from shared fit state."""
