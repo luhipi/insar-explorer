@@ -1,5 +1,8 @@
 """Reusable styling helpers for code-created toolbars."""
 
+from qgis.PyQt.QtCore import QSize
+
+
 COMMAND_TOOLBAR_STYLESHEET = """
 QToolBar {
     background: transparent;
@@ -8,27 +11,12 @@ QToolBar {
     border: none;
     spacing: 1px;
 }
-QToolButton {
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 2px;
+QToolButton[controlRole="toggle"]:hover:enabled {
+    border: 1px solid palette(mid);
+}
+QToolButton[controlRole="selector"] {
     margin: 0;
-    padding: 1px;
-    min-width: 20px;
-    min-height: 20px;
-}
-QToolButton:hover:enabled {
-    background: palette(midlight);
-    border-color: palette(mid);
-}
-QToolButton:pressed:enabled {
-    background: palette(mid);
-    border-color: palette(dark);
-}
-QToolButton:disabled {
-    background: transparent;
-    border-color: transparent;
-    color: palette(mid);
+    padding: 1px 1px;
 }
 """
 
@@ -39,10 +27,21 @@ def apply_command_toolbar_style(toolbar):
 
 
 def set_toolbar_control_role(widget, role):
-    """Assign a reusable visual role to a code-created toolbar control."""
+    """Assign and configure a visual role for a code-created toolbar control."""
     if role not in {"toggle", "command", "selector"}:
         raise ValueError(f"Unsupported toolbar control role: {role}")
+
     widget.setProperty("controlRole", role)
+    widget.setIconSize(QSize(18, 18))
+
+    if role == "selector":
+        widget.setAutoRaise(True)
+        widget.setFixedHeight(22)
+        widget.setMinimumWidth(22)
+    else:
+        widget.setAutoRaise(role == "toggle")
+        widget.setFixedSize(22, 22)
+
     style = widget.style()
     style.unpolish(widget)
     style.polish(widget)
