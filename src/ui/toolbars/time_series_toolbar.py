@@ -1,8 +1,11 @@
 """Toolbar actions for the time-series plot panel."""
 
 from qgis.PyQt.QtCore import QSize, pyqtSignal
-from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QSizePolicy, QToolBar, QWidget
+from qgis.PyQt.QtGui import QAction, QIcon
+from qgis.PyQt.QtWidgets import QToolBar, QWidget
+
+from ...qt_compat import SIZE_POLICY_EXPANDING, SIZE_POLICY_PREFERRED
+from ..styles import apply_command_toolbar_style
 
 
 class TimeSeriesToolbar(QToolBar):
@@ -15,23 +18,42 @@ class TimeSeriesToolbar(QToolBar):
     def __init__(self, parent=None):
         """Initialize the toolbar and its actions."""
         super().__init__(parent)
-        self.setObjectName("time_series_toolbar")
+        self.setObjectName("timeSeriesToolbar")
         self.setMovable(False)
         self.setFloatable(False)
-        self.setIconSize(QSize(20, 20))
+        self.setIconSize(QSize(18, 18))
+        self.setContentsMargins(0, 0, 0, 0)
+        apply_command_toolbar_style(self)
 
         spacer = QWidget(self)
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        spacer.setObjectName("timeSeriesToolbarSpacer")
+        spacer.setSizePolicy(
+            SIZE_POLICY_EXPANDING,
+            SIZE_POLICY_PREFERRED,
+        )
         self.addWidget(spacer)
 
-        self.settings_action = QAction(QIcon(":/icons/icons/setting.svg"), "Settings", self)
-        self.settings_action.setToolTip("Open time-series settings")
-        self.plot_export_action = QAction(QIcon(":/icons/icons/screenshot.svg"), "Save plot", self)
-        self.plot_export_action.setToolTip("Save the time-series plot")
-        self.data_export_action = QAction(QIcon(":/icons/icons/export.svg"), "Export values", self)
-        self.data_export_action.setToolTip("Export time-series values")
+        self.settings_action = self._createAction(
+            ":/icons/icons/setting.svg",
+            "Time-series settings",
+            "Configure time-series plot settings",
+            "action_ts_settings",
+        )
+        self.plot_export_action = self._createAction(
+            ":/icons/icons/screenshot.svg",
+            "Export plot",
+            "Export the current time-series plot",
+            "action_ts_export_plot",
+        )
+        self.data_export_action = self._createAction(
+            ":/icons/icons/export.svg",
+            "Export data",
+            "Export the current time-series data",
+            "action_ts_export_data",
+        )
 
         self.addAction(self.settings_action)
+        self.addSeparator()
         self.addAction(self.plot_export_action)
         self.addAction(self.data_export_action)
 
@@ -39,10 +61,10 @@ class TimeSeriesToolbar(QToolBar):
         self.plot_export_action.triggered.connect(self.plotExportRequested.emit)
         self.data_export_action.triggered.connect(self.dataExportRequested.emit)
 
-    def setPlotExportEnabled(self, enabled):
-        """Enable or disable plot export without inspecting application state."""
-        self.plot_export_action.setEnabled(enabled)
-
-    def setDataExportEnabled(self, enabled):
-        """Enable or disable data export without inspecting application state."""
-        self.data_export_action.setEnabled(enabled)
+    def _createAction(self, icon_path, text, tooltip, object_name):
+        """Create a non-checkable command action with stable metadata."""
+        action = QAction(QIcon(icon_path), text, self)
+        action.setObjectName(object_name)
+        action.setToolTip(tooltip)
+        action.setCheckable(False)
+        return action
