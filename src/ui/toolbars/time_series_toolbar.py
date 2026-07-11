@@ -25,8 +25,11 @@ class TimeSeriesToolbar(QToolBar):
         self.addWidget(spacer)
 
         self.settings_action = QAction(QIcon(":/icons/icons/setting.svg"), "Settings", self)
+        self.settings_action.setToolTip("Open time-series settings")
         self.plot_export_action = QAction(QIcon(":/icons/icons/screenshot.svg"), "Save plot", self)
+        self.plot_export_action.setToolTip("Save the time-series plot")
         self.data_export_action = QAction(QIcon(":/icons/icons/export.svg"), "Export values", self)
+        self.data_export_action.setToolTip("Export time-series values")
 
         self.addAction(self.settings_action)
         self.addAction(self.plot_export_action)
@@ -35,3 +38,11 @@ class TimeSeriesToolbar(QToolBar):
         self.settings_action.triggered.connect(self.settingsRequested.emit)
         self.plot_export_action.triggered.connect(self.plotExportRequested.emit)
         self.data_export_action.triggered.connect(self.dataExportRequested.emit)
+
+    def setPlotExportEnabled(self, enabled):
+        """Enable or disable plot export without inspecting application state."""
+        self.plot_export_action.setEnabled(enabled)
+
+    def setDataExportEnabled(self, enabled):
+        """Enable or disable data export without inspecting application state."""
+        self.data_export_action.setEnabled(enabled)
