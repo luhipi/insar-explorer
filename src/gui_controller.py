@@ -297,9 +297,6 @@ class GuiController(QObject):
         self.ui.pb_set_reference_polygon.clicked.connect(self.activateReferencePolygonSelection)
         self.ui.cb_symbol_value_offset_sync_with_ref.clicked.connect(self.syncOffsetWithReferenceClicked)
         # TS fit handler
-        self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
-        self.ui.pb_ts_fit_seasonal.clicked.connect(self.seasonalFitClicked)
-        self.ui.pb_plot_residuals.toggled.connect(self.residualPlotClicked)
         self.ui.time_series_toolbar.fitEnabledChanged.connect(self.setTimeSeriesFitEnabled)
         self.ui.time_series_toolbar.fitModelChanged.connect(self.setTimeSeriesFitModel)
         self.ui.time_series_toolbar.seasonalEnabledChanged.connect(self.setTimeSeriesSeasonalEnabled)
@@ -466,29 +463,13 @@ class GuiController(QObject):
                 combo_box.setItemIcon(index, QIcon(flipped_pixmap))
 
     def _syncTimeSeriesFitControls(self):
-        """Synchronize toolbar and compatibility Settings controls without loops."""
+        """Synchronize the code-created toolbar from shared fit state."""
         state = self.time_series_fit_state
         toolbar = self.ui.time_series_toolbar
         toolbar.setFitEnabled(state.fit_enabled)
         toolbar.setSelectedFitModel(state.selected_fit_model)
         toolbar.setSeasonalEnabled(state.seasonal_enabled)
         toolbar.setResidualEnabled(state.residual_enabled)
-
-        model_widgets = {
-            "poly-1": self.ui.pb_ts_fit_poly1,
-            "poly-2": self.ui.pb_ts_fit_poly2,
-            "poly-3": self.ui.pb_ts_fit_poly3,
-            "exp": self.ui.pb_ts_fit_exp,
-        }
-        widgets = [self.ui.pb_ts_nofit, self.ui.pb_ts_fit_seasonal,
-                   self.ui.pb_plot_residuals] + list(model_widgets.values())
-        previous = {widget: widget.blockSignals(True) for widget in widgets}
-        self.ui.pb_ts_nofit.setChecked(not state.fit_enabled)
-        model_widgets[state.selected_fit_model].setChecked(state.fit_enabled)
-        self.ui.pb_ts_fit_seasonal.setChecked(state.seasonal_enabled)
-        self.ui.pb_plot_residuals.setChecked(state.residual_enabled)
-        for widget, was_blocked in previous.items():
-            widget.blockSignals(was_blocked)
 
     def _applyTimeSeriesFitState(self, refresh=True):
         """Apply fit state to the plotter and both temporary UI surfaces."""
@@ -533,45 +514,6 @@ class GuiController(QObject):
         self.msg_signal.emit(
             "Residual plot enabled: measurement − fit." if enabled
             else "Residual plot disabled.", "i", 0
-        )
-
-    def seasonalFitClicked(self, status):
-        """Adapt the legacy Settings seasonal control to the shared fit state."""
-        if status and not self.time_series_fit_state.fit_enabled:
-            self.time_series_fit_state.setFitEnabled(True)
-        self.setTimeSeriesSeasonalEnabled(status)
-
-    def timeseriesPlotFit(self):
-        """Adapt the legacy Settings model controls to the shared fit state."""
-        model_widgets = {
-            self.ui.pb_ts_fit_poly1: "poly-1",
-            self.ui.pb_ts_fit_poly2: "poly-2",
-            self.ui.pb_ts_fit_poly3: "poly-3",
-            self.ui.pb_ts_fit_exp: "exp",
-        }
-        if self.ui.pb_ts_nofit.isChecked():
-            self.time_series_fit_state.setFitEnabled(False)
-        else:
-            for widget, model in model_widgets.items():
-                if widget.isChecked():
-                    self.time_series_fit_state.setSelectedModel(model)
-                    self.time_series_fit_state.setFitEnabled(True)
-                    break
-        self.time_series_fit_state.seasonal_enabled = self.ui.pb_ts_fit_seasonal.isChecked()
-        self.time_series_fit_state.residual_enabled = self.ui.pb_plot_residuals.isChecked()
-        self._applyTimeSeriesFitState()
-
-    def residualPlotClicked(self, status):
-        """Adapt the legacy Settings residual control to the shared fit state."""
-        if status and not self.time_series_fit_state.fit_enabled:
-            self.time_series_fit_state.setFitEnabled(True)
-        self.setTimeSeriesResidualEnabled(status)
-
-    def timeseriesPlotResiduals(self):
-        """Apply residual visibility from the shared fit state."""
-        self.choose_point_click_handler.plot_ts.plot_residuals_flag = (
-            self.time_series_fit_state.residual_enabled
-            and self.time_series_fit_state.fit_enabled
         )
 
     def holdOnPlot(self, status):
