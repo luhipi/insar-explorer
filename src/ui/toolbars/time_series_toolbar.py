@@ -2,9 +2,15 @@
 
 from qgis.PyQt.QtCore import QSize, pyqtSignal
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QActionGroup, QMenu, QToolBar, QToolButton, QWidget
+from qgis.PyQt.QtWidgets import QMenu, QToolBar, QToolButton, QWidget
 
-from ...qt_compat import QAction, SIZE_POLICY_EXPANDING, SIZE_POLICY_PREFERRED
+from ...qt_compat import (
+    QAction,
+    QActionGroup,
+    SIZE_POLICY_EXPANDING,
+    SIZE_POLICY_PREFERRED,
+    TOOL_BUTTON_INSTANT_POPUP,
+)
 from ..styles import apply_command_toolbar_style
 
 
@@ -39,7 +45,7 @@ class TimeSeriesToolbar(QToolBar):
 
         self.fit_model_button = QToolButton(self)
         self.fit_model_button.setObjectName("tool_ts_fit_model")
-        self.fit_model_button.setPopupMode(QToolButton.InstantPopup)
+        self.fit_model_button.setPopupMode(TOOL_BUTTON_INSTANT_POPUP)
         self.fit_model_menu = QMenu(self.fit_model_button)
         self.fit_model_menu.setObjectName("menu_ts_fit_model")
         self.fit_model_group = QActionGroup(self.fit_model_menu)

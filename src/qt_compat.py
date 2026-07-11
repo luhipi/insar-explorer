@@ -7,14 +7,14 @@ of branching on Qt binding versions or using enum aliases directly.
 try:
     from qgis.PyQt.QtCore import Qt
     try:
-        from qgis.PyQt.QtGui import QAction
+        from qgis.PyQt.QtGui import QAction, QActionGroup
     except ImportError:
-        from qgis.PyQt.QtWidgets import QAction
-    from qgis.PyQt.QtWidgets import QColorDialog, QMessageBox, QSizePolicy
+        from qgis.PyQt.QtWidgets import QAction, QActionGroup
+    from qgis.PyQt.QtWidgets import QColorDialog, QMessageBox, QSizePolicy, QToolButton
 except ImportError:
     from PySide6.QtCore import Qt
-    from PySide6.QtGui import QAction
-    from PySide6.QtWidgets import QColorDialog, QMessageBox, QSizePolicy
+    from PySide6.QtGui import QAction, QActionGroup
+    from PySide6.QtWidgets import QColorDialog, QMessageBox, QSizePolicy, QToolButton
 
 try:
     from qgis.core import QgsMapLayer, QgsWkbTypes
@@ -54,6 +54,13 @@ PEN_STYLE_BY_NAME = {
 # QSizePolicy enums
 SIZE_POLICY_EXPANDING = _enum_value(QSizePolicy, "Policy", "Expanding")
 SIZE_POLICY_PREFERRED = _enum_value(QSizePolicy, "Policy", "Preferred")
+
+# QToolButton enums
+TOOL_BUTTON_INSTANT_POPUP = _enum_value(
+    QToolButton,
+    "ToolButtonPopupMode",
+    "InstantPopup",
+)
 
 # QMessageBox enums
 MESSAGE_ICON_INFORMATION = _enum_value(QMessageBox, "Icon", "Information")
