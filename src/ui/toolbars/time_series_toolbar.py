@@ -121,6 +121,33 @@ class TimeSeriesToolbar(QToolBar):
         self.seasonal_action.toggled.connect(self.seasonalEnabledChanged.emit)
         self.residual_action.toggled.connect(self.residualEnabledChanged.emit)
 
+
+    def setFitEnabled(self, enabled):
+        """Update the fit toggle without emitting a user-change signal."""
+        previous = self.fit_enabled_action.blockSignals(True)
+        self.fit_enabled_action.setChecked(bool(enabled))
+        self.fit_enabled_action.blockSignals(previous)
+
+    def setSelectedFitModel(self, model):
+        """Update the selected menu model without emitting a user-change signal."""
+        action = self.fit_model_actions[model]
+        previous = self.fit_model_group.blockSignals(True)
+        action.setChecked(True)
+        self.fit_model_button.setDefaultAction(action)
+        self.fit_model_group.blockSignals(previous)
+
+    def setSeasonalEnabled(self, enabled):
+        """Update the seasonal toggle without emitting a user-change signal."""
+        previous = self.seasonal_action.blockSignals(True)
+        self.seasonal_action.setChecked(bool(enabled))
+        self.seasonal_action.blockSignals(previous)
+
+    def setResidualEnabled(self, enabled):
+        """Update the residual toggle without emitting a user-change signal."""
+        previous = self.residual_action.blockSignals(True)
+        self.residual_action.setChecked(bool(enabled))
+        self.residual_action.blockSignals(previous)
+
     def _createAction(self, icon_path, text, tooltip, object_name):
         """Create a non-checkable command action with stable metadata."""
         action = QAction(QIcon(icon_path), text, self)
