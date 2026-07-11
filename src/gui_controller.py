@@ -310,14 +310,14 @@ class GuiController(QObject):
         self.ui.cb_line_color.clicked.connect(self.lineColorClicked)
         self.ui.sb_line_width.valueChanged.connect(self.lineWidthChanged)
         # TS save
-        self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
-        self.ui.pb_ts_export.clicked.connect(self.exportTs)
+        self.ui.time_series_toolbar.plotExportRequested.connect(self.saveTsPlot)
+        self.ui.time_series_toolbar.dataExportRequested.connect(self.exportTs)
         # Replica
         self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
         self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
 
         # Setting popup
-        self.ui.pb_ts_settings.clicked.connect(self.settingsWidgetPopup)
+        self.ui.time_series_toolbar.settingsRequested.connect(self.settingsWidgetPopup)
 
     def connectMapSignals(self):
         self.ui.cb_select_field.currentTextChanged.connect(self.selectVectorFieldChanged)
