@@ -6,10 +6,10 @@ of branching on Qt binding versions or using enum aliases directly.
 
 try:
     from qgis.PyQt.QtCore import Qt
-    from qgis.PyQt.QtWidgets import QColorDialog, QMessageBox
+    from qgis.PyQt.QtWidgets import QColorDialog, QMessageBox, QSizePolicy
 except ImportError:
     from PySide6.QtCore import Qt
-    from PySide6.QtWidgets import QColorDialog, QMessageBox
+    from PySide6.QtWidgets import QColorDialog, QMessageBox, QSizePolicy
 
 try:
     from qgis.core import QgsMapLayer, QgsWkbTypes
@@ -45,6 +45,10 @@ PEN_STYLE_BY_NAME = {
     ":": DOT_LINE,
     "-.": DASH_DOT_LINE,
 }
+
+# QSizePolicy enums
+SIZE_POLICY_EXPANDING = _enum_value(QSizePolicy, "Policy", "Expanding")
+SIZE_POLICY_PREFERRED = _enum_value(QSizePolicy, "Policy", "Preferred")
 
 # QMessageBox enums
 MESSAGE_ICON_INFORMATION = _enum_value(QMessageBox, "Icon", "Information")
