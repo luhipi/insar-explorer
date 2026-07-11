@@ -1,10 +1,10 @@
 """Toolbar actions for the time-series plot panel."""
 
 from qgis.PyQt.QtCore import QSize, pyqtSignal
-from qgis.PyQt.QtGui import QAction, QIcon
+from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QToolBar, QWidget
 
-from ...qt_compat import SIZE_POLICY_EXPANDING, SIZE_POLICY_PREFERRED
+from ...qt_compat import QAction, SIZE_POLICY_EXPANDING, SIZE_POLICY_PREFERRED
 from ..styles import apply_command_toolbar_style
 
 

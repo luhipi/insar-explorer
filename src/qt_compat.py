@@ -6,9 +6,14 @@ of branching on Qt binding versions or using enum aliases directly.
 
 try:
     from qgis.PyQt.QtCore import Qt
+    try:
+        from qgis.PyQt.QtGui import QAction
+    except ImportError:
+        from qgis.PyQt.QtWidgets import QAction
     from qgis.PyQt.QtWidgets import QColorDialog, QMessageBox, QSizePolicy
 except ImportError:
     from PySide6.QtCore import Qt
+    from PySide6.QtGui import QAction
     from PySide6.QtWidgets import QColorDialog, QMessageBox, QSizePolicy
 
 try:
