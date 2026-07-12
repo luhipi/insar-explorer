@@ -307,7 +307,6 @@ class GuiController(QObject):
         self.ui.time_series_toolbar.yAxisModeChanged.connect(self.setTimeSeriesYAxisMode)
         self._restoreTimeSeriesFitState()
         # Plot setting
-        self.ui.gb_y_axis.buttonClicked.connect(self.plotYAxis)
         self._restoreTimeSeriesYAxisMode()
         self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
         self.ui.cb_remove_last_plot.clicked.connect(self.removeLastPlotClicked)
@@ -636,17 +635,8 @@ class GuiController(QObject):
         self._applyTimeSeriesYAxisMode(self.time_series_y_axis_mode, refresh=False)
 
     def _syncTimeSeriesYAxisControls(self, mode):
-        """Synchronize toolbar and temporary Settings controls without recursion."""
+        """Synchronize the code-created toolbar from shared Y-axis state."""
         self.ui.time_series_toolbar.setSelectedYAxisMode(mode)
-        buttons = {
-            "from_data": self.ui.cb_y_from_data,
-            "symmetric": self.ui.cb_y_symmetric,
-            "adaptive": self.ui.cb_y_adaptive,
-        }
-        for button_mode, button in buttons.items():
-            previous = button.blockSignals(True)
-            button.setChecked(button_mode == mode)
-            button.blockSignals(previous)
 
     def _applyTimeSeriesYAxisMode(self, mode, refresh=True):
         """Apply one validated Y-axis mode and optionally redraw the active plot."""
@@ -670,16 +660,6 @@ class GuiController(QObject):
             ),
         }
         self.msg_signal.emit(messages[self.time_series_y_axis_mode], "i", 0)
-
-    def plotYAxis(self):
-        """Forward the temporary Settings button selection to shared Y-axis state."""
-        if self.ui.cb_y_from_data.isChecked():
-            mode = "from_data"
-        elif self.ui.cb_y_symmetric.isChecked():
-            mode = "symmetric"
-        else:
-            mode = "adaptive"
-        self.setTimeSeriesYAxisMode(mode)
 
     def timeseriesReplica(self):
         if self.ui.pb_ts_replica.isChecked():
