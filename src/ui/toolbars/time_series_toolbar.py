@@ -36,7 +36,7 @@ class TimeSeriesToolbar(QToolBar):
         apply_command_toolbar_style(self)
 
         self.fit_enabled_action = self._createToggleAction(
-            ":/icons/icons/fit_poly1.svg",
+            ":/icons/icons/fit_curve.svg",
             "Fit",
             "Toggle time-series fitting",
             "action_ts_fit_enabled",
