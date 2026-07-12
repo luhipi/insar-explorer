@@ -36,6 +36,10 @@ class GuiController(QObject):
         self.insar_map = InsarMap(self.iface)
         self.settings = QSettings()
         self.time_series_y_axis_mode = self._loadTimeSeriesYAxisMode()
+        self.time_series_replica_enabled = self.settings.value(
+            "insar_explorer/replica_enabled", False, type=bool
+        )
+        self.time_series_replica_interval_mm = self._loadReplicaInterval()
         self.last_save_path = self._initialExportDirectory()
         self.last_save_ts_name = "ts_plot.png"
         self.last_export_ts_name = "ts_data.csv"
@@ -111,6 +115,7 @@ class GuiController(QObject):
             self.choose_point_click_handler.reset()
             self._restoreTimeSeriesFitState()
             self._restoreTimeSeriesYAxisMode()
+            self._restoreTimeSeriesReplicaState()
             self.insar_map.reset()
             self.setVectorFields()
 
@@ -305,9 +310,16 @@ class GuiController(QObject):
         self.ui.time_series_toolbar.seasonalEnabledChanged.connect(self.setTimeSeriesSeasonalEnabled)
         self.ui.time_series_toolbar.residualEnabledChanged.connect(self.setTimeSeriesResidualEnabled)
         self.ui.time_series_toolbar.yAxisModeChanged.connect(self.setTimeSeriesYAxisMode)
+        self.ui.time_series_toolbar.replicaEnabledChanged.connect(
+            self.setTimeSeriesReplicaEnabled
+        )
+        self.ui.time_series_toolbar.replicaIntervalChanged.connect(
+            self.setTimeSeriesReplicaInterval
+        )
         self._restoreTimeSeriesFitState()
         # Plot setting
         self._restoreTimeSeriesYAxisMode()
+        self._restoreTimeSeriesReplicaState()
         self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
         self.ui.cb_remove_last_plot.clicked.connect(self.removeLastPlotClicked)
         self.ui.cb_marker_color_auto.toggled.connect(self.markerColorAutoClicked)
@@ -320,9 +332,9 @@ class GuiController(QObject):
         # TS save
         self.ui.time_series_toolbar.plotExportRequested.connect(self.saveTsPlot)
         self.ui.time_series_toolbar.dataExportRequested.connect(self.exportTs)
-        # Replica
-        self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
-        self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
+        # Replica compatibility controls (removed after toolbar migration).
+        self.ui.pb_ts_replica.toggled.connect(self._settingsReplicaEnabledChanged)
+        self.ui.sb_ts_replica.valueChanged.connect(self._settingsReplicaIntervalChanged)
 
         # Setting popup
         self.ui.time_series_toolbar.settingsRequested.connect(self.settingsWidgetPopup)
@@ -661,17 +673,75 @@ class GuiController(QObject):
         }
         self.msg_signal.emit(messages[self.time_series_y_axis_mode], "i", 0)
 
-    def timeseriesReplica(self):
-        if self.ui.pb_ts_replica.isChecked():
-            self.choose_point_click_handler.plot_ts.replicate_flag = True
-            replicate_value = int(self.ui.sb_ts_replica.text())
-            self.choose_point_click_handler.plot_ts.replicate_value = replicate_value
-            self.msg_signal.emit(f"Replica enabled: time series will be replicated every ±{replicate_value} units.",
-                                 "i", 0)
+    def _loadReplicaInterval(self):
+        """Load and validate the persisted replica half-wavelength interval."""
+        value = self.settings.value(
+            "insar_explorer/replica_interval_mm", 27.8, type=float
+        )
+        return value if value > 0 else 27.8
+
+    def _restoreTimeSeriesReplicaState(self):
+        """Restore Replica configuration after plotter lifecycle changes."""
+        self._applyTimeSeriesReplicaState(refresh=False)
+
+    def _syncTimeSeriesReplicaControls(self):
+        """Synchronize toolbar and temporary Settings controls without recursion."""
+        toolbar = self.ui.time_series_toolbar
+        toolbar.setReplicaEnabled(self.time_series_replica_enabled)
+        toolbar.setReplicaInterval(self.time_series_replica_interval_mm)
+        previous = self.ui.pb_ts_replica.blockSignals(True)
+        self.ui.pb_ts_replica.setChecked(self.time_series_replica_enabled)
+        self.ui.pb_ts_replica.blockSignals(previous)
+        previous = self.ui.sb_ts_replica.blockSignals(True)
+        self.ui.sb_ts_replica.setValue(round(self.time_series_replica_interval_mm))
+        self.ui.sb_ts_replica.blockSignals(previous)
+
+    def _applyTimeSeriesReplicaState(self, refresh=True):
+        """Apply Replica state and optionally redraw the active plot exactly once."""
+        plot = self.choose_point_click_handler.plot_ts
+        plot.replicate_flag = self.time_series_replica_enabled
+        plot.replicate_value = self.time_series_replica_interval_mm
+        self._syncTimeSeriesReplicaControls()
+        self.settings.setValue(
+            "insar_explorer/replica_enabled", self.time_series_replica_enabled
+        )
+        self.settings.setValue(
+            "insar_explorer/replica_interval_mm", self.time_series_replica_interval_mm
+        )
+        if refresh:
+            plot.plotTs(update=True)
+
+    def setTimeSeriesReplicaEnabled(self, enabled):
+        """Enable or disable replicas while preserving the selected interval."""
+        self.time_series_replica_enabled = bool(enabled)
+        self._applyTimeSeriesReplicaState()
+        if enabled:
+            message = (
+                "Replica enabled: time series will be replicated every "
+                f"±{self.time_series_replica_interval_mm:.1f} mm."
+            )
         else:
-            self.choose_point_click_handler.plot_ts.replicate_flag = False
-            self.msg_signal.emit("Replica disabled.", "i", 0)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+            message = "Replica disabled."
+        self.msg_signal.emit(message, "i", 0)
+
+    def setTimeSeriesReplicaInterval(self, interval_mm):
+        """Store a positive replica interval and redraw only when Replica is active."""
+        interval_mm = float(interval_mm)
+        if interval_mm <= 0:
+            return
+        self.time_series_replica_interval_mm = interval_mm
+        self._applyTimeSeriesReplicaState(refresh=self.time_series_replica_enabled)
+        self.msg_signal.emit(
+            f"Replica interval set to ±{interval_mm:.1f} mm.", "i", 0
+        )
+
+    def _settingsReplicaEnabledChanged(self, enabled):
+        """Forward the temporary Settings toggle to shared Replica state."""
+        self.setTimeSeriesReplicaEnabled(enabled)
+
+    def _settingsReplicaIntervalChanged(self, interval_mm):
+        """Forward the temporary Settings interval to shared Replica state."""
+        self.setTimeSeriesReplicaInterval(float(interval_mm))
 
     def handleUiClose(self, visible):
         if not visible:
