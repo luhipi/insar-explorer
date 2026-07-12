@@ -332,9 +332,6 @@ class GuiController(QObject):
         # TS save
         self.ui.time_series_toolbar.plotExportRequested.connect(self.saveTsPlot)
         self.ui.time_series_toolbar.dataExportRequested.connect(self.exportTs)
-        # Replica compatibility controls (removed after toolbar migration).
-        self.ui.pb_ts_replica.toggled.connect(self._settingsReplicaEnabledChanged)
-        self.ui.sb_ts_replica.valueChanged.connect(self._settingsReplicaIntervalChanged)
 
         # Setting popup
         self.ui.time_series_toolbar.settingsRequested.connect(self.settingsWidgetPopup)
@@ -689,12 +686,6 @@ class GuiController(QObject):
         toolbar = self.ui.time_series_toolbar
         toolbar.setReplicaEnabled(self.time_series_replica_enabled)
         toolbar.setReplicaInterval(self.time_series_replica_interval_mm)
-        previous = self.ui.pb_ts_replica.blockSignals(True)
-        self.ui.pb_ts_replica.setChecked(self.time_series_replica_enabled)
-        self.ui.pb_ts_replica.blockSignals(previous)
-        previous = self.ui.sb_ts_replica.blockSignals(True)
-        self.ui.sb_ts_replica.setValue(round(self.time_series_replica_interval_mm))
-        self.ui.sb_ts_replica.blockSignals(previous)
 
     def _applyTimeSeriesReplicaState(self, refresh=True):
         """Apply Replica state and optionally redraw the active plot exactly once."""
@@ -734,14 +725,6 @@ class GuiController(QObject):
         self.msg_signal.emit(
             f"Replica interval set to ±{interval_mm:.1f} mm.", "i", 0
         )
-
-    def _settingsReplicaEnabledChanged(self, enabled):
-        """Forward the temporary Settings toggle to shared Replica state."""
-        self.setTimeSeriesReplicaEnabled(enabled)
-
-    def _settingsReplicaIntervalChanged(self, interval_mm):
-        """Forward the temporary Settings interval to shared Replica state."""
-        self.setTimeSeriesReplicaInterval(float(interval_mm))
 
     def handleUiClose(self, visible):
         if not visible:
