@@ -67,7 +67,8 @@ class TimeSeriesToolbar(QToolBar):
             self.fit_model_actions[model] = action
         self.fit_model_actions["poly-1"].setChecked(True)
         self.fit_model_button.setMenu(self.fit_model_menu)
-        self.fit_model_button.setDefaultAction(self.fit_model_actions["poly-1"])
+        self.fit_model_button.setCheckable(False)
+        self._updateFitModelSelector(self.fit_model_actions["poly-1"])
         self.addWidget(self.fit_model_button)
         self._updateFitToggleMetadata()
 
@@ -136,9 +137,7 @@ class TimeSeriesToolbar(QToolBar):
         self.plot_export_action.triggered.connect(self.plotExportRequested.emit)
         self.data_export_action.triggered.connect(self.dataExportRequested.emit)
         self.fit_enabled_action.toggled.connect(self.fitEnabledChanged.emit)
-        self.fit_model_group.triggered.connect(
-            lambda action: self.fitModelChanged.emit(action.data())
-        )
+        self.fit_model_group.triggered.connect(self._fitModelActionTriggered)
         self.seasonal_action.toggled.connect(self.seasonalEnabledChanged.emit)
         self.residual_action.toggled.connect(self.residualEnabledChanged.emit)
 
@@ -154,10 +153,23 @@ class TimeSeriesToolbar(QToolBar):
         action = self.fit_model_actions[model]
         previous = self.fit_model_group.blockSignals(True)
         action.setChecked(True)
-        self.fit_model_button.setDefaultAction(action)
         self.fit_model_group.blockSignals(previous)
+        self._updateFitModelSelector(action)
         self._updateFitToggleMetadata()
 
+    def _fitModelActionTriggered(self, action):
+        """Update selector presentation and emit the selected model identifier."""
+        self._updateFitModelSelector(action)
+        self._updateFitToggleMetadata()
+        self.fitModelChanged.emit(action.data())
+
+    def _updateFitModelSelector(self, action):
+        """Render the selected model without inheriting its checked action state."""
+        self.fit_model_button.setIcon(action.icon())
+        self.fit_model_button.setText(action.text())
+        self.fit_model_button.setToolTip(action.text())
+        self.fit_model_button.setStatusTip(action.statusTip())
+        self.fit_model_button.setWhatsThis(action.whatsThis())
 
     def _updateFitToggleMetadata(self):
         """Update Fit metadata for the currently selected model."""
