@@ -1,6 +1,7 @@
 ### History
 
 v2.6.0dev
+- Move replica to time series toolbar.
 - Move fit curve to time series toolbar.
 - Move time series setting and exports to time series toolbar.
 
