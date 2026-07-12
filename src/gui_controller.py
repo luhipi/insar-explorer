@@ -376,6 +376,8 @@ class GuiController(QObject):
         self.initializeUiParams()
 
     def onSettingDialogChanged(self):
+        """Reload externally edited Replica settings before one plot redraw."""
+        self._reloadReplicaPairCountFromConfig()
         self.choose_point_click_handler.plot_ts.plotTs(update=True)
 
     def setSymbologyUpperRange(self):
@@ -698,8 +700,17 @@ class GuiController(QObject):
         )
         return self._validateReplicaPairCount(value)
 
+    def _reloadReplicaPairCountFromConfig(self):
+        """Reload the canonical Replica pair count and synchronize its toolbar view."""
+        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
+        parms.load(block_key="timeseries settings")
+        value = parms.get(["time series plot", "replica pair count"])
+        self.time_series_replica_pair_count = self._validateReplicaPairCount(value)
+        self._syncTimeSeriesReplicaControls()
+
     def _restoreTimeSeriesReplicaState(self):
         """Restore Replica configuration after plotter lifecycle changes."""
+        self._reloadReplicaPairCountFromConfig()
         self._applyTimeSeriesReplicaState(refresh=False)
 
     def _syncTimeSeriesReplicaControls(self):
