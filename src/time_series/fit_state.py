@@ -30,3 +30,15 @@ class TimeSeriesFitState:
         if model not in FIT_MODELS:
             raise ValueError(f"Unsupported fit model: {model}")
         self.selected_fit_model = model
+
+    def setSeasonalEnabled(self, enabled):
+        """Set seasonal fitting and activate fitting when seasonal is enabled."""
+        self.seasonal_enabled = bool(enabled)
+        if self.seasonal_enabled:
+            self.fit_enabled = True
+
+    def setResidualEnabled(self, enabled):
+        """Set residual visibility and activate fitting when residuals are enabled."""
+        self.residual_enabled = bool(enabled)
+        if self.residual_enabled:
+            self.fit_enabled = True

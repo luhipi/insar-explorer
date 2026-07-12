@@ -512,21 +512,21 @@ class GuiController(QObject):
         self._applyTimeSeriesFitState(refresh=self.time_series_fit_state.fit_enabled)
 
     def setTimeSeriesSeasonalEnabled(self, enabled):
-        """Set seasonal fitting independently of model selection."""
-        self.time_series_fit_state.seasonal_enabled = bool(enabled)
-        self._applyTimeSeriesFitState(refresh=self.time_series_fit_state.fit_enabled)
+        """Set seasonal fitting and activate fitting when seasonal is enabled."""
+        self.time_series_fit_state.setSeasonalEnabled(enabled)
+        self._applyTimeSeriesFitState()
         self.msg_signal.emit(
-            "Seasonal fit enabled: a seasonal component will be added to the selected model."
+            "Seasonal fit enabled using the selected model."
             if enabled else "Seasonal fit disabled.", "i", 0
         )
 
     def setTimeSeriesResidualEnabled(self, enabled):
-        """Set residual visibility independently of selected model."""
-        self.time_series_fit_state.residual_enabled = bool(enabled)
+        """Set residual visibility and activate fitting when residuals are enabled."""
+        self.time_series_fit_state.setResidualEnabled(enabled)
         self._applyTimeSeriesFitState()
         self.msg_signal.emit(
-            "Residual plot enabled: measurement − fit." if enabled
-            else "Residual plot disabled.", "i", 0
+            "Residual plot enabled using the selected fit model."
+            if enabled else "Residual plot disabled.", "i", 0
         )
 
     def holdOnPlot(self, status):

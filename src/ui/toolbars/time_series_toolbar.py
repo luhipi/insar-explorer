@@ -69,7 +69,7 @@ class TimeSeriesToolbar(QToolBar):
         self.fit_model_button.setMenu(self.fit_model_menu)
         self.fit_model_button.setDefaultAction(self.fit_model_actions["poly-1"])
         self.addWidget(self.fit_model_button)
-        self._updateFitTogglePresentation()
+        self._updateFitToggleMetadata()
 
         self.seasonal_action = self._createToggleAction(
             ":/icons/icons/fit__add_seasonal.svg",
@@ -156,19 +156,18 @@ class TimeSeriesToolbar(QToolBar):
         action.setChecked(True)
         self.fit_model_button.setDefaultAction(action)
         self.fit_model_group.blockSignals(previous)
-        self._updateFitTogglePresentation()
+        self._updateFitToggleMetadata()
 
 
-    def _updateFitTogglePresentation(self):
-        """Mirror the selected model action on the fit toggle presentation."""
+    def _updateFitToggleMetadata(self):
+        """Update Fit metadata for the currently selected model."""
         selected_action = next(
             action for action in self.fit_model_actions.values() if action.isChecked()
         )
         model_name = selected_action.text()
-        self.fit_enabled_action.setIcon(selected_action.icon())
-        self.fit_enabled_action.setToolTip(f"Toggle {model_name.lower()} fit")
-        self.fit_enabled_action.setStatusTip(f"Fit using {model_name.lower()} model")
-        self.fit_enabled_action.setWhatsThis(f"Fit using {model_name.lower()} model")
+        self.fit_enabled_action.setToolTip(f"Toggle fit using {model_name}")
+        self.fit_enabled_action.setStatusTip(f"Fit using {model_name} model")
+        self.fit_enabled_action.setWhatsThis(f"Fit using {model_name} model")
         self.fit_model_button.setAccessibleName(f"Selected fit model: {model_name}")
 
     def setSeasonalEnabled(self, enabled):
