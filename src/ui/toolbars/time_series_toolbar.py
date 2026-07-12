@@ -1,6 +1,6 @@
 """Toolbar actions for the time-series plot panel."""
 
-from qgis.PyQt.QtCore import QSize, pyqtSignal
+from qgis.PyQt.QtCore import QSize, Qt, pyqtSignal
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import (
     QInputDialog,
@@ -156,6 +156,10 @@ class TimeSeriesToolbar(QToolBar):
         self.replica_interval_button.setObjectName("tool_ts_replica_interval")
         set_toolbar_control_role(self.replica_interval_button, "selector")
         self.replica_interval_button.setPopupMode(TOOL_BUTTON_INSTANT_POPUP)
+        tool_button_style = getattr(Qt, "ToolButtonStyle", Qt)
+        self.replica_interval_button.setToolButtonStyle(
+            tool_button_style.ToolButtonTextOnly
+        )
         self.replica_interval_menu = QMenu(self.replica_interval_button)
         self.replica_interval_menu.setObjectName("menu_ts_replica_interval")
         self.replica_interval_group = QActionGroup(self.replica_interval_menu)
@@ -167,7 +171,7 @@ class TimeSeriesToolbar(QToolBar):
             ("alos", "ALOS (L-band) — 118.0 mm", 118.0, "action_replica_alos"),
             ("nisar_l", "NISAR (L-band) — 120.0 mm", 120.0, "action_replica_nisar_l"),
         ):
-            action = QAction(QIcon(":/icons/icons/replica.svg"), text, self.replica_interval_group)
+            action = QAction(text, self.replica_interval_group)
             action.setObjectName(object_name)
             action.setCheckable(True)
             action.setData(interval_mm)
@@ -365,15 +369,18 @@ class TimeSeriesToolbar(QToolBar):
     def _updateReplicaIntervalSelector(self, action, interval_mm):
         """Update Replica interval presentation without a checked tool button."""
         if action is self.replica_custom_action:
-            label = f"Custom · {interval_mm:.1f} mm"
-            tooltip = f"Custom replica half-wavelength interval: {interval_mm:.1f} mm"
+            label = f"{interval_mm:.1f} mm"
+            description = f"Custom interval — {interval_mm:.1f} mm"
         else:
-            label = action.text()
-            tooltip = f"Replica half-wavelength interval: {action.text()}"
-        self.replica_interval_button.setIcon(QIcon(":/icons/icons/replica.svg"))
+            label = f"{interval_mm:.1f} mm"
+            description = action.text()
+        tooltip = f"Replica interval: {description}"
+        self.replica_interval_button.setIcon(QIcon())
         self.replica_interval_button.setText(label)
         self.replica_interval_button.setToolTip(tooltip)
-        self.replica_interval_button.setAccessibleName(label)
+        self.replica_interval_button.setStatusTip(tooltip)
+        self.replica_interval_button.setWhatsThis(tooltip)
+        self.replica_interval_button.setAccessibleName(tooltip)
 
     def _setActionControlRole(self, action, role):
         """Assign a semantic role to the tool button generated for an action."""
