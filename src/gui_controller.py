@@ -748,9 +748,19 @@ class GuiController(QObject):
             f"Replica interval set to ±{interval_mm:.1f} mm.", "i", 0
         )
 
+    def _persistReplicaPairCount(self, pair_count):
+        """Persist the validated Replica pair count to the plot configuration."""
+        block_key = "timeseries settings"
+        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
+        settings_block = parms.load(block_key=block_key)
+        settings_block["time series plot"]["replica pair count"]["value"] = pair_count
+        parms.save(block_key, settings_block)
+
     def setTimeSeriesReplicaPairCount(self, pair_count):
-        """Store a symmetric pair count and redraw only when Replica is active."""
-        self.time_series_replica_pair_count = max(1, min(10, int(pair_count)))
+        """Persist a symmetric pair count before optionally redrawing Replica."""
+        pair_count = max(1, min(10, int(pair_count)))
+        self._persistReplicaPairCount(pair_count)
+        self.time_series_replica_pair_count = pair_count
         self._applyTimeSeriesReplicaState(refresh=self.time_series_replica_enabled)
         self.msg_signal.emit(
             f"Replica pairs set to {self.time_series_replica_pair_count}.", "i", 0
