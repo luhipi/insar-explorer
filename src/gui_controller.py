@@ -681,15 +681,22 @@ class GuiController(QObject):
         )
         return value if value > 0 else 27.8
 
+    @staticmethod
+    def _validateReplicaPairCount(value):
+        """Validate a Replica pair count without accepting coercible values."""
+        if isinstance(value, bool) or not isinstance(value, int):
+            return 1
+        return max(1, min(10, value))
+
     def _loadReplicaPairCount(self):
         """Load and validate the persisted symmetric Replica pair count."""
         default = self.choose_point_click_handler.plot_ts.parms[
             "time series plot"
         ].get("replica pair count", 1)
         value = self.settings.value(
-            "insar_explorer/replica_pair_count", default, type=int
+            "insar_explorer/replica_pair_count", default
         )
-        return max(1, min(10, int(value)))
+        return self._validateReplicaPairCount(value)
 
     def _restoreTimeSeriesReplicaState(self):
         """Restore Replica configuration after plotter lifecycle changes."""
@@ -758,7 +765,7 @@ class GuiController(QObject):
 
     def setTimeSeriesReplicaPairCount(self, pair_count):
         """Persist a symmetric pair count before optionally redrawing Replica."""
-        pair_count = max(1, min(10, int(pair_count)))
+        pair_count = self._validateReplicaPairCount(pair_count)
         self._persistReplicaPairCount(pair_count)
         self.time_series_replica_pair_count = pair_count
         self._applyTimeSeriesReplicaState(refresh=self.time_series_replica_enabled)

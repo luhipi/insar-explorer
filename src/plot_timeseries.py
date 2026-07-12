@@ -78,6 +78,19 @@ class PlotTs():
         self._y_data_ranges = {}
         self._last_replica_y_data = []
 
+
+    @staticmethod
+    def _validateReplicaPairCount(value):
+        """Return a safe symmetric Replica pair count for rendering.
+
+        Only integer configuration values are accepted. Invalid values fall
+        back to one pair, while valid integers are clamped to the supported
+        range of one through ten pairs.
+        """
+        if isinstance(value, bool) or not isinstance(value, int):
+            return 1
+        return max(1, min(10, value))
+
     def modifySettings(self, block_key, value):
         params = JsonSettings(self.config_file)
         params.save(block_key, value)
@@ -120,9 +133,9 @@ class PlotTs():
         parms['replica alpha'] = parms_ts.get(["time series plot", "replica alpha"]) or 1.0
         parms['replica marker size'] = parms_ts.get(["time series plot", "replica marker size"]) or 5
         parms['replica marker'] = parms_ts.get(["time series plot", "replica marker"]) or 'o'
-        parms['replica pair count'] = parms_ts.get(
-            ["time series plot", "replica pair count"]
-        ) or 1
+        parms['replica pair count'] = self._validateReplicaPairCount(
+            parms_ts.get(["time series plot", "replica pair count"])
+        )
 
         self.parms['time series plot'] = parms
 
@@ -443,7 +456,9 @@ class PlotTs():
         marker_alpha = parms['replica alpha']
         marker_size_replica = parms['replica marker size']
         marker_replica = parms['replica marker']
-        replica_pair_count = max(1, int(parms['replica pair count']))
+        replica_pair_count = self._validateReplicaPairCount(
+            parms.get('replica pair count')
+        )
         self._last_replica_y_data = []
 
         # Plot symmetric positive/negative replica pairs around the source series.
