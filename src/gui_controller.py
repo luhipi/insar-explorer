@@ -691,13 +691,10 @@ class GuiController(QObject):
         return max(1, min(10, value))
 
     def _loadReplicaPairCount(self):
-        """Load and validate the persisted symmetric Replica pair count."""
-        default = self.choose_point_click_handler.plot_ts.parms[
-            "time series plot"
-        ].get("replica pair count", 1)
-        value = self.settings.value(
-            "insar_explorer/replica_pair_count", default
-        )
+        """Load the symmetric Replica pair count from the canonical JSON config."""
+        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
+        parms.load(block_key="timeseries settings")
+        value = parms.get(["time series plot", "replica pair count"])
         return self._validateReplicaPairCount(value)
 
     def _reloadReplicaPairCountFromConfig(self):
@@ -734,10 +731,6 @@ class GuiController(QObject):
         )
         self.settings.setValue(
             "insar_explorer/replica_interval_mm", self.time_series_replica_interval_mm
-        )
-        self.settings.setValue(
-            "insar_explorer/replica_pair_count",
-            self.time_series_replica_pair_count,
         )
         if refresh:
             plot.plotTs(update=True)
