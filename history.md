@@ -1,5 +1,9 @@
 ### History
 
+v2.6.0dev
+- Move fit curve to time series toolbar.
+- Move time series setting and exports to time series toolbar.
+
 v2.5.0
 - Support for Qt6 for compatibility with QGIS 4.
 - Remove "." from marker options.
