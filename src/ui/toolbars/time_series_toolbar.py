@@ -24,6 +24,7 @@ class TimeSeriesToolbar(QToolBar):
     fitModelChanged = pyqtSignal(str)
     seasonalEnabledChanged = pyqtSignal(bool)
     residualEnabledChanged = pyqtSignal(bool)
+    yAxisModeChanged = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Initialize the toolbar and its actions."""
@@ -88,6 +89,52 @@ class TimeSeriesToolbar(QToolBar):
         )
         self.addAction(self.residual_action)
 
+        self.y_axis_button = QToolButton(self)
+        self.y_axis_button.setObjectName("tool_ts_y_axis")
+        set_toolbar_control_role(self.y_axis_button, "selector")
+        self.y_axis_button.setPopupMode(TOOL_BUTTON_INSTANT_POPUP)
+        self.y_axis_menu = QMenu(self.y_axis_button)
+        self.y_axis_menu.setObjectName("menu_ts_y_axis")
+        self.y_axis_group = QActionGroup(self.y_axis_menu)
+        self.y_axis_group.setExclusive(True)
+        self.y_axis_actions = {}
+        for mode, text, tooltip, icon_path, object_name in (
+            (
+                "from_data",
+                "From data",
+                "Y-axis from data",
+                ":/icons/icons/y_axis_from_data.svg",
+                "action_ts_y_from_data",
+            ),
+            (
+                "symmetric",
+                "Symmetric",
+                "Symmetric Y-axis",
+                ":/icons/icons/y_axis_symmetric.svg",
+                "action_ts_y_symmetric",
+            ),
+            (
+                "adaptive",
+                "Adaptive",
+                "Adaptive Y-axis",
+                ":/icons/icons/y_axis_adaptive.svg",
+                "action_ts_y_adaptive",
+            ),
+        ):
+            action = QAction(QIcon(icon_path), text, self.y_axis_group)
+            action.setObjectName(object_name)
+            action.setCheckable(True)
+            action.setData(mode)
+            action.setToolTip(tooltip)
+            self.y_axis_group.addAction(action)
+            self.y_axis_menu.addAction(action)
+            self.y_axis_actions[mode] = action
+        self.y_axis_actions["from_data"].setChecked(True)
+        self.y_axis_button.setMenu(self.y_axis_menu)
+        self.y_axis_button.setCheckable(False)
+        self._updateYAxisSelector(self.y_axis_actions["from_data"])
+        self.addWidget(self.y_axis_button)
+
         spacer = QWidget(self)
         spacer.setObjectName("timeSeriesToolbarSpacer")
         spacer.setSizePolicy(
@@ -140,6 +187,7 @@ class TimeSeriesToolbar(QToolBar):
         self.fit_model_group.triggered.connect(self._fitModelActionTriggered)
         self.seasonal_action.toggled.connect(self.seasonalEnabledChanged.emit)
         self.residual_action.toggled.connect(self.residualEnabledChanged.emit)
+        self.y_axis_group.triggered.connect(self._yAxisActionTriggered)
 
 
     def setFitEnabled(self, enabled):
@@ -181,6 +229,28 @@ class TimeSeriesToolbar(QToolBar):
         self.fit_enabled_action.setStatusTip(f"Fit using {model_name} model")
         self.fit_enabled_action.setWhatsThis(f"Fit using {model_name} model")
         self.fit_model_button.setAccessibleName(f"Selected fit model: {model_name}")
+
+    def setSelectedYAxisMode(self, mode):
+        """Update the selected Y-axis mode without emitting a user-change signal."""
+        action = self.y_axis_actions[mode]
+        previous = self.y_axis_group.blockSignals(True)
+        action.setChecked(True)
+        self.y_axis_group.blockSignals(previous)
+        self._updateYAxisSelector(action)
+
+    def _yAxisActionTriggered(self, action):
+        """Update selector presentation and emit the selected Y-axis mode."""
+        self._updateYAxisSelector(action)
+        self.yAxisModeChanged.emit(action.data())
+
+    def _updateYAxisSelector(self, action):
+        """Render the current Y-axis mode without a checked toolbar state."""
+        self.y_axis_button.setIcon(action.icon())
+        self.y_axis_button.setText(action.text())
+        self.y_axis_button.setToolTip(action.toolTip())
+        self.y_axis_button.setStatusTip(action.toolTip())
+        self.y_axis_button.setWhatsThis(action.toolTip())
+        self.y_axis_button.setAccessibleName(f"Selected Y-axis mode: {action.text()}")
 
     def setSeasonalEnabled(self, enabled):
         """Update the seasonal toggle without emitting a user-change signal."""
