@@ -120,8 +120,9 @@ class PlotTs():
         parms['replica alpha'] = parms_ts.get(["time series plot", "replica alpha"]) or 1.0
         parms['replica marker size'] = parms_ts.get(["time series plot", "replica marker size"]) or 5
         parms['replica marker'] = parms_ts.get(["time series plot", "replica marker"]) or 'o'
-        parms['number of up replicas'] = parms_ts.get(["time series plot", "number of up replicas"])
-        parms['number of down replicas'] = parms_ts.get(["time series plot", "number of down replicas"])
+        parms['replica pair count'] = parms_ts.get(
+            ["time series plot", "replica pair count"]
+        ) or 1
 
         self.parms['time series plot'] = parms
 
@@ -442,13 +443,13 @@ class PlotTs():
         marker_alpha = parms['replica alpha']
         marker_size_replica = parms['replica marker size']
         marker_replica = parms['replica marker']
-        number_of_up_replicas = parms['number of up replicas']
-        number_of_down_replicas = parms['number of down replicas']
+        replica_pair_count = max(1, int(parms['replica pair count']))
         self._last_replica_y_data = []
 
-        # plot multiple replicas
+        # Plot symmetric positive/negative replica pairs around the source series.
         replicate_up_list = []
-        for i in range(number_of_up_replicas):
+        replicate_dn_list = []
+        for i in range(replica_pair_count):
             replicate_value = self.replicate_value * (i + 1)
 
             if i % 2 == 0:
@@ -468,19 +469,15 @@ class PlotTs():
             replicate_up_list.append(replicate_up)
             self._last_replica_y_data.append(series.plot_values + replicate_value)
 
-        replicate_dn_list = []
-        for i in range(number_of_down_replicas):
-            replicate_value = self.replicate_value * (i + 1)
-
-            if i % 2 == 0:
-                marker_replica_color = marker_color_2
-            else:
-                marker_replica_color = marker_color_1
-
-            replicate_dn = pg.ScatterPlotItem(x=x, y=series.plot_values - replicate_value,
-                                              symbol=self._symbol(marker_replica), size=marker_size_replica,
-                                              pen=None,
-                                              brush=self._brush(marker_replica_color, marker_alpha))
+            down_color = marker_color_2 if i % 2 == 0 else marker_color_1
+            replicate_dn = pg.ScatterPlotItem(
+                x=x,
+                y=series.plot_values - replicate_value,
+                symbol=self._symbol(marker_replica),
+                size=marker_size_replica,
+                pen=None,
+                brush=self._brush(down_color, marker_alpha),
+            )
             self.ax.addItem(replicate_dn)
             replicate_dn_list.append(replicate_dn)
             self._last_replica_y_data.append(series.plot_values - replicate_value)
