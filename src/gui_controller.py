@@ -35,6 +35,7 @@ class GuiController(QObject):
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
         self.settings = QSettings()
+        self.time_series_y_axis_mode = self._loadTimeSeriesYAxisMode()
         self.last_save_path = self._initialExportDirectory()
         self.last_save_ts_name = "ts_plot.png"
         self.last_export_ts_name = "ts_data.csv"
@@ -109,6 +110,7 @@ class GuiController(QObject):
         if layer:
             self.choose_point_click_handler.reset()
             self._restoreTimeSeriesFitState()
+            self._restoreTimeSeriesYAxisMode()
             self.insar_map.reset()
             self.setVectorFields()
 
@@ -302,9 +304,11 @@ class GuiController(QObject):
         self.ui.time_series_toolbar.fitModelChanged.connect(self.setTimeSeriesFitModel)
         self.ui.time_series_toolbar.seasonalEnabledChanged.connect(self.setTimeSeriesSeasonalEnabled)
         self.ui.time_series_toolbar.residualEnabledChanged.connect(self.setTimeSeriesResidualEnabled)
+        self.ui.time_series_toolbar.yAxisModeChanged.connect(self.setTimeSeriesYAxisMode)
         self._restoreTimeSeriesFitState()
         # Plot setting
         self.ui.gb_y_axis.buttonClicked.connect(self.plotYAxis)
+        self._restoreTimeSeriesYAxisMode()
         self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
         self.ui.cb_remove_last_plot.clicked.connect(self.removeLastPlotClicked)
         self.ui.cb_marker_color_auto.toggled.connect(self.markerColorAutoClicked)
@@ -620,19 +624,62 @@ class GuiController(QObject):
         parms.save(block_key, settings_block)
         return new_value
 
-    def plotYAxis(self):
-        if self.ui.cb_y_from_data.isChecked():
-            self.choose_point_click_handler.plot_ts.plot_y_axis = "from_data"
-            self.msg_signal.emit("Y-axis range set from data.", "i", 0)
-        elif self.ui.cb_y_symmetric.isChecked():
-            self.choose_point_click_handler.plot_ts.plot_y_axis = "symmetric"
-            self.msg_signal.emit("Y-axis range set symmetric.", "i", 0)
-        elif self.ui.cb_y_adaptive.isChecked():
-            self.choose_point_click_handler.plot_ts.plot_y_axis = "adaptive"
-            self.msg_signal.emit("Y-axis range set adaptively: less range change when plotting new time series.", "i",
-                                 0)
+    def _loadTimeSeriesYAxisMode(self):
+        """Load and validate the persisted Time Series Y-axis mode."""
+        mode = self.settings.value(
+            "insar_explorer/time_series_y_axis_mode", "from_data", type=str
+        )
+        return mode if mode in {"from_data", "symmetric", "adaptive"} else "from_data"
 
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+    def _restoreTimeSeriesYAxisMode(self):
+        """Restore the selected Y-axis mode after UI or plotter lifecycle changes."""
+        self._applyTimeSeriesYAxisMode(self.time_series_y_axis_mode, refresh=False)
+
+    def _syncTimeSeriesYAxisControls(self, mode):
+        """Synchronize toolbar and temporary Settings controls without recursion."""
+        self.ui.time_series_toolbar.setSelectedYAxisMode(mode)
+        buttons = {
+            "from_data": self.ui.cb_y_from_data,
+            "symmetric": self.ui.cb_y_symmetric,
+            "adaptive": self.ui.cb_y_adaptive,
+        }
+        for button_mode, button in buttons.items():
+            previous = button.blockSignals(True)
+            button.setChecked(button_mode == mode)
+            button.blockSignals(previous)
+
+    def _applyTimeSeriesYAxisMode(self, mode, refresh=True):
+        """Apply one validated Y-axis mode and optionally redraw the active plot."""
+        if mode not in {"from_data", "symmetric", "adaptive"}:
+            mode = "from_data"
+        self.time_series_y_axis_mode = mode
+        self.choose_point_click_handler.plot_ts.plot_y_axis = mode
+        self._syncTimeSeriesYAxisControls(mode)
+        self.settings.setValue("insar_explorer/time_series_y_axis_mode", mode)
+        if refresh:
+            self.choose_point_click_handler.plot_ts.plotTs(update=True)
+
+    def setTimeSeriesYAxisMode(self, mode):
+        """Handle a toolbar Y-axis selection with one state update and redraw."""
+        self._applyTimeSeriesYAxisMode(mode)
+        messages = {
+            "from_data": "Y-axis range set from data.",
+            "symmetric": "Y-axis range set symmetric.",
+            "adaptive": (
+                "Y-axis range set adaptively: less range change when plotting new time series."
+            ),
+        }
+        self.msg_signal.emit(messages[self.time_series_y_axis_mode], "i", 0)
+
+    def plotYAxis(self):
+        """Forward the temporary Settings button selection to shared Y-axis state."""
+        if self.ui.cb_y_from_data.isChecked():
+            mode = "from_data"
+        elif self.ui.cb_y_symmetric.isChecked():
+            mode = "symmetric"
+        else:
+            mode = "adaptive"
+        self.setTimeSeriesYAxisMode(mode)
 
     def timeseriesReplica(self):
         if self.ui.pb_ts_replica.isChecked():
