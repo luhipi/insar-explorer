@@ -33,6 +33,7 @@ class TimeSeriesToolbar(QToolBar):
     yAxisModeChanged = pyqtSignal(str)
     replicaEnabledChanged = pyqtSignal(bool)
     replicaIntervalChanged = pyqtSignal(float)
+    replicaPairCountChanged = pyqtSignal(int)
 
     def __init__(self, parent=None):
         """Initialize the toolbar and its actions."""
@@ -179,17 +180,21 @@ class TimeSeriesToolbar(QToolBar):
             self.replica_interval_group.addAction(action)
             self.replica_interval_menu.addAction(action)
             self.replica_interval_actions[preset_id] = action
-        self.replica_interval_menu.addSeparator()
-        self.replica_custom_action = QAction("Custom…", self.replica_interval_group)
+        self.replica_custom_action = QAction("Custom interval…", self.replica_interval_group)
         self.replica_custom_action.setObjectName("action_replica_custom")
         self.replica_custom_action.setCheckable(True)
         self.replica_custom_action.setData(None)
         self.replica_interval_group.addAction(self.replica_custom_action)
         self.replica_interval_menu.addAction(self.replica_custom_action)
         self.replica_interval_actions["custom"] = self.replica_custom_action
+        self.replica_interval_menu.addSeparator()
+        self.replica_pairs_action = QAction("Replica pairs…", self.replica_interval_menu)
+        self.replica_pairs_action.setObjectName("action_replica_pairs")
+        self.replica_interval_menu.addAction(self.replica_pairs_action)
         self.replica_interval_button.setMenu(self.replica_interval_menu)
         self.replica_interval_button.setCheckable(False)
         self._replica_interval_mm = 27.8
+        self._replica_pair_count = 1
         self.setReplicaInterval(27.8)
         self.addWidget(self.replica_interval_button)
 
@@ -249,6 +254,7 @@ class TimeSeriesToolbar(QToolBar):
         self.y_axis_group.triggered.connect(self._yAxisActionTriggered)
         self.replica_enabled_action.toggled.connect(self.replicaEnabledChanged.emit)
         self.replica_interval_group.triggered.connect(self._replicaIntervalActionTriggered)
+        self.replica_pairs_action.triggered.connect(self._configureReplicaPairs)
 
     def setFitEnabled(self, enabled):
         """Update the fit toggle without emitting a user-change signal."""
@@ -365,6 +371,29 @@ class TimeSeriesToolbar(QToolBar):
             interval_mm = float(action.data())
         self.setReplicaInterval(interval_mm)
         self.replicaIntervalChanged.emit(interval_mm)
+
+    def setReplicaPairCount(self, pair_count):
+        """Update the stored Replica pair count without emitting a signal."""
+        self._replica_pair_count = max(1, min(10, int(pair_count)))
+        self.replica_pairs_action.setToolTip(
+            f"Current Replica pairs: {self._replica_pair_count}"
+        )
+
+    def _configureReplicaPairs(self):
+        """Prompt for a symmetric Replica pair count and emit accepted changes."""
+        value, accepted = QInputDialog.getInt(
+            self,
+            "Replica pairs",
+            "Number of symmetric replica pairs:",
+            self._replica_pair_count,
+            1,
+            10,
+            1,
+        )
+        if not accepted:
+            return
+        self.setReplicaPairCount(value)
+        self.replicaPairCountChanged.emit(self._replica_pair_count)
 
     def _updateReplicaIntervalSelector(self, action, interval_mm):
         """Update Replica interval presentation without a checked tool button."""

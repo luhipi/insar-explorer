@@ -40,6 +40,7 @@ class GuiController(QObject):
             "insar_explorer/replica_enabled", False, type=bool
         )
         self.time_series_replica_interval_mm = self._loadReplicaInterval()
+        self.time_series_replica_pair_count = self._loadReplicaPairCount()
         self.last_save_path = self._initialExportDirectory()
         self.last_save_ts_name = "ts_plot.png"
         self.last_export_ts_name = "ts_data.csv"
@@ -315,6 +316,9 @@ class GuiController(QObject):
         )
         self.ui.time_series_toolbar.replicaIntervalChanged.connect(
             self.setTimeSeriesReplicaInterval
+        )
+        self.ui.time_series_toolbar.replicaPairCountChanged.connect(
+            self.setTimeSeriesReplicaPairCount
         )
         self._restoreTimeSeriesFitState()
         # Plot setting
@@ -677,6 +681,16 @@ class GuiController(QObject):
         )
         return value if value > 0 else 27.8
 
+    def _loadReplicaPairCount(self):
+        """Load and validate the persisted symmetric Replica pair count."""
+        default = self.choose_point_click_handler.plot_ts.parms[
+            "time series plot"
+        ].get("replica pair count", 1)
+        value = self.settings.value(
+            "insar_explorer/replica_pair_count", default, type=int
+        )
+        return max(1, min(10, int(value)))
+
     def _restoreTimeSeriesReplicaState(self):
         """Restore Replica configuration after plotter lifecycle changes."""
         self._applyTimeSeriesReplicaState(refresh=False)
@@ -686,18 +700,26 @@ class GuiController(QObject):
         toolbar = self.ui.time_series_toolbar
         toolbar.setReplicaEnabled(self.time_series_replica_enabled)
         toolbar.setReplicaInterval(self.time_series_replica_interval_mm)
+        toolbar.setReplicaPairCount(self.time_series_replica_pair_count)
 
     def _applyTimeSeriesReplicaState(self, refresh=True):
         """Apply Replica state and optionally redraw the active plot exactly once."""
         plot = self.choose_point_click_handler.plot_ts
         plot.replicate_flag = self.time_series_replica_enabled
         plot.replicate_value = self.time_series_replica_interval_mm
+        plot.parms["time series plot"][
+            "replica pair count"
+        ] = self.time_series_replica_pair_count
         self._syncTimeSeriesReplicaControls()
         self.settings.setValue(
             "insar_explorer/replica_enabled", self.time_series_replica_enabled
         )
         self.settings.setValue(
             "insar_explorer/replica_interval_mm", self.time_series_replica_interval_mm
+        )
+        self.settings.setValue(
+            "insar_explorer/replica_pair_count",
+            self.time_series_replica_pair_count,
         )
         if refresh:
             plot.plotTs(update=True)
@@ -724,6 +746,14 @@ class GuiController(QObject):
         self._applyTimeSeriesReplicaState(refresh=self.time_series_replica_enabled)
         self.msg_signal.emit(
             f"Replica interval set to ±{interval_mm:.1f} mm.", "i", 0
+        )
+
+    def setTimeSeriesReplicaPairCount(self, pair_count):
+        """Store a symmetric pair count and redraw only when Replica is active."""
+        self.time_series_replica_pair_count = max(1, min(10, int(pair_count)))
+        self._applyTimeSeriesReplicaState(refresh=self.time_series_replica_enabled)
+        self.msg_signal.emit(
+            f"Replica pairs set to {self.time_series_replica_pair_count}.", "i", 0
         )
 
     def handleUiClose(self, visible):
