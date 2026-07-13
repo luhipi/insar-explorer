@@ -5,7 +5,14 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from ..models.time_series import TimeSeriesSnapshot, TimeSeriesStyle
-from .style_schema import LINE_STYLE_OPTIONS, LINE_WIDTH_RANGE, normalize_color, normalize_line_style, normalize_number
+from .style_schema import (
+    FIT_LINE_STYLE_DEFAULT,
+    FIT_LINE_STYLE_OPTIONS,
+    LINE_WIDTH_RANGE,
+    normalize_color,
+    normalize_fit_line_style,
+    normalize_number,
+)
 
 FIT_STYLE_KEYS = ("line style", "line color", "line width")
 
@@ -14,7 +21,7 @@ FIT_STYLE_KEYS = ("line style", "line color", "line width")
 class FitStyle:
     """Normalized appearance values for a fitted time-series curve."""
 
-    line_style: str = "--"
+    line_style: str = FIT_LINE_STYLE_DEFAULT
     line_color: str = "#242424"
     line_width: float = 2.0
 
@@ -23,7 +30,7 @@ class FitStyle:
         """Build a normalized fit style from complete plot parameters."""
         values = params.get("model fit", {}) if isinstance(params, dict) else {}
         return cls(
-            line_style=normalize_line_style(values.get("line style"), "--"),
+            line_style=normalize_fit_line_style(values.get("line style")),
             line_color=normalize_color(values.get("line color"), "#242424"),
             line_width=normalize_number(values.get("line width"), LINE_WIDTH_RANGE, 2.0),
         )
@@ -88,7 +95,7 @@ class FitStyleController:
     def _normalize(key, value):
         """Normalize one fit property using the shared series control schema."""
         if key == "line style":
-            return normalize_line_style(value, "--")
+            return normalize_fit_line_style(value)
         if key == "line color":
             return normalize_color(value, "#242424")
         if key == "line width":
@@ -98,4 +105,4 @@ class FitStyleController:
     @staticmethod
     def supportedOptions():
         """Return supported fit-line selector options for diagnostics."""
-        return {"line style": LINE_STYLE_OPTIONS}
+        return {"line style": FIT_LINE_STYLE_OPTIONS}

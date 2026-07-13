@@ -277,8 +277,8 @@
                 "options": [
                     "-",
                     "--",
-                    "-.",
-                    ":"
+                    ":",
+                    "-."
                 ],
                 "default": "--",
                 "advanced": false
@@ -302,10 +302,10 @@
             "line width": {
                 "type": "float",
                 "value": 2.0,
-                "default": 5.0,
+                "default": 2.0,
                 "range": [
-                    0,
-                    100
+                    0.0,
+                    20.0
                 ],
                 "advanced": false
             }

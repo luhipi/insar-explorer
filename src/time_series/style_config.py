@@ -6,12 +6,14 @@ from ...external.setting_manager_ui.json_settings import JsonSettings
 from ..models.time_series import TimeSeriesStyle
 from .fit_style_controller import FIT_STYLE_KEYS, FitStyle
 from .style_schema import (
+    FIT_LINE_STYLE_OPTIONS,
     LINE_STYLE_OPTIONS,
     LINE_WIDTH_RANGE,
     MARKER_OPTIONS,
     MARKER_SIZE_RANGE,
     PERSISTED_STYLE_KEYS,
     normalize_color,
+    normalize_fit_line_style,
     normalize_line_style,
     normalize_marker,
     normalize_number,
@@ -100,7 +102,7 @@ class TimeSeriesStyleConfig:
     def normalize_fit_property(self, key, value):
         """Normalize one fit-line property through the canonical shared schema."""
         if key == "line style":
-            return normalize_line_style(value, "--")
+            return normalize_fit_line_style(value)
         if key == "line color":
             return normalize_color(value, "#242424")
         if key == "line width":
@@ -127,4 +129,8 @@ class TimeSeriesStyleConfig:
     @staticmethod
     def supported_options():
         """Return schema options for validation and diagnostics."""
-        return {"marker": MARKER_OPTIONS, "line style": LINE_STYLE_OPTIONS}
+        return {
+            "marker": MARKER_OPTIONS,
+            "line style": LINE_STYLE_OPTIONS,
+            "fit line style": FIT_LINE_STYLE_OPTIONS,
+        }

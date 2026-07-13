@@ -13,6 +13,7 @@ from ..external.setting_manager_ui.json_settings import JsonSettings
 from .export_plot import TimeSeriesPlotExporter
 from .time_series.style_config import TimeSeriesStyleConfig
 from .time_series.fit_style_controller import FitStyle
+from .time_series.style_schema import normalize_fit_line_style
 from .models.time_series import (
     TimeSeriesData,
     TimeSeriesGraphics,
@@ -190,7 +191,9 @@ class PlotTs():
 
         # fit model
         parms = {}
-        parms['line style'] = parms_ts.get(["model fit", "line style"]) or '--'
+        parms['line style'] = normalize_fit_line_style(
+            parms_ts.get(["model fit", "line style"])
+        )
         parms['line color'] = parms_ts.get(["model fit", "line color"]) or 'black'
         parms['line alpha'] = parms_ts.get(["model fit", "line alpha"]) or 1.0
         parms['line width'] = parms_ts.get(["model fit", "line width"]) or 2.0

@@ -5,6 +5,7 @@ from qgis.PyQt.QtGui import QColor, QIcon
 
 from ...ui_windows.color_picker import ColorPicker
 from ...time_series.style_schema import (
+    FIT_LINE_STYLE_OPTIONS,
     LINE_STYLE_OPTIONS,
     LINE_WIDTH_RANGE,
     MARKER_OPTIONS,
@@ -187,7 +188,7 @@ class TimeSeriesStylePopup(QWidget):
         self.fit_group = QGroupBox("Fit line", tab)
         fit_layout = QFormLayout(self.fit_group)
         self.fit_line_type = QComboBox(self.fit_group)
-        self.fit_line_type.addItems(list(LINE_STYLE_OPTIONS))
+        self.fit_line_type.addItems(list(FIT_LINE_STYLE_OPTIONS))
         self.fit_line_color = CompactColorButton("━", "Select fit line color", self.fit_group)
         self.fit_line_width = QDoubleSpinBox(self.fit_group)
         self.fit_line_width.setRange(*LINE_WIDTH_RANGE)
