@@ -15,6 +15,7 @@ from .models.time_series import (
     TimeSeriesData,
     TimeSeriesGraphics,
     TimeSeriesSnapshot,
+    DefaultTimeSeriesStyle,
     TimeSeriesStyle,
     buildTimeSeriesData,
 )
@@ -62,6 +63,7 @@ class PlotTs():
         json_file = "config.json"
         self.config_file = os.path.join(os.path.dirname(script_path), 'config', json_file)
         self.series_history: List[TimeSeriesSnapshot] = []
+        self.default_style = None
         self.fit_models = []
         self.fit_seasonal_flag = False
         self.replicate_flag = False
@@ -286,6 +288,8 @@ class PlotTs():
         # update: flag indicating if the plot should be updated or a new one created
 
         self.updateSettings()
+        if self.default_style is None:
+            self.default_style = DefaultTimeSeriesStyle.fromParams(self.parms)
 
         if update:
             source_snapshot = self._remove_rendered_snapshot_for_update()
@@ -303,8 +307,10 @@ class PlotTs():
             if ref_coords is None:
                 ref_coords = source_data.ref_coords
             random_marker_color_flag = False
+            style = TimeSeriesStyle.fromParams(source_snapshot.style.params)
         else:
             random_marker_color_flag = self.random_marker_color_flag
+            style = self.default_style.snapshotStyle()
 
         self.initializeAxes()
 
@@ -334,9 +340,8 @@ class PlotTs():
 
         if random_marker_color_flag:
             rand_color = np.random.rand(3, )
-            self.parms['time series plot']['marker color'] = self.parms['time series plot']['line color'] = rand_color
-
-        style = TimeSeriesStyle.fromParams(self.parms)
+            style.params['time series plot']['marker color'] = rand_color
+            style.params['time series plot']['line color'] = rand_color
         items, residuals_values = self._render_time_series(series, style, plot_multiple=plot_multiple)
         if residuals_values is not None:
             series = series.withResiduals(residuals_values)
@@ -879,6 +884,62 @@ class PlotTs():
 
     def _brush(self, color=None, alpha=1.0):
         return pg.mkBrush(self._color(color, alpha))
+
+    def rerenderTimeSeriesSnapshots(self, snapshots: List[TimeSeriesSnapshot]) -> None:
+        """Re-render selected snapshots in place and issue one final draw."""
+        selected_ids = {id(snapshot) for snapshot in snapshots}
+        for snapshot in self.series_history:
+            if id(snapshot) not in selected_ids:
+                continue
+            self._remove_snapshot_graphics(snapshot)
+            graphics, residuals = self._render_time_series(snapshot.data, snapshot.style)
+            snapshot.graphics = graphics
+            if residuals is not None:
+                snapshot.data = snapshot.data.withResiduals(residuals)
+        self._rebuildYDataRanges()
+        if self.ax is not None:
+            self.setYlims(
+                ax=self.ax,
+                parms=self.parms["time series plot"],
+            )
+
+        if self.ax_residuals is not None:
+            self.setYlims(
+                ax=self.ax_residuals,
+                parms=self.parms["residual plot"],
+            )
+
+        self._draw()
+
+    def selectedTimeSeriesSnapshots(self) -> List[TimeSeriesSnapshot]:
+        """Return the snapshots currently targeted for editing."""
+        snapshot = self.current_series()
+        return [snapshot] if snapshot is not None else []
+
+    def hasSelectedTimeSeries(self) -> bool:
+        """Return whether at least one time-series snapshot is selected."""
+        return bool(self.selectedTimeSeriesSnapshots())
+
+    def selectedTimeSeriesCount(self) -> int:
+        """Return the number of selected time-series snapshots."""
+        return len(self.selectedTimeSeriesSnapshots())
+
+    def setCurrentSeriesStyleAsDefault(self) -> bool:
+        """Copy the current series style into the new-series default source."""
+        snapshot = self.current_series()
+        if snapshot is None:
+            return False
+        if self.default_style is None:
+            self.default_style = DefaultTimeSeriesStyle.fromParams(snapshot.style.params)
+        else:
+            self.default_style.replaceFromSeries(snapshot.style)
+        return True
+
+    def defaultTimeSeriesStyle(self) -> TimeSeriesStyle:
+        """Return a defensive copy of the style used for future series."""
+        if self.default_style is None:
+            self.default_style = DefaultTimeSeriesStyle.fromParams(self.parms)
+        return self.default_style.snapshotStyle()
 
     def add_series(self, snapshot: TimeSeriesSnapshot) -> None:
         """Store a plotted time-series snapshot."""

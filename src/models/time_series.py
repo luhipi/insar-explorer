@@ -64,6 +64,32 @@ class TimeSeriesStyle:
 
 
 @dataclass
+class DefaultTimeSeriesStyle:
+    """Mutable source of defaults used only when creating new time-series snapshots."""
+
+    def __init__(self, style: TimeSeriesStyle):
+        self._style = TimeSeriesStyle.fromParams(style.params)
+
+    @classmethod
+    def fromParams(cls, params: Optional[dict]) -> "DefaultTimeSeriesStyle":
+        """Create a default-style source from copied plot parameters."""
+        return cls(TimeSeriesStyle.fromParams(params))
+
+    def snapshotStyle(self) -> TimeSeriesStyle:
+        """Return an independent style copy for a newly-created series."""
+        return TimeSeriesStyle.fromParams(self._style.params)
+
+    def replaceFromSeries(self, style: TimeSeriesStyle) -> None:
+        """Replace defaults with a defensive copy of a series style."""
+        self._style = TimeSeriesStyle.fromParams(style.params)
+
+    @property
+    def params(self) -> dict:
+        """Return a defensive copy of the current default parameters."""
+        return deepcopy(self._style.params)
+
+
+@dataclass
 class TimeSeriesGraphics:
     """Pyqtgraph items associated with one plotted time-series snapshot."""
 
