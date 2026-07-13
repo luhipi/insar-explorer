@@ -3,6 +3,7 @@
 from copy import deepcopy
 from typing import Iterable
 
+from .style_schema import PERSISTED_STYLE_KEYS
 from ..models.time_series import (
     TimeSeriesSnapshot,
     TimeSeriesStyle,
@@ -45,6 +46,30 @@ class TimeSeriesStyleController:
         for snapshot in snapshots:
             params = deepcopy(snapshot.style.params)
             params.setdefault("time series plot", {})[key] = value
+            snapshot.style = TimeSeriesStyle.fromParams(
+                params,
+                label=snapshot.style.label,
+                visible=snapshot.style.visible,
+                z_order=snapshot.style.z_order,
+            )
+            changed.append(snapshot)
+        return changed
+
+    def applySettingsChanges(self, snapshots, runtime_params, changed_style_values):
+        """Merge global settings and changed defaults into explicit selection targets."""
+        changed = []
+        for snapshot in snapshots:
+            params = deepcopy(snapshot.style.params)
+            for section, section_values in runtime_params.items():
+                if section != "time series plot":
+                    params[section] = deepcopy(section_values)
+                    continue
+                plot = params.setdefault(section, {})
+                for key, value in section_values.items():
+                    if key not in PERSISTED_STYLE_KEYS:
+                        plot[key] = deepcopy(value)
+                for key, value in changed_style_values.items():
+                    plot[key] = deepcopy(value)
             snapshot.style = TimeSeriesStyle.fromParams(
                 params,
                 label=snapshot.style.label,

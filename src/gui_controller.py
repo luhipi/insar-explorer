@@ -1,7 +1,7 @@
 import os
 
 from qgis.gui import QgsMapToolEmitPoint
-from qgis.PyQt.QtWidgets import QFileDialog, QMenu, QComboBox
+from qgis.PyQt.QtWidgets import QFileDialog, QMenu, QComboBox, QLabel
 from qgis.PyQt.QtCore import QObject, QPoint, QRect, QSettings, QStandardPaths, QTimer, QVariant, pyqtSignal
 from qgis.PyQt.QtGui import QIcon, QTransform
 
@@ -23,7 +23,7 @@ from .qt_compat import (
 )
 from .time_series.fit_state import TimeSeriesFitState
 from .time_series.style_controller import TimeSeriesStyleController
-from .time_series.style_persistence import persist_default_time_series_style
+from .time_series.style_schema import EDITABLE_STYLE_KEYS
 
 
 class GuiController(QObject):
@@ -350,16 +350,56 @@ class GuiController(QObject):
         block_key = "timeseries settings"
         script_path = os.path.abspath(__file__)
         json_file_path = os.path.join(os.path.dirname(script_path), json_file)
+        plotter = self.choose_point_click_handler.plot_ts
+        self._settings_style_before = plotter.style_config.load_style_values()
         dialog = SettingsTableDialog(json_file_path, block_key=block_key)
+        self._configureTimeSeriesSettingsScope(dialog)
         dialog.accepted.connect(self.onSettingDialogChanged)
         dialog.applyClicked.connect(self.onSettingDialogChanged)
         dialog.exec()
         self.initializeUiParams()
 
+    def _configureTimeSeriesSettingsScope(self, dialog):
+        """Explain Settings style scope without modifying the vendored dialog package."""
+        guidance = (
+            "These values are defaults for new time series and are also applied to "
+            "the currently selected time series when Settings are applied."
+        )
+        label = QLabel(guidance, dialog)
+        label.setWordWrap(True)
+        label.setObjectName("label_time_series_style_scope")
+        dialog.layout().insertWidget(0, label)
+        tabs = dialog.tab_widget
+        for index in range(tabs.count()):
+            if tabs.tabText(index) == "time series plot":
+                tabs.setTabText(index, "Time series defaults")
+                tabs.setTabToolTip(index, guidance)
+                tabs.widget(index).setToolTip(guidance)
+                break
+
     def onSettingDialogChanged(self):
-        """Reload externally edited Replica settings before one plot redraw."""
+        """Synchronize Settings defaults, selected styles, popup, and plot once."""
         self._reloadReplicaPairCountFromConfig()
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+        plotter = self.choose_point_click_handler.plot_ts
+        previous = getattr(self, "_settings_style_before", plotter.style_config.load_style_values())
+        plotter.updateSettings()
+        current = plotter.style_config.load_style_values()
+        plotter.default_style.replaceFromSeries(
+            plotter.style_config.load_default_style(plotter.parms)
+        )
+        changed_values = {
+            key: current[key]
+            for key in EDITABLE_STYLE_KEYS
+            if previous.get(key) != current.get(key)
+        }
+        snapshots = self.selectedTimeSeriesSnapshots()
+        if snapshots:
+            changed = self.time_series_style_controller.applySettingsChanges(
+                snapshots, plotter.parms, changed_values
+            )
+            plotter.rerenderTimeSeriesSnapshots(changed)
+        self._settings_style_before = current
+        self._refreshTimeSeriesStylePopup()
 
     def setSymbologyUpperRange(self):
         self.ui.sb_symbol_lower_range.blockSignals(True)
@@ -565,24 +605,30 @@ class GuiController(QObject):
         if not snapshots:
             return
         style = snapshots[0].style
-        persist_default_time_series_style(
-            self.choose_point_click_handler.plot_ts.config_file,
-            style,
-        )
-        self.choose_point_click_handler.plot_ts.default_style.replaceFromSeries(style)
+        plotter = self.choose_point_click_handler.plot_ts
+        plotter.style_config.save_default_style(style)
+        plotter.default_style.replaceFromSeries(style)
+        self._settings_style_before = plotter.style_config.load_style_values()
         self.msg_signal.emit("Current plot style set as default for new time series.", "done", 3000)
+
+    def _refreshTimeSeriesStylePopup(self):
+        """Refresh popup controls from actual selected snapshot styles without edits."""
+        snapshots = self.selectedTimeSeriesSnapshots()
+        popup = self.time_series_style_popup
+        popup.setSelectionState(bool(snapshots), len(snapshots))
+        if snapshots:
+            styles = self.time_series_style_controller.selectedSeriesStyles(snapshots)
+            popup.setStyle(styles[0])
+            popup.setMixedProperties(
+                self.time_series_style_controller.mixedProperties(snapshots)
+            )
+        else:
+            popup.setMixedProperties(set())
 
     def showTimeSeriesStylePopup(self):
         """Open the style popup anchored below the Plot style toolbar action."""
         plotter = self.choose_point_click_handler.plot_ts
-        snapshots = plotter.selectedTimeSeriesSnapshots()
-        self.time_series_style_popup.setSelectionState(bool(snapshots), len(snapshots))
-        if snapshots:
-            styles = self.time_series_style_controller.selectedSeriesStyles(snapshots)
-            self.time_series_style_popup.setStyle(styles[0])
-            self.time_series_style_popup.setMixedProperties(
-                self.time_series_style_controller.mixedProperties(snapshots)
-            )
+        self._refreshTimeSeriesStylePopup()
         toolbar = self.ui.time_series_toolbar
         action_widget = toolbar.widgetForAction(toolbar.plot_style_action)
         anchor = action_widget or toolbar
