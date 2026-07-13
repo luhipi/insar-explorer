@@ -418,10 +418,7 @@ class GuiController(QObject):
             plotter.rerenderTimeSeriesSnapshots(changed)
         self._settings_style_before = current
         self._settings_fit_style_before = current_fit
-        if changed_values:
-            self._refreshTimeSeriesStylePopup()
-        else:
-            self._refreshFitStyleTab()
+        self._refreshTimeSeriesStylePopup()
 
     def setSymbologyUpperRange(self):
         self.ui.sb_symbol_lower_range.blockSignals(True)

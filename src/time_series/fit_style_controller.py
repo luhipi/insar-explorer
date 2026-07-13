@@ -8,7 +8,8 @@ from ..models.time_series import TimeSeriesSnapshot, TimeSeriesStyle
 from .style_schema import (
     FIT_LINE_STYLE_DEFAULT,
     FIT_LINE_STYLE_OPTIONS,
-    LINE_WIDTH_RANGE,
+    FIT_LINE_WIDTH_DEFAULT,
+    FIT_LINE_WIDTH_RANGE,
     normalize_color,
     normalize_fit_line_style,
     normalize_number,
@@ -23,7 +24,7 @@ class FitStyle:
 
     line_style: str = FIT_LINE_STYLE_DEFAULT
     line_color: str = "#242424"
-    line_width: float = 2.0
+    line_width: float = FIT_LINE_WIDTH_DEFAULT
 
     @classmethod
     def fromParams(cls, params):
@@ -32,7 +33,9 @@ class FitStyle:
         return cls(
             line_style=normalize_fit_line_style(values.get("line style")),
             line_color=normalize_color(values.get("line color"), "#242424"),
-            line_width=normalize_number(values.get("line width"), LINE_WIDTH_RANGE, 2.0),
+            line_width=normalize_number(
+                values.get("line width"), FIT_LINE_WIDTH_RANGE, FIT_LINE_WIDTH_DEFAULT
+            ),
         )
 
     def asParams(self):
@@ -99,7 +102,7 @@ class FitStyleController:
         if key == "line color":
             return normalize_color(value, "#242424")
         if key == "line width":
-            return normalize_number(value, LINE_WIDTH_RANGE, 2.0)
+            return normalize_number(value, FIT_LINE_WIDTH_RANGE, FIT_LINE_WIDTH_DEFAULT)
         return value
 
     @staticmethod

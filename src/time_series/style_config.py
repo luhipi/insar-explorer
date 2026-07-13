@@ -7,6 +7,8 @@ from ..models.time_series import TimeSeriesStyle
 from .fit_style_controller import FIT_STYLE_KEYS, FitStyle
 from .style_schema import (
     FIT_LINE_STYLE_OPTIONS,
+    FIT_LINE_WIDTH_DEFAULT,
+    FIT_LINE_WIDTH_RANGE,
     LINE_STYLE_OPTIONS,
     LINE_WIDTH_RANGE,
     MARKER_OPTIONS,
@@ -106,7 +108,7 @@ class TimeSeriesStyleConfig:
         if key == "line color":
             return normalize_color(value, "#242424")
         if key == "line width":
-            return normalize_number(value, LINE_WIDTH_RANGE, 2.0)
+            return normalize_number(value, FIT_LINE_WIDTH_RANGE, FIT_LINE_WIDTH_DEFAULT)
         return value
 
     def normalize_property(self, key, value):
