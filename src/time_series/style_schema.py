@@ -39,6 +39,11 @@ EDITABLE_STYLE_PROPERTIES = OrderedDict((
 PERSISTED_STYLE_KEYS = tuple(STYLE_PROPERTIES.values())
 EDITABLE_STYLE_KEYS = tuple(EDITABLE_STYLE_PROPERTIES.values())
 
+RESIDUAL_STYLE_KEYS = (
+    "marker", "marker color", "marker size",
+    "line style", "line color", "line width",
+)
+
 
 def normalize_color(value, fallback="#000000"):
     """Return a stable JSON-compatible color string without Qt dependencies."""

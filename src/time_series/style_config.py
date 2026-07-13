@@ -5,6 +5,7 @@ from copy import deepcopy
 from ...external.setting_manager_ui.json_settings import JsonSettings
 from ..models.time_series import TimeSeriesStyle
 from .fit_style_controller import FIT_STYLE_KEYS, FitStyle
+from .residual_style_controller import RESIDUAL_STYLE_KEYS, ResidualStyle
 from .style_schema import (
     FIT_LINE_STYLE_OPTIONS,
     FIT_LINE_WIDTH_DEFAULT,
@@ -100,6 +101,45 @@ class TimeSeriesStyleConfig:
                 raise KeyError(f"Missing model-fit style setting: {key}")
             entry["value"] = self.normalize_fit_property(key, values.get(key))
         settings.save(self.BLOCK_KEY, block)
+
+
+    def load_residual_style_values(self):
+        """Load and normalize persisted residual-series defaults."""
+        settings = JsonSettings(self.config_file)
+        block = settings.load(block_key=self.BLOCK_KEY)
+        residual = block.get("residual plot", {})
+        values = {}
+        for key in RESIDUAL_STYLE_KEYS:
+            entry = residual.get(key, {})
+            value = entry.get("value", entry.get("default")) if isinstance(entry, dict) else None
+            values[key] = self.normalize_residual_property(key, value)
+        return values
+
+    def load_default_residual_style(self):
+        return ResidualStyle.fromParams({"residual plot": self.load_residual_style_values()})
+
+    def save_default_residual_style(self, residual_style):
+        values = residual_style.asParams() if isinstance(residual_style, ResidualStyle) else dict(residual_style)
+        settings = JsonSettings(self.config_file)
+        block = settings.load(block_key=self.BLOCK_KEY)
+        residual = block.get("residual plot")
+        if not isinstance(residual, dict):
+            raise KeyError("Missing timeseries settings/residual plot configuration block")
+        for key in RESIDUAL_STYLE_KEYS:
+            entry = residual.get(key)
+            if not isinstance(entry, dict):
+                raise KeyError(f"Missing residual style setting: {key}")
+            entry["value"] = self.normalize_residual_property(key, values.get(key))
+        settings.save(self.BLOCK_KEY, block)
+
+    def normalize_residual_property(self, key, value):
+        if key == "marker": return normalize_marker(value, "o")
+        if key == "marker size": return normalize_number(value, MARKER_SIZE_RANGE, 5.0)
+        if key == "line style": return normalize_line_style(value, "")
+        if key == "line width": return normalize_number(value, LINE_WIDTH_RANGE, 1.0)
+        if key == "marker color": return normalize_color(value, "#d62728")
+        if key == "line color": return normalize_color(value, "#1f77b4")
+        return value
 
     def normalize_fit_property(self, key, value):
         """Normalize one fit-line property through the canonical shared schema."""
