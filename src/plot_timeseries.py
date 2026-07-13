@@ -1,5 +1,6 @@
 import os
 import sys
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
@@ -85,6 +86,8 @@ class PlotTs():
         self.ref_coords = None
         self._y_data_ranges = {}
         self._last_replica_y_data = []
+        self._defer_draw_depth = 0
+        self._draw_requested = False
 
 
     @staticmethod
@@ -776,7 +779,22 @@ class PlotTs():
         self._last_replica_y_data = []
 
     def _draw(self):
+        if self._defer_draw_depth:
+            self._draw_requested = True
+            return
         self.ui.plot_widget.update()
+
+    @contextmanager
+    def _deferDraw(self):
+        """Coalesce nested rendering updates into one final widget redraw."""
+        self._defer_draw_depth += 1
+        try:
+            yield
+        finally:
+            self._defer_draw_depth -= 1
+            if self._defer_draw_depth == 0 and self._draw_requested:
+                self._draw_requested = False
+                self.ui.plot_widget.update()
 
     def _removeItem(self, ax, item):
         if ax is not None and item is not None:
@@ -916,6 +934,50 @@ class PlotTs():
             )
 
         self._draw()
+
+    def refreshGlobalPlotSettings(self) -> None:
+        """Apply current figure-wide settings without replacing snapshot styles."""
+        if self.ax is not None:
+            if self.dates is not None:
+                self.decoratePlot(ax=self.ax, parms=self.parms["time series plot"])
+            else:
+                self.setFontSize(ax=self.ax, parms=self.parms["time series plot"])
+                self.setGrid(ax=self.ax, parms=self.parms["time series plot"])
+                self.setLabels(ax=self.ax, parms=self.parms["time series plot"])
+                self.setAxisStyle(ax=self.ax, parms=self.parms["time series plot"])
+        if self.ax_residuals is not None:
+            if self.dates is not None:
+                self.decoratePlot(ax=self.ax_residuals, parms=self.parms["residual plot"])
+            else:
+                self.setFontSize(ax=self.ax_residuals, parms=self.parms["residual plot"])
+                self.setGrid(ax=self.ax_residuals, parms=self.parms["residual plot"])
+                self.setLabels(ax=self.ax_residuals, parms=self.parms["residual plot"])
+                self.setAxisStyle(ax=self.ax_residuals, parms=self.parms["residual plot"])
+        self.decorateFigure(parms=self.parms["figure"])
+        self._draw()
+
+    def refreshAfterSettingsApply(
+        self,
+        snapshots: List[TimeSeriesSnapshot],
+        *,
+        refresh_global: bool,
+        y_axis_mode: str,
+    ) -> None:
+        """Apply Settings changes with one draw while preserving the Y-axis mode."""
+        self.plot_y_axis = y_axis_mode
+        with self._deferDraw():
+            if snapshots:
+                self.rerenderTimeSeriesSnapshots(snapshots)
+            if refresh_global:
+                self.refreshGlobalPlotSettings()
+            # Rendering helpers may reload parameters, but the selected axis mode
+            # remains controller-owned for the complete Settings transaction.
+            self.plot_y_axis = y_axis_mode
+            if self.ax is not None and self.dates is not None:
+                self.setYlims(ax=self.ax, parms=self.parms["time series plot"])
+            if self.ax_residuals is not None and self.dates is not None:
+                self.setYlims(ax=self.ax_residuals, parms=self.parms["residual plot"])
+            self._draw()
 
     def selectedTimeSeriesSnapshots(self) -> List[TimeSeriesSnapshot]:
         """Return the snapshots currently targeted for editing."""

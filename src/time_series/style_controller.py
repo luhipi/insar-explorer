@@ -55,6 +55,66 @@ class TimeSeriesStyleController:
             changed.append(snapshot)
         return changed
 
+    @staticmethod
+    def _globalSettings(params):
+        """Return figure-wide settings without snapshot-owned series style values."""
+        global_params = {}
+        for section, section_values in params.items():
+            if section == "export":
+                continue
+            if section != "time series plot":
+                global_params[section] = deepcopy(section_values)
+                continue
+            global_params[section] = {
+                key: deepcopy(value)
+                for key, value in section_values.items()
+                if key not in PERSISTED_STYLE_KEYS
+            }
+        return global_params
+
+    def globalSettingsChanged(self, previous_params, current_params):
+        """Return whether any figure-wide plot setting changed."""
+        return self._globalSettings(previous_params) != self._globalSettings(current_params)
+
+    def applyGlobalSettings(self, snapshots, runtime_params):
+        """Synchronize figure-wide settings while preserving every series style key."""
+        global_params = self._globalSettings(runtime_params)
+        changed = []
+        for snapshot in snapshots:
+            params = deepcopy(snapshot.style.params)
+            for section, section_values in global_params.items():
+                if section != "time series plot":
+                    params[section] = deepcopy(section_values)
+                    continue
+                plot = params.setdefault(section, {})
+                for key, value in section_values.items():
+                    plot[key] = deepcopy(value)
+            snapshot.style = TimeSeriesStyle.fromParams(
+                params,
+                label=snapshot.style.label,
+                visible=snapshot.style.visible,
+                z_order=snapshot.style.z_order,
+            )
+            changed.append(snapshot)
+        return changed
+
+    def applyStyleValues(self, snapshots, changed_style_values):
+        """Apply only changed series-style values to explicit selection targets."""
+        changed = []
+        for snapshot in snapshots:
+            params = deepcopy(snapshot.style.params)
+            plot = params.setdefault("time series plot", {})
+            for key, value in changed_style_values.items():
+                plot[key] = deepcopy(value)
+            snapshot.style = TimeSeriesStyle.fromParams(
+                params,
+                label=snapshot.style.label,
+                visible=snapshot.style.visible,
+                z_order=snapshot.style.z_order,
+            )
+            changed.append(snapshot)
+        return changed
+
     def applySettingsChanges(self, snapshots, runtime_params, changed_style_values):
         """Merge global settings and changed defaults into explicit selection targets."""
         changed = []
