@@ -4,6 +4,14 @@ from qgis.PyQt.QtCore import pyqtSignal
 from qgis.PyQt.QtGui import QColor, QIcon
 
 from ...ui_windows.color_picker import ColorPicker
+from ...time_series.style_schema import (
+    LINE_STYLE_OPTIONS,
+    LINE_WIDTH_RANGE,
+    MARKER_OPTIONS,
+    MARKER_SIZE_RANGE,
+    NUMERIC_DECIMALS,
+    NUMERIC_STEP,
+)
 from ...qt_compat import (
     POPUP_WINDOW_FLAG,
     SIZE_POLICY_FIXED,
@@ -93,12 +101,12 @@ class TimeSeriesStylePopup(QWidget):
         self.marker_group = QGroupBox("Marker", self)
         marker_layout = QFormLayout(self.marker_group)
         self.marker_type = QComboBox(self.marker_group)
-        self.marker_type.addItems([".", "o", "s", "^", "v", "+", "x", "d", "*"])
+        self.marker_type.addItems(list(MARKER_OPTIONS))
         self.marker_color = CompactColorButton("●", "Select marker color", self.marker_group)
         self.marker_size = QDoubleSpinBox(self.marker_group)
-        self.marker_size.setRange(0.0, 100.0)
-        self.marker_size.setDecimals(1)
-        self.marker_size.setSingleStep(0.5)
+        self.marker_size.setRange(*MARKER_SIZE_RANGE)
+        self.marker_size.setDecimals(NUMERIC_DECIMALS)
+        self.marker_size.setSingleStep(NUMERIC_STEP)
         marker_layout.addRow("Type", self.marker_type)
         marker_layout.addRow("Size", self.marker_size)
         marker_layout.addRow("Color", self.marker_color)
@@ -106,12 +114,12 @@ class TimeSeriesStylePopup(QWidget):
         self.line_group = QGroupBox("Line", self)
         line_layout = QFormLayout(self.line_group)
         self.line_type = QComboBox(self.line_group)
-        self.line_type.addItems(["", "-", "--", ":", "-."])
+        self.line_type.addItems(list(LINE_STYLE_OPTIONS))
         self.line_color = CompactColorButton("━", "Select line color", self.line_group)
         self.line_width = QDoubleSpinBox(self.line_group)
-        self.line_width.setRange(0.0, 20.0)
-        self.line_width.setDecimals(1)
-        self.line_width.setSingleStep(0.5)
+        self.line_width.setRange(*LINE_WIDTH_RANGE)
+        self.line_width.setDecimals(NUMERIC_DECIMALS)
+        self.line_width.setSingleStep(NUMERIC_STEP)
         line_layout.addRow("Type", self.line_type)
         line_layout.addRow("Width", self.line_width)
         line_layout.addRow("Color", self.line_color)
