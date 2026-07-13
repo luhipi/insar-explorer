@@ -34,6 +34,7 @@ class TimeSeriesToolbar(QToolBar):
     replicaEnabledChanged = pyqtSignal(bool)
     replicaIntervalChanged = pyqtSignal(float)
     replicaPairCountChanged = pyqtSignal(int)
+    plotStyleRequested = pyqtSignal()
 
     def __init__(self, parent=None):
         """Initialize the toolbar and its actions."""
@@ -198,6 +199,15 @@ class TimeSeriesToolbar(QToolBar):
         self.setReplicaInterval(27.8)
         self.addWidget(self.replica_interval_button)
 
+        self.addSeparator()
+        self.plot_style_action = self._createAction(
+            ":/icons/icons/plot_settings.svg",
+            "Plot style",
+            "Edit the style of the current time series",
+            "action_ts_plot_style",
+        )
+        self.addAction(self.plot_style_action)
+
         spacer = QWidget(self)
         spacer.setObjectName("timeSeriesToolbarSpacer")
         spacer.setSizePolicy(
@@ -241,9 +251,11 @@ class TimeSeriesToolbar(QToolBar):
             self.settings_action,
             self.plot_export_action,
             self.data_export_action,
+            self.plot_style_action,
         ):
             self._setActionControlRole(action, "command")
 
+        self.plot_style_action.triggered.connect(self.plotStyleRequested.emit)
         self.settings_action.triggered.connect(self.settingsRequested.emit)
         self.plot_export_action.triggered.connect(self.plotExportRequested.emit)
         self.data_export_action.triggered.connect(self.dataExportRequested.emit)
