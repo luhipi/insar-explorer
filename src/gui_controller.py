@@ -23,6 +23,7 @@ from .qt_compat import (
 )
 from .time_series.fit_state import TimeSeriesFitState
 from .time_series.style_controller import TimeSeriesStyleController
+from .time_series.style_persistence import persist_default_time_series_style
 
 
 class GuiController(QObject):
@@ -564,14 +565,10 @@ class GuiController(QObject):
         if not snapshots:
             return
         style = snapshots[0].style
-        plot_params = style.params.get("time series plot", {})
-        keys = ("marker", "marker color", "marker size", "line style", "line color", "line width")
-        settings = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
-        settings.load(block_key="timeseries settings")
-        for key in keys:
-            if key in plot_params:
-                settings.set(["time series plot", key], plot_params[key])
-        settings.save()
+        persist_default_time_series_style(
+            self.choose_point_click_handler.plot_ts.config_file,
+            style,
+        )
         self.choose_point_click_handler.plot_ts.default_style.replaceFromSeries(style)
         self.msg_signal.emit("Current plot style set as default for new time series.", "done", 3000)
 
