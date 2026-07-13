@@ -65,8 +65,10 @@ class TimeSeriesStyle:
 
     @classmethod
     def fromParams(cls, params: Optional[dict], **kwargs: Any) -> "TimeSeriesStyle":
-        """Create style metadata with a defensive copy of mutable settings."""
-        return cls(params=deepcopy(params) if params is not None else {}, **kwargs)
+        """Create per-series style metadata without global overlay settings."""
+        copied_params = deepcopy(params) if params is not None else {}
+        copied_params.get("time series plot", {}).pop("replica pair count", None)
+        return cls(params=copied_params, **kwargs)
 
 
 @dataclass
