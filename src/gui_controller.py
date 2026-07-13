@@ -23,6 +23,7 @@ from .qt_compat import (
 )
 from .time_series.fit_state import TimeSeriesFitState
 from .time_series.fit_style_controller import FitStyleController
+from .time_series.residual_style_controller import ResidualStyleController
 from .time_series.style_controller import TimeSeriesStyleController
 from .time_series.style_schema import EDITABLE_STYLE_KEYS
 
@@ -53,6 +54,7 @@ class GuiController(QObject):
         self.time_series_style_popup = TimeSeriesStylePopup(self.ui)
         self.time_series_style_controller = TimeSeriesStyleController()
         self.fit_style_controller = FitStyleController()
+        self.residual_style_controller = ResidualStyleController()
         self.last_save_path = self._initialExportDirectory()
         self.last_save_ts_name = "ts_plot.png"
         self.last_export_ts_name = "ts_data.csv"
@@ -314,6 +316,14 @@ class GuiController(QObject):
         popup.randomizeColorRequested.connect(self.randomizeSelectedTimeSeriesColor)
         popup.setCurrentStyleAsDefaultRequested.connect(self.setCurrentSeriesStyleAsDefault)
         popup.setCurrentFitStyleAsDefaultRequested.connect(self.setCurrentFitStyleAsDefault)
+        popup.residualMarkerTypeChanged.connect(lambda value: self._applySelectedResidualStyle("marker_type", value))
+        popup.residualMarkerColorChanged.connect(lambda value: self._applySelectedResidualStyle("marker_color", value))
+        popup.residualMarkerSizeChanged.connect(lambda value: self._applySelectedResidualStyle("marker_size", value))
+        popup.residualLineTypeChanged.connect(lambda value: self._applySelectedResidualStyle("line_type", value))
+        popup.residualLineColorChanged.connect(lambda value: self._applySelectedResidualStyle("line_color", value))
+        popup.residualLineWidthChanged.connect(lambda value: self._applySelectedResidualStyle("line_width", value))
+        popup.randomizeResidualColorRequested.connect(self.randomizeSelectedResidualColor)
+        popup.setCurrentResidualStyleAsDefaultRequested.connect(self.setCurrentResidualStyleAsDefault)
         self._restoreTimeSeriesFitState()
         # Plot setting
         self._restoreTimeSeriesYAxisMode()
@@ -617,6 +627,39 @@ class GuiController(QObject):
         changed = self.fit_style_controller.applyProperty(snapshots, property_name, value)
         self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
 
+    def _applySelectedResidualStyle(self, property_name, value):
+        """Apply one residual-series property and redraw exactly once."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        if not snapshots:
+            return
+        changed = self.residual_style_controller.applyProperty(snapshots, property_name, value)
+        self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+        self._refreshTimeSeriesStylePopup()
+
+    def randomizeSelectedResidualColor(self):
+        """Randomize selected residual colors only."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        if not snapshots:
+            return
+        changed = self.residual_style_controller.randomizeColor(snapshots)
+        self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+        self._refreshTimeSeriesStylePopup()
+
+    def setCurrentResidualStyleAsDefault(self):
+        """Persist selected residual appearance for future series only."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        if not snapshots:
+            return
+        residual_style = self.residual_style_controller.residualStyle(snapshots[0])
+        plotter = self.choose_point_click_handler.plot_ts
+        plotter.style_config.save_default_residual_style(residual_style)
+        params = plotter.default_style.params
+        params.setdefault("residual plot", {}).update(residual_style.asParams())
+        plotter.default_style = type(plotter.default_style).fromParams(params)
+        self._settings_residual_style_before = plotter.style_config.load_residual_style_values()
+        self._refreshTimeSeriesStylePopup()
+        self.msg_signal.emit("Current residual style set as default for new time series.", "done", 3000)
+
     def randomizeSelectedTimeSeriesColor(self):
         """Randomize only selected series colors while preserving future defaults."""
         snapshots = self._selectedTimeSeriesSnapshots()
@@ -670,6 +713,7 @@ class GuiController(QObject):
             styles = self.time_series_style_controller.selectedSeriesStyles(snapshots)
             popup.setStyle(styles[0])
             popup.setFitStyle(self.fit_style_controller.fitStyle(snapshots[0]))
+            popup.setResidualStyle(self.residual_style_controller.residualStyle(snapshots[0]))
             popup.setMixedProperties(
                 self.time_series_style_controller.mixedProperties(snapshots)
             )

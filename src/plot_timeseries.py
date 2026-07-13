@@ -584,7 +584,6 @@ class PlotTs():
             items.residual_y_data = [residuals_values]
             self.updateYlim(ax=self.ax_residuals, y_data=items.residual_y_data)
             self.decoratePlot(ax=self.ax_residuals, parms=parms)
-            self._draw()
 
 
     def decorateFigure(self, parms={}):
