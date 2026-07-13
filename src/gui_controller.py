@@ -22,6 +22,7 @@ from .qt_compat import (
     screen_aware_popup_position,
 )
 from .time_series.fit_state import TimeSeriesFitState
+from .time_series.fit_style_controller import FitStyleController
 from .time_series.style_controller import TimeSeriesStyleController
 from .time_series.style_schema import EDITABLE_STYLE_KEYS
 
@@ -51,6 +52,7 @@ class GuiController(QObject):
         self.time_series_replica_pair_count = self._loadReplicaPairCount()
         self.time_series_style_popup = TimeSeriesStylePopup(self.ui)
         self.time_series_style_controller = TimeSeriesStyleController()
+        self.fit_style_controller = FitStyleController()
         self.last_save_path = self._initialExportDirectory()
         self.last_save_ts_name = "ts_plot.png"
         self.last_export_ts_name = "ts_data.csv"
@@ -306,8 +308,12 @@ class GuiController(QObject):
         popup.lineTypeChanged.connect(lambda value: self._applySelectedSeriesStyle("line_type", value))
         popup.lineColorChanged.connect(lambda value: self._applySelectedSeriesStyle("line_color", value))
         popup.lineWidthChanged.connect(lambda value: self._applySelectedSeriesStyle("line_width", value))
+        popup.fitLineTypeChanged.connect(lambda value: self._applySelectedFitStyle("line_type", value))
+        popup.fitLineColorChanged.connect(lambda value: self._applySelectedFitStyle("line_color", value))
+        popup.fitLineWidthChanged.connect(lambda value: self._applySelectedFitStyle("line_width", value))
         popup.randomizeColorRequested.connect(self.randomizeSelectedTimeSeriesColor)
         popup.setCurrentStyleAsDefaultRequested.connect(self.setCurrentSeriesStyleAsDefault)
+        popup.setCurrentFitStyleAsDefaultRequested.connect(self.setCurrentFitStyleAsDefault)
         self._restoreTimeSeriesFitState()
         # Plot setting
         self._restoreTimeSeriesYAxisMode()
@@ -590,6 +596,14 @@ class GuiController(QObject):
         changed = self.time_series_style_controller.applyProperty(snapshots, property_name, value)
         self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
 
+    def _applySelectedFitStyle(self, property_name, value):
+        """Apply one fit-line property to selected series and redraw exactly once."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        if not snapshots:
+            return
+        changed = self.fit_style_controller.applyProperty(snapshots, property_name, value)
+        self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+
     def randomizeSelectedTimeSeriesColor(self):
         """Randomize only selected series colors while preserving future defaults."""
         snapshots = self._selectedTimeSeriesSnapshots()
@@ -611,6 +625,20 @@ class GuiController(QObject):
         self._settings_style_before = plotter.style_config.load_style_values()
         self.msg_signal.emit("Current plot style set as default for new time series.", "done", 3000)
 
+    def setCurrentFitStyleAsDefault(self):
+        """Persist current fit-line appearance for future series only."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        if not snapshots:
+            return
+        fit_style = self.fit_style_controller.fitStyle(snapshots[0])
+        plotter = self.choose_point_click_handler.plot_ts
+        plotter.style_config.save_default_fit_style(fit_style)
+        default_params = plotter.default_style.params
+        default_params.setdefault("model fit", {}).update(fit_style.asParams())
+        plotter.default_style = type(plotter.default_style).fromParams(default_params)
+        self.time_series_style_popup.setFitStyle(fit_style)
+        self.msg_signal.emit("Current fit style set as default for new time series.", "done", 3000)
+
     def _refreshTimeSeriesStylePopup(self):
         """Refresh popup controls from actual selected snapshot styles without edits."""
         snapshots = self.selectedTimeSeriesSnapshots()
@@ -619,6 +647,7 @@ class GuiController(QObject):
         if snapshots:
             styles = self.time_series_style_controller.selectedSeriesStyles(snapshots)
             popup.setStyle(styles[0])
+            popup.setFitStyle(self.fit_style_controller.fitStyle(snapshots[0]))
             popup.setMixedProperties(
                 self.time_series_style_controller.mixedProperties(snapshots)
             )
