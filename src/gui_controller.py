@@ -358,6 +358,7 @@ class GuiController(QObject):
         json_file_path = os.path.join(os.path.dirname(script_path), json_file)
         plotter = self.choose_point_click_handler.plot_ts
         self._settings_style_before = plotter.style_config.load_style_values()
+        self._settings_fit_style_before = plotter.style_config.load_fit_style_values()
         dialog = SettingsTableDialog(json_file_path, block_key=block_key)
         self._configureTimeSeriesSettingsScope(dialog)
         dialog.accepted.connect(self.onSettingDialogChanged)
@@ -388,8 +389,10 @@ class GuiController(QObject):
         self._reloadReplicaPairCountFromConfig()
         plotter = self.choose_point_click_handler.plot_ts
         previous = getattr(self, "_settings_style_before", plotter.style_config.load_style_values())
+        previous_fit = getattr(self, "_settings_fit_style_before", plotter.style_config.load_fit_style_values())
         plotter.updateSettings()
         current = plotter.style_config.load_style_values()
+        current_fit = plotter.style_config.load_fit_style_values()
         plotter.default_style.replaceFromSeries(
             plotter.style_config.load_default_style(plotter.parms)
         )
@@ -398,14 +401,27 @@ class GuiController(QObject):
             for key in EDITABLE_STYLE_KEYS
             if previous.get(key) != current.get(key)
         }
+        changed_fit_values = {
+            key: current_fit[key]
+            for key in current_fit
+            if previous_fit.get(key) != current_fit.get(key)
+        }
         snapshots = self.selectedTimeSeriesSnapshots()
         if snapshots:
             changed = self.time_series_style_controller.applySettingsChanges(
                 snapshots, plotter.parms, changed_values
             )
+            if changed_fit_values:
+                changed = self.fit_style_controller.applyValues(
+                    changed, changed_fit_values
+                )
             plotter.rerenderTimeSeriesSnapshots(changed)
         self._settings_style_before = current
-        self._refreshTimeSeriesStylePopup()
+        self._settings_fit_style_before = current_fit
+        if changed_values:
+            self._refreshTimeSeriesStylePopup()
+        else:
+            self._refreshFitStyleTab()
 
     def setSymbologyUpperRange(self):
         self.ui.sb_symbol_lower_range.blockSignals(True)
@@ -636,8 +652,17 @@ class GuiController(QObject):
         default_params = plotter.default_style.params
         default_params.setdefault("model fit", {}).update(fit_style.asParams())
         plotter.default_style = type(plotter.default_style).fromParams(default_params)
+        self._settings_fit_style_before = plotter.style_config.load_fit_style_values()
         self.time_series_style_popup.setFitStyle(fit_style)
         self.msg_signal.emit("Current fit style set as default for new time series.", "done", 3000)
+
+    def _refreshFitStyleTab(self):
+        """Refresh only Fit controls from the current selected snapshot."""
+        snapshots = self.selectedTimeSeriesSnapshots()
+        if snapshots:
+            self.time_series_style_popup.setFitStyle(
+                self.fit_style_controller.fitStyle(snapshots[0])
+            )
 
     def _refreshTimeSeriesStylePopup(self):
         """Refresh popup controls from actual selected snapshot styles without edits."""

@@ -3,6 +3,7 @@
 from copy import deepcopy
 from typing import Iterable
 
+from .fit_style_controller import FIT_STYLE_KEYS
 from .style_schema import PERSISTED_STYLE_KEYS
 from ..models.time_series import (
     TimeSeriesSnapshot,
@@ -61,6 +62,13 @@ class TimeSeriesStyleController:
         global_params = {}
         for section, section_values in params.items():
             if section == "export":
+                continue
+            if section == "model fit":
+                global_params[section] = {
+                    key: deepcopy(value)
+                    for key, value in section_values.items()
+                    if key not in FIT_STYLE_KEYS
+                }
                 continue
             if section != "time series plot":
                 global_params[section] = deepcopy(section_values)
@@ -121,6 +129,12 @@ class TimeSeriesStyleController:
         for snapshot in snapshots:
             params = deepcopy(snapshot.style.params)
             for section, section_values in runtime_params.items():
+                if section == "model fit":
+                    fit = params.setdefault(section, {})
+                    for key, value in section_values.items():
+                        if key not in FIT_STYLE_KEYS:
+                            fit[key] = deepcopy(value)
+                    continue
                 if section != "time series plot":
                     params[section] = deepcopy(section_values)
                     continue
