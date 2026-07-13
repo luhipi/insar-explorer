@@ -1,5 +1,4 @@
 import os
-from copy import deepcopy
 
 from qgis.gui import QgsMapToolEmitPoint
 from qgis.PyQt.QtWidgets import QFileDialog, QMenu, QComboBox, QLabel
@@ -24,7 +23,7 @@ from .qt_compat import (
 )
 from .time_series.fit_state import TimeSeriesFitState
 from .time_series.style_controller import TimeSeriesStyleController
-from .time_series.style_schema import PERSISTED_STYLE_KEYS
+from .time_series.style_schema import EDITABLE_STYLE_KEYS
 
 
 class GuiController(QObject):
@@ -353,7 +352,6 @@ class GuiController(QObject):
         json_file_path = os.path.join(os.path.dirname(script_path), json_file)
         plotter = self.choose_point_click_handler.plot_ts
         self._settings_style_before = plotter.style_config.load_style_values()
-        self._settings_plot_before = deepcopy(plotter.parms)
         dialog = SettingsTableDialog(json_file_path, block_key=block_key)
         self._configureTimeSeriesSettingsScope(dialog)
         dialog.accepted.connect(self.onSettingDialogChanged)
@@ -380,55 +378,27 @@ class GuiController(QObject):
                 break
 
     def onSettingDialogChanged(self):
-        """Synchronize Settings changes in one style/global refresh transaction."""
+        """Synchronize Settings defaults, selected styles, popup, and plot once."""
         self._reloadReplicaPairCountFromConfig()
         plotter = self.choose_point_click_handler.plot_ts
-        previous_style = getattr(
-            self, "_settings_style_before", plotter.style_config.load_style_values()
-        )
-        previous_plot = getattr(self, "_settings_plot_before", deepcopy(plotter.parms))
-        y_axis_mode = self.time_series_y_axis_mode
-
+        previous = getattr(self, "_settings_style_before", plotter.style_config.load_style_values())
         plotter.updateSettings()
-        current_style = plotter.style_config.load_style_values()
+        current = plotter.style_config.load_style_values()
         plotter.default_style.replaceFromSeries(
             plotter.style_config.load_default_style(plotter.parms)
         )
         changed_values = {
-            key: current_style[key]
-            for key in PERSISTED_STYLE_KEYS
-            if previous_style.get(key) != current_style.get(key)
+            key: current[key]
+            for key in EDITABLE_STYLE_KEYS
+            if previous.get(key) != current.get(key)
         }
-        global_changed = self.time_series_style_controller.globalSettingsChanged(
-            previous_plot, plotter.parms
-        )
-
-        all_snapshots = list(plotter.series_history)
-        if global_changed and all_snapshots:
-            self.time_series_style_controller.applyGlobalSettings(
-                all_snapshots, plotter.parms
+        snapshots = self.selectedTimeSeriesSnapshots()
+        if snapshots:
+            changed = self.time_series_style_controller.applySettingsChanges(
+                snapshots, plotter.parms, changed_values
             )
-
-        selected = self.selectedTimeSeriesSnapshots()
-        changed_snapshots = []
-        if selected and changed_values:
-            changed_snapshots = self.time_series_style_controller.applyStyleValues(
-                selected, changed_values
-            )
-
-        # The toolbar/controller mode is authoritative; config/style refreshes must
-        # never reset adaptive or symmetric limits to the from-data mode.
-        plotter.plot_y_axis = y_axis_mode
-        rerender_targets = all_snapshots if global_changed else changed_snapshots
-        if global_changed or changed_snapshots:
-            plotter.refreshAfterSettingsApply(
-                rerender_targets,
-                refresh_global=global_changed,
-                y_axis_mode=y_axis_mode,
-            )
-
-        self._settings_style_before = current_style
-        self._settings_plot_before = deepcopy(plotter.parms)
+            plotter.rerenderTimeSeriesSnapshots(changed)
+        self._settings_style_before = current
         self._refreshTimeSeriesStylePopup()
 
     def setSymbologyUpperRange(self):
@@ -843,11 +813,24 @@ class GuiController(QObject):
         parms.save(block_key, settings_block)
 
     def setTimeSeriesReplicaPairCount(self, pair_count):
-        """Persist a symmetric pair count before optionally redrawing Replica."""
+        """Persist, apply, and redraw a toolbar Replica pair-count change once."""
         pair_count = self._validateReplicaPairCount(pair_count)
         self._persistReplicaPairCount(pair_count)
+
+        plot = self.choose_point_click_handler.plot_ts
         self.time_series_replica_pair_count = pair_count
-        self._applyTimeSeriesReplicaState(refresh=self.time_series_replica_enabled)
+        plot.parms.setdefault("time series plot", {})[
+            "replica pair count"
+        ] = pair_count
+        self._syncTimeSeriesReplicaControls()
+
+        if self.time_series_replica_enabled and plot.series_history:
+            y_axis_mode = plot.plot_y_axis
+            try:
+                plot.rerenderTimeSeriesSnapshots(list(plot.series_history))
+            finally:
+                plot.plot_y_axis = y_axis_mode
+
         self.msg_signal.emit(
             f"Replica pairs set to {self.time_series_replica_pair_count}.", "i", 0
         )
