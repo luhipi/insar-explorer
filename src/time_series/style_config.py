@@ -4,6 +4,7 @@ from copy import deepcopy
 
 from ...external.setting_manager_ui.json_settings import JsonSettings
 from ..models.time_series import TimeSeriesStyle
+from .fit_style_controller import FIT_STYLE_KEYS, FitStyle
 from .style_schema import (
     LINE_STYLE_OPTIONS,
     LINE_WIDTH_RANGE,
@@ -63,6 +64,48 @@ class TimeSeriesStyleConfig:
             entry["value"] = self.normalize_property(key, plot_values[key])
 
         settings.save(self.BLOCK_KEY, block)
+
+
+    def load_fit_style_values(self):
+        """Load and normalize persisted fit-line defaults."""
+        settings = JsonSettings(self.config_file)
+        block = settings.load(block_key=self.BLOCK_KEY)
+        fit = block.get("model fit", {})
+        values = {}
+        for key in FIT_STYLE_KEYS:
+            entry = fit.get(key, {})
+            value = entry.get("value", entry.get("default")) if isinstance(entry, dict) else None
+            values[key] = self.normalize_fit_property(key, value)
+        return values
+
+    def load_default_fit_style(self):
+        """Return normalized persisted fit-line defaults."""
+        return FitStyle.fromParams({"model fit": self.load_fit_style_values()})
+
+    def save_default_fit_style(self, fit_style):
+        """Persist fit-line defaults while preserving settings metadata."""
+        values = fit_style.asParams() if isinstance(fit_style, FitStyle) else dict(fit_style)
+        settings = JsonSettings(self.config_file)
+        block = settings.load(block_key=self.BLOCK_KEY)
+        fit = block.get("model fit")
+        if not isinstance(fit, dict):
+            raise KeyError("Missing timeseries settings/model fit configuration block")
+        for key in FIT_STYLE_KEYS:
+            entry = fit.get(key)
+            if not isinstance(entry, dict):
+                raise KeyError(f"Missing model-fit style setting: {key}")
+            entry["value"] = self.normalize_fit_property(key, values.get(key))
+        settings.save(self.BLOCK_KEY, block)
+
+    def normalize_fit_property(self, key, value):
+        """Normalize one fit-line property through the canonical shared schema."""
+        if key == "line style":
+            return normalize_line_style(value, "--")
+        if key == "line color":
+            return normalize_color(value, "#242424")
+        if key == "line width":
+            return normalize_number(value, LINE_WIDTH_RANGE, 2.0)
+        return value
 
     def normalize_property(self, key, value):
         """Normalize one property according to the canonical plugin schema."""
