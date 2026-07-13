@@ -1,8 +1,8 @@
 import os
 
 from qgis.gui import QgsMapToolEmitPoint
-from qgis.PyQt.QtWidgets import QFileDialog, QMenu, QComboBox
-from qgis.PyQt.QtCore import QObject, QSettings, QStandardPaths, QTimer, QVariant, pyqtSignal
+from qgis.PyQt.QtWidgets import QFileDialog, QMenu, QComboBox, QLabel
+from qgis.PyQt.QtCore import QObject, QPoint, QRect, QSettings, QStandardPaths, QTimer, QVariant, pyqtSignal
 from qgis.PyQt.QtGui import QIcon, QTransform
 
 from . import map_click_handler as cph
@@ -14,7 +14,16 @@ from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
 from ..external.setting_manager_ui.json_settings import JsonSettings
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 from .ui_windows.color_picker import ColorPicker
-from .qt_compat import RASTER_LAYER, VECTOR_LAYER
+from .ui.popups.time_series_style_popup import TimeSeriesStylePopup
+from .qt_compat import (
+    RASTER_LAYER,
+    VECTOR_LAYER,
+    available_screen_geometry,
+    screen_aware_popup_position,
+)
+from .time_series.fit_state import TimeSeriesFitState
+from .time_series.style_controller import TimeSeriesStyleController
+from .time_series.style_schema import EDITABLE_STYLE_KEYS
 
 
 class GuiController(QObject):
@@ -29,10 +38,19 @@ class GuiController(QObject):
         self.drawing_tool = None  # for polygon drawing
         self.drawing_tool_reference = None  # for reference polygon drawing
         self.selection_type = "point"  # "point" or "polygon" or "reference polygon"
+        self.time_series_fit_state = TimeSeriesFitState()
         self.initializeSelection()
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
         self.settings = QSettings()
+        self.time_series_y_axis_mode = self._loadTimeSeriesYAxisMode()
+        self.time_series_replica_enabled = self.settings.value(
+            "insar_explorer/replica_enabled", False, type=bool
+        )
+        self.time_series_replica_interval_mm = self._loadReplicaInterval()
+        self.time_series_replica_pair_count = self._loadReplicaPairCount()
+        self.time_series_style_popup = TimeSeriesStylePopup(self.ui)
+        self.time_series_style_controller = TimeSeriesStyleController()
         self.last_save_path = self._initialExportDirectory()
         self.last_save_ts_name = "ts_plot.png"
         self.last_export_ts_name = "ts_data.csv"
@@ -57,40 +75,8 @@ class GuiController(QObject):
         self.setVectorFields()
 
     def initializeUiParams(self):
-        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
-        parms.load(block_key="timeseries settings")
-
-        # plot marker size
-        marker_size = parms.get(["time series plot", "marker size"]) or 5.0
-        self.ui.sb_marker_size.setValue(marker_size)
-
-        # plot marker color
-        marker_color = parms.get(["time series plot", "marker color"]) or "#000000"
-        self.ui.cb_marker_color.setStyleSheet(f"QPushButton:enabled {{ color: {marker_color}; }} ")
-
-        # marker style
-        marker_style_options = parms.get(["time series plot", "marker"], sub_key="options") or ["", "o"]
-        marker_style = parms.get(["time series plot", "marker"])
-        self.ui.cmb_marker_style.clear()
-        if isinstance(marker_style_options, list):
-            self.ui.cmb_marker_style.addItems(marker_style_options)
-        self.ui.cmb_marker_style.setCurrentText(marker_style)
-
-        # line style
-        line_style_options = parms.get(["time series plot", "line style"], sub_key="options") or ["", "-"]
-        line_style = parms.get(["time series plot", "line style"])
-        self.ui.cmb_line_style.clear()
-        if isinstance(line_style_options, list):
-            self.ui.cmb_line_style.addItems(line_style_options)
-        self.ui.cmb_line_style.setCurrentText(line_style)
-
-        # line color
-        line_color = parms.get(["time series plot", "line color"]) or "#000000"
-        self.ui.cb_line_color.setStyleSheet(f"QPushButton:enabled {{ color: {line_color}; }} ")
-
-        # line width
-        line_width = parms.get(["time series plot", "line width"]) or 1.0
-        self.ui.sb_line_width.setValue(line_width)
+        """Initialize code-created controls; migrated style controls live in the popup."""
+        return
 
     def initializeSelection(self):
         if self.selection_type == "point":
@@ -106,6 +92,9 @@ class GuiController(QObject):
             layer = self.iface.activeLayer()
         if layer:
             self.choose_point_click_handler.reset()
+            self._restoreTimeSeriesFitState()
+            self._restoreTimeSeriesYAxisMode()
+            self._restoreTimeSeriesReplicaState()
             self.insar_map.reset()
             self.setVectorFields()
 
@@ -295,29 +284,42 @@ class GuiController(QObject):
         self.ui.pb_set_reference_polygon.clicked.connect(self.activateReferencePolygonSelection)
         self.ui.cb_symbol_value_offset_sync_with_ref.clicked.connect(self.syncOffsetWithReferenceClicked)
         # TS fit handler
-        self.ui.gb_ts_fit.buttonClicked.connect(self.timeseriesPlotFit)
-        self.ui.pb_ts_fit_seasonal.clicked.connect(self.seasonalFitClicked)
-        self.ui.pb_plot_residuals.toggled.connect(self.residualPlotClicked)
+        self.ui.time_series_toolbar.fitEnabledChanged.connect(self.setTimeSeriesFitEnabled)
+        self.ui.time_series_toolbar.fitModelChanged.connect(self.setTimeSeriesFitModel)
+        self.ui.time_series_toolbar.seasonalEnabledChanged.connect(self.setTimeSeriesSeasonalEnabled)
+        self.ui.time_series_toolbar.residualEnabledChanged.connect(self.setTimeSeriesResidualEnabled)
+        self.ui.time_series_toolbar.yAxisModeChanged.connect(self.setTimeSeriesYAxisMode)
+        self.ui.time_series_toolbar.replicaEnabledChanged.connect(
+            self.setTimeSeriesReplicaEnabled
+        )
+        self.ui.time_series_toolbar.replicaIntervalChanged.connect(
+            self.setTimeSeriesReplicaInterval
+        )
+        self.ui.time_series_toolbar.replicaPairCountChanged.connect(
+            self.setTimeSeriesReplicaPairCount
+        )
+        self.ui.time_series_toolbar.plotStyleRequested.connect(self.showTimeSeriesStylePopup)
+        popup = self.time_series_style_popup
+        popup.markerTypeChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_type", value))
+        popup.markerColorChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_color", value))
+        popup.markerSizeChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_size", value))
+        popup.lineTypeChanged.connect(lambda value: self._applySelectedSeriesStyle("line_type", value))
+        popup.lineColorChanged.connect(lambda value: self._applySelectedSeriesStyle("line_color", value))
+        popup.lineWidthChanged.connect(lambda value: self._applySelectedSeriesStyle("line_width", value))
+        popup.randomizeColorRequested.connect(self.randomizeSelectedTimeSeriesColor)
+        popup.setCurrentStyleAsDefaultRequested.connect(self.setCurrentSeriesStyleAsDefault)
+        self._restoreTimeSeriesFitState()
         # Plot setting
-        self.ui.gb_y_axis.buttonClicked.connect(self.plotYAxis)
+        self._restoreTimeSeriesYAxisMode()
+        self._restoreTimeSeriesReplicaState()
         self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
         self.ui.cb_remove_last_plot.clicked.connect(self.removeLastPlotClicked)
-        self.ui.cb_marker_color_auto.toggled.connect(self.markerColorAutoClicked)
-        self.ui.sb_marker_size.valueChanged.connect(self.markerSizeValueChanged)
-        self.ui.cb_marker_color.clicked.connect(self.markerColorClicked)
-        self.ui.cmb_marker_style.currentTextChanged.connect(self.markerStyleChanged)
-        self.ui.cmb_line_style.currentTextChanged.connect(self.lineStyleChanged)
-        self.ui.cb_line_color.clicked.connect(self.lineColorClicked)
-        self.ui.sb_line_width.valueChanged.connect(self.lineWidthChanged)
         # TS save
-        self.ui.pb_ts_save.clicked.connect(self.saveTsPlot)
-        self.ui.pb_ts_export.clicked.connect(self.exportTs)
-        # Replica
-        self.ui.pb_ts_replica.clicked.connect(self.timeseriesReplica)
-        self.ui.sb_ts_replica.valueChanged.connect(self.timeseriesReplica)
+        self.ui.time_series_toolbar.plotExportRequested.connect(self.saveTsPlot)
+        self.ui.time_series_toolbar.dataExportRequested.connect(self.exportTs)
 
         # Setting popup
-        self.ui.pb_ts_settings.clicked.connect(self.settingsWidgetPopup)
+        self.ui.time_series_toolbar.settingsRequested.connect(self.settingsWidgetPopup)
 
     def connectMapSignals(self):
         self.ui.cb_select_field.currentTextChanged.connect(self.selectVectorFieldChanged)
@@ -348,14 +350,56 @@ class GuiController(QObject):
         block_key = "timeseries settings"
         script_path = os.path.abspath(__file__)
         json_file_path = os.path.join(os.path.dirname(script_path), json_file)
+        plotter = self.choose_point_click_handler.plot_ts
+        self._settings_style_before = plotter.style_config.load_style_values()
         dialog = SettingsTableDialog(json_file_path, block_key=block_key)
+        self._configureTimeSeriesSettingsScope(dialog)
         dialog.accepted.connect(self.onSettingDialogChanged)
         dialog.applyClicked.connect(self.onSettingDialogChanged)
         dialog.exec()
         self.initializeUiParams()
 
+    def _configureTimeSeriesSettingsScope(self, dialog):
+        """Explain Settings style scope without modifying the vendored dialog package."""
+        guidance = (
+            "These values are defaults for new time series and are also applied to "
+            "the currently selected time series when Settings are applied."
+        )
+        label = QLabel(guidance, dialog)
+        label.setWordWrap(True)
+        label.setObjectName("label_time_series_style_scope")
+        dialog.layout().insertWidget(0, label)
+        tabs = dialog.tab_widget
+        for index in range(tabs.count()):
+            if tabs.tabText(index) == "time series plot":
+                tabs.setTabText(index, "Time series defaults")
+                tabs.setTabToolTip(index, guidance)
+                tabs.widget(index).setToolTip(guidance)
+                break
+
     def onSettingDialogChanged(self):
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+        """Synchronize Settings defaults, selected styles, popup, and plot once."""
+        self._reloadReplicaPairCountFromConfig()
+        plotter = self.choose_point_click_handler.plot_ts
+        previous = getattr(self, "_settings_style_before", plotter.style_config.load_style_values())
+        plotter.updateSettings()
+        current = plotter.style_config.load_style_values()
+        plotter.default_style.replaceFromSeries(
+            plotter.style_config.load_default_style(plotter.parms)
+        )
+        changed_values = {
+            key: current[key]
+            for key in EDITABLE_STYLE_KEYS
+            if previous.get(key) != current.get(key)
+        }
+        snapshots = self.selectedTimeSeriesSnapshots()
+        if snapshots:
+            changed = self.time_series_style_controller.applySettingsChanges(
+                snapshots, plotter.parms, changed_values
+            )
+            plotter.rerenderTimeSeriesSnapshots(changed)
+        self._settings_style_before = current
+        self._refreshTimeSeriesStylePopup()
 
     def setSymbologyUpperRange(self):
         self.ui.sb_symbol_lower_range.blockSignals(True)
@@ -458,54 +502,148 @@ class GuiController(QObject):
                 flipped_pixmap = pixmap.transformed(transform)
                 combo_box.setItemIcon(index, QIcon(flipped_pixmap))
 
-    def seasonalFitClicked(self, status):
-        if status and self.ui.pb_ts_nofit.isChecked():
-            self.ui.pb_ts_fit_poly1.setChecked(True)
-        self.timeseriesPlotFit()
-        self.msg_signal.emit("Seasonal fit enabled: a seasonal component will be added to the selected model.",
-                             "i", 0)
+    def _restoreTimeSeriesFitState(self):
+        """Restore session fit state after UI, plotter, or layer lifecycle changes."""
+        state = self.time_series_fit_state
+        state.setSelectedModel(state.selected_fit_model)
+        self._applyTimeSeriesFitState(refresh=False)
 
-    def timeseriesPlotFit(self):
-        if self.ui.pb_ts_nofit.isChecked():
-            self.ui.pb_ts_fit_seasonal.setChecked(False)
-            self.ui.pb_plot_residuals.setChecked(False)
+    def resetTimeSeriesFitState(self):
+        """Reset fit activity while retaining a valid selected model for this session."""
+        self.time_series_fit_state.setFitEnabled(False)
+        self.time_series_fit_state.residual_enabled = False
+        self._applyTimeSeriesFitState(refresh=False)
 
-        selected_buttons = [button for button in self.ui.gb_ts_fit.buttons() if
-                            button.isChecked()]
-        check_box_lookup = {self.ui.pb_ts_nofit: [],
-                            self.ui.pb_ts_fit_poly1: "poly-1",
-                            self.ui.pb_ts_fit_poly2: "poly-2",
-                            self.ui.pb_ts_fit_poly3: "poly-3",
-                            self.ui.pb_ts_fit_exp: "exp", }
+    def _syncTimeSeriesFitControls(self):
+        """Synchronize the code-created toolbar from shared fit state."""
+        state = self.time_series_fit_state
+        toolbar = self.ui.time_series_toolbar
+        toolbar.setFitEnabled(state.fit_enabled)
+        toolbar.setSelectedFitModel(state.selected_fit_model)
+        toolbar.setSeasonalEnabled(state.seasonal_enabled)
+        toolbar.setResidualEnabled(state.residual_enabled)
 
-        if self.ui.pb_ts_nofit.isChecked():
-            self.choose_point_click_handler.plot_ts.fit_models = []
+    def _applyTimeSeriesFitState(self, refresh=True):
+        """Apply fit state to the plotter and both temporary UI surfaces."""
+        state = self.time_series_fit_state
+        plotter = self.choose_point_click_handler.plot_ts
+        plotter.fit_models = [state.selected_fit_model] if state.fit_enabled else []
+        plotter.fit_seasonal_flag = state.seasonal_enabled
+        plotter.plot_residuals_flag = state.residual_enabled and state.fit_enabled
+        self._syncTimeSeriesFitControls()
+        if refresh:
+            plotter.plotTs(update=True)
+
+    def setTimeSeriesFitEnabled(self, enabled):
+        """Enable or disable the currently selected model in one operation."""
+        self.time_series_fit_state.setFitEnabled(enabled)
+        self._applyTimeSeriesFitState()
+        if enabled:
+            self.msg_signal.emit(
+                f"Fit model selected: {self.time_series_fit_state.selected_fit_model}", "i", 0
+            )
+        else:
             self.msg_signal.emit("No fit model selected.", "i", 0)
+
+    def setTimeSeriesFitModel(self, model):
+        """Select a model and refresh only when fitting is active."""
+        self.time_series_fit_state.setSelectedModel(model)
+        self._applyTimeSeriesFitState(refresh=self.time_series_fit_state.fit_enabled)
+
+    def setTimeSeriesSeasonalEnabled(self, enabled):
+        """Set seasonal fitting and activate fitting when seasonal is enabled."""
+        self.time_series_fit_state.setSeasonalEnabled(enabled)
+        self._applyTimeSeriesFitState()
+        self.msg_signal.emit(
+            "Seasonal fit enabled using the selected model."
+            if enabled else "Seasonal fit disabled.", "i", 0
+        )
+
+    def setTimeSeriesResidualEnabled(self, enabled):
+        """Set residual visibility and activate fitting when residuals are enabled."""
+        self.time_series_fit_state.setResidualEnabled(enabled)
+        self._applyTimeSeriesFitState()
+        self.msg_signal.emit(
+            "Residual plot enabled using the selected fit model."
+            if enabled else "Residual plot disabled.", "i", 0
+        )
+
+    def selectedTimeSeriesSnapshots(self):
+        """Return all explicit style-edit targets for current and future selection UIs."""
+        return self.choose_point_click_handler.plot_ts.selectedTimeSeriesSnapshots()
+
+    def selectedSeriesStyles(self):
+        """Return styles for all currently selected time-series snapshots."""
+        return self.time_series_style_controller.selectedSeriesStyles(
+            self.selectedTimeSeriesSnapshots()
+        )
+
+    def _selectedTimeSeriesSnapshots(self):
+        """Return explicit current style-edit targets from the plotter selection API."""
+        return self.selectedTimeSeriesSnapshots()
+
+    def _applySelectedSeriesStyle(self, property_name, value):
+        """Apply one style property to selected series and redraw exactly once."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        if not snapshots:
+            return
+        changed = self.time_series_style_controller.applyProperty(snapshots, property_name, value)
+        self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+
+    def randomizeSelectedTimeSeriesColor(self):
+        """Randomize only selected series colors while preserving future defaults."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        if not snapshots:
+            return
+        changed = self.time_series_style_controller.randomizeColor(snapshots)
+        self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+        self.time_series_style_popup.setStyle(changed[0].style)
+
+    def setCurrentSeriesStyleAsDefault(self):
+        """Persist the selected series style as the default for newly-created series."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        if not snapshots:
+            return
+        style = snapshots[0].style
+        plotter = self.choose_point_click_handler.plot_ts
+        plotter.style_config.save_default_style(style)
+        plotter.default_style.replaceFromSeries(style)
+        self._settings_style_before = plotter.style_config.load_style_values()
+        self.msg_signal.emit("Current plot style set as default for new time series.", "done", 3000)
+
+    def _refreshTimeSeriesStylePopup(self):
+        """Refresh popup controls from actual selected snapshot styles without edits."""
+        snapshots = self.selectedTimeSeriesSnapshots()
+        popup = self.time_series_style_popup
+        popup.setSelectionState(bool(snapshots), len(snapshots))
+        if snapshots:
+            styles = self.time_series_style_controller.selectedSeriesStyles(snapshots)
+            popup.setStyle(styles[0])
+            popup.setMixedProperties(
+                self.time_series_style_controller.mixedProperties(snapshots)
+            )
         else:
-            fit_models = [check_box_lookup[button] for button in selected_buttons]
-            self.choose_point_click_handler.plot_ts.fit_models = fit_models
-            seasonal_flag = self.ui.pb_ts_fit_seasonal.isChecked()
-            self.choose_point_click_handler.plot_ts.fit_seasonal_flag = seasonal_flag
-            msg = f"Fit model selected: {', '.join(fit_models)}"
-            msg = msg + " Seasonal component will be added." if seasonal_flag else msg
-            self.msg_signal.emit(msg, "i", 0)
+            popup.setMixedProperties(set())
 
-        self.timeseriesPlotResiduals()
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-
-    def residualPlotClicked(self, status):
-        # disable hold on when residuals are plotted
-        if self.ui.pb_plot_residuals.isChecked() and self.ui.pb_ts_nofit.isChecked():
-            self.ui.pb_ts_fit_poly1.setChecked(True)
-        self.timeseriesPlotFit()
-        if status:
-            self.msg_signal.emit("Residual plot enabled: measurement − fit.", "i", 0)
-        else:
-            self.msg_signal.emit("Residual plot disabled.", "i", 0)
-
-    def timeseriesPlotResiduals(self):
-        self.choose_point_click_handler.plot_ts.plot_residuals_flag = (self.ui.pb_plot_residuals.isChecked()
-                                                                       and not self.ui.pb_ts_nofit.isChecked())
+    def showTimeSeriesStylePopup(self):
+        """Open the style popup anchored below the Plot style toolbar action."""
+        plotter = self.choose_point_click_handler.plot_ts
+        self._refreshTimeSeriesStylePopup()
+        toolbar = self.ui.time_series_toolbar
+        action_widget = toolbar.widgetForAction(toolbar.plot_style_action)
+        anchor = action_widget or toolbar
+        self.time_series_style_popup.adjustSize()
+        anchor_top_left = anchor.mapToGlobal(QPoint(0, 0))
+        anchor_rect = QRect(anchor_top_left, anchor.size())
+        available_geometry = available_screen_geometry(anchor_rect.center(), anchor)
+        point = screen_aware_popup_position(
+            anchor_rect,
+            self.time_series_style_popup.sizeHint(),
+            available_geometry,
+        )
+        self.time_series_style_popup.move(point)
+        self.time_series_style_popup.show()
+        self.time_series_style_popup.raise_()
 
     def holdOnPlot(self, status):
         self.choose_point_click_handler.plot_ts.hold_on_flag = status
@@ -520,59 +658,6 @@ class GuiController(QObject):
         # TODO: move polygon drawing methods to PolygonDrawingTool class
         self.removePolygonDrawingTool(reference=False)
         self.removePolygonDrawingTool(reference=True)
-
-    def markerSizeValueChanged(self, value):
-        value = float(value)
-        self.updateConfigFile(["time series plot", "marker size"], "float", new_value=value)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-
-        if value == 0 and self.ui.cmb_line_style.currentText() == "":
-            self.msg_signal.emit("No time series plot: 'Marker size' is 0 and no 'Line style' is selected. ", "e", 0)
-        else:
-            self.msg_signal.emit("", "", 0)
-
-    def markerColorClicked(self):
-        marker_color = self.updateConfigFile(["time series plot", "marker color"], "color")
-        self.choose_point_click_handler.plot_ts.random_marker_color_flag = False
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-        self.ui.cb_marker_color.setStyleSheet(f"QPushButton:enabled {{ color: {marker_color}; }} ")
-        self.ui.cb_marker_color_auto.setChecked(False)
-        self.msg_signal.emit("", "", 0)
-
-    def markerColorAutoClicked(self, status):
-        self.choose_point_click_handler.plot_ts.random_marker_color_flag = status
-        self.ui.cb_marker_color.setEnabled(not status)
-        self.ui.cb_line_color.setEnabled(not status)
-        if status:
-            self.msg_signal.emit("Random marker color enabled: each time series will have a random color.", "t", 0)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-
-    def markerStyleChanged(self, value):
-        self.updateConfigFile(["time series plot", "marker"], "string", new_value=value)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-
-        self.msg_signal.emit("", "", 0)
-
-    def lineStyleChanged(self, value):
-        self.updateConfigFile(["time series plot", "line style"], "string", new_value=value)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-
-        if value == "" and self.ui.sb_marker_size.value() == 0:
-            self.msg_signal.emit("No time series plot: No 'Line style' is selected and 'Marker size' is 0. ", "e", 0)
-        else:
-            self.msg_signal.emit("", "", 0)
-
-    def lineColorClicked(self):
-        line_color = self.updateConfigFile(["time series plot", "line color"], "color")
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-        self.ui.cb_line_color.setStyleSheet(f"QPushButton:enabled {{ color: {line_color}; }} ")
-        self.msg_signal.emit("", "", 0)
-
-    def lineWidthChanged(self, value):
-        value = float(value)
-        self.updateConfigFile(["time series plot", "line width"], "float", new_value=value)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-        self.msg_signal.emit("", "", 0)
 
     def updateConfigFile(self, key_list, value_type, new_value=None):
         block_key = "timeseries settings"
@@ -598,31 +683,157 @@ class GuiController(QObject):
         parms.save(block_key, settings_block)
         return new_value
 
-    def plotYAxis(self):
-        if self.ui.cb_y_from_data.isChecked():
-            self.choose_point_click_handler.plot_ts.plot_y_axis = "from_data"
-            self.msg_signal.emit("Y-axis range set from data.", "i", 0)
-        elif self.ui.cb_y_symmetric.isChecked():
-            self.choose_point_click_handler.plot_ts.plot_y_axis = "symmetric"
-            self.msg_signal.emit("Y-axis range set symmetric.", "i", 0)
-        elif self.ui.cb_y_adaptive.isChecked():
-            self.choose_point_click_handler.plot_ts.plot_y_axis = "adaptive"
-            self.msg_signal.emit("Y-axis range set adaptively: less range change when plotting new time series.", "i",
-                                 0)
+    def _loadTimeSeriesYAxisMode(self):
+        """Load and validate the persisted Time Series Y-axis mode."""
+        mode = self.settings.value(
+            "insar_explorer/time_series_y_axis_mode", "from_data", type=str
+        )
+        return mode if mode in {"from_data", "symmetric", "adaptive"} else "from_data"
 
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+    def _restoreTimeSeriesYAxisMode(self):
+        """Restore the selected Y-axis mode after UI or plotter lifecycle changes."""
+        self._applyTimeSeriesYAxisMode(self.time_series_y_axis_mode, refresh=False)
 
-    def timeseriesReplica(self):
-        if self.ui.pb_ts_replica.isChecked():
-            self.choose_point_click_handler.plot_ts.replicate_flag = True
-            replicate_value = int(self.ui.sb_ts_replica.text())
-            self.choose_point_click_handler.plot_ts.replicate_value = replicate_value
-            self.msg_signal.emit(f"Replica enabled: time series will be replicated every ±{replicate_value} units.",
-                                 "i", 0)
+    def _syncTimeSeriesYAxisControls(self, mode):
+        """Synchronize the code-created toolbar from shared Y-axis state."""
+        self.ui.time_series_toolbar.setSelectedYAxisMode(mode)
+
+    def _applyTimeSeriesYAxisMode(self, mode, refresh=True):
+        """Apply one validated Y-axis mode and optionally redraw the active plot."""
+        if mode not in {"from_data", "symmetric", "adaptive"}:
+            mode = "from_data"
+        self.time_series_y_axis_mode = mode
+        self.choose_point_click_handler.plot_ts.plot_y_axis = mode
+        self._syncTimeSeriesYAxisControls(mode)
+        self.settings.setValue("insar_explorer/time_series_y_axis_mode", mode)
+        if refresh:
+            self.choose_point_click_handler.plot_ts.plotTs(update=True)
+
+    def setTimeSeriesYAxisMode(self, mode):
+        """Handle a toolbar Y-axis selection with one state update and redraw."""
+        self._applyTimeSeriesYAxisMode(mode)
+        messages = {
+            "from_data": "Y-axis range set from data.",
+            "symmetric": "Y-axis range set symmetric.",
+            "adaptive": (
+                "Y-axis range set adaptively: less range change when plotting new time series."
+            ),
+        }
+        self.msg_signal.emit(messages[self.time_series_y_axis_mode], "i", 0)
+
+    def _loadReplicaInterval(self):
+        """Load and validate the persisted replica half-wavelength interval."""
+        value = self.settings.value(
+            "insar_explorer/replica_interval_mm", 27.8, type=float
+        )
+        return value if value > 0 else 27.8
+
+    @staticmethod
+    def _validateReplicaPairCount(value):
+        """Validate a Replica pair count without accepting coercible values."""
+        if isinstance(value, bool) or not isinstance(value, int):
+            return 1
+        return max(1, min(10, value))
+
+    def _loadReplicaPairCount(self):
+        """Load the symmetric Replica pair count from the canonical JSON config."""
+        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
+        parms.load(block_key="timeseries settings")
+        value = parms.get(["time series plot", "replica pair count"])
+        return self._validateReplicaPairCount(value)
+
+    def _reloadReplicaPairCountFromConfig(self):
+        """Reload the canonical Replica pair count and synchronize its toolbar view."""
+        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
+        parms.load(block_key="timeseries settings")
+        value = parms.get(["time series plot", "replica pair count"])
+        self.time_series_replica_pair_count = self._validateReplicaPairCount(value)
+        self._syncTimeSeriesReplicaControls()
+
+    def _restoreTimeSeriesReplicaState(self):
+        """Restore Replica configuration after plotter lifecycle changes."""
+        self._reloadReplicaPairCountFromConfig()
+        self._applyTimeSeriesReplicaState(refresh=False)
+
+    def _syncTimeSeriesReplicaControls(self):
+        """Synchronize toolbar and temporary Settings controls without recursion."""
+        toolbar = self.ui.time_series_toolbar
+        toolbar.setReplicaEnabled(self.time_series_replica_enabled)
+        toolbar.setReplicaInterval(self.time_series_replica_interval_mm)
+        toolbar.setReplicaPairCount(self.time_series_replica_pair_count)
+
+    def _applyTimeSeriesReplicaState(self, refresh=True):
+        """Apply Replica state and optionally redraw the active plot exactly once."""
+        plot = self.choose_point_click_handler.plot_ts
+        plot.replicate_flag = self.time_series_replica_enabled
+        plot.replicate_value = self.time_series_replica_interval_mm
+        plot.parms["time series plot"][
+            "replica pair count"
+        ] = self.time_series_replica_pair_count
+        self._syncTimeSeriesReplicaControls()
+        self.settings.setValue(
+            "insar_explorer/replica_enabled", self.time_series_replica_enabled
+        )
+        self.settings.setValue(
+            "insar_explorer/replica_interval_mm", self.time_series_replica_interval_mm
+        )
+        if refresh:
+            plot.plotTs(update=True)
+
+    def setTimeSeriesReplicaEnabled(self, enabled):
+        """Enable or disable replicas while preserving the selected interval."""
+        self.time_series_replica_enabled = bool(enabled)
+        self._applyTimeSeriesReplicaState()
+        if enabled:
+            message = (
+                "Replica enabled: time series will be replicated every "
+                f"±{self.time_series_replica_interval_mm:.1f} mm."
+            )
         else:
-            self.choose_point_click_handler.plot_ts.replicate_flag = False
-            self.msg_signal.emit("Replica disabled.", "i", 0)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
+            message = "Replica disabled."
+        self.msg_signal.emit(message, "i", 0)
+
+    def setTimeSeriesReplicaInterval(self, interval_mm):
+        """Store a positive replica interval and redraw only when Replica is active."""
+        interval_mm = float(interval_mm)
+        if interval_mm <= 0:
+            return
+        self.time_series_replica_interval_mm = interval_mm
+        self._applyTimeSeriesReplicaState(refresh=self.time_series_replica_enabled)
+        self.msg_signal.emit(
+            f"Replica interval set to ±{interval_mm:.1f} mm.", "i", 0
+        )
+
+    def _persistReplicaPairCount(self, pair_count):
+        """Persist the validated Replica pair count to the plot configuration."""
+        block_key = "timeseries settings"
+        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
+        settings_block = parms.load(block_key=block_key)
+        settings_block["time series plot"]["replica pair count"]["value"] = pair_count
+        parms.save(block_key, settings_block)
+
+    def setTimeSeriesReplicaPairCount(self, pair_count):
+        """Persist, apply, and redraw a toolbar Replica pair-count change once."""
+        pair_count = self._validateReplicaPairCount(pair_count)
+        self._persistReplicaPairCount(pair_count)
+
+        plot = self.choose_point_click_handler.plot_ts
+        self.time_series_replica_pair_count = pair_count
+        plot.parms.setdefault("time series plot", {})[
+            "replica pair count"
+        ] = pair_count
+        self._syncTimeSeriesReplicaControls()
+
+        if self.time_series_replica_enabled and plot.series_history:
+            y_axis_mode = plot.plot_y_axis
+            try:
+                plot.rerenderTimeSeriesSnapshots(list(plot.series_history))
+            finally:
+                plot.plot_y_axis = y_axis_mode
+
+        self.msg_signal.emit(
+            f"Replica pairs set to {self.time_series_replica_pair_count}.", "i", 0
+        )
 
     def handleUiClose(self, visible):
         if not visible:
@@ -789,6 +1000,10 @@ class GuiController(QObject):
 
     def saveTsPlot(self):
         self.msg_signal.emit("", "", 0)
+
+        if self.choose_point_click_handler.plot_ts.current_series() is None:
+            self.msg_signal.emit('No time-series plot to export.', 'w', 0)
+            return
 
         plot_extension = self.last_plot_export_format.lower().lstrip('.')
         suggested_name = self._withExtension(self.last_save_ts_name, plot_extension)

@@ -11,12 +11,15 @@ from qgis.PyQt.QtGui import QColor, QFont
 from .model_fitting import FittingModels
 from ..external.setting_manager_ui.json_settings import JsonSettings
 from .export_plot import TimeSeriesPlotExporter
+from .time_series.style_config import TimeSeriesStyleConfig
 from .models.time_series import (
     TimeSeriesData,
     TimeSeriesGraphics,
     TimeSeriesSnapshot,
+    DefaultTimeSeriesStyle,
     TimeSeriesStyle,
     buildTimeSeriesData,
+    randomTimeSeriesColor,
 )
 
 try:
@@ -62,6 +65,7 @@ class PlotTs():
         json_file = "config.json"
         self.config_file = os.path.join(os.path.dirname(script_path), 'config', json_file)
         self.series_history: List[TimeSeriesSnapshot] = []
+        self.default_style = None
         self.fit_models = []
         self.fit_seasonal_flag = False
         self.replicate_flag = False
@@ -73,10 +77,27 @@ class PlotTs():
         self.random_marker_color_flag = False
         self.parms = {}
         self.updateSettings()
+        self.style_config = TimeSeriesStyleConfig(self.config_file)
+        self.default_style = DefaultTimeSeriesStyle(
+            self.style_config.load_default_style(self.parms)
+        )
         self.coords = None
         self.ref_coords = None
         self._y_data_ranges = {}
         self._last_replica_y_data = []
+
+
+    @staticmethod
+    def _validateReplicaPairCount(value):
+        """Return a safe symmetric Replica pair count for rendering.
+
+        Only integer configuration values are accepted. Invalid values fall
+        back to one pair, while valid integers are clamped to the supported
+        range of one through ten pairs.
+        """
+        if isinstance(value, bool) or not isinstance(value, int):
+            return 1
+        return max(1, min(10, value))
 
     def modifySettings(self, block_key, value):
         params = JsonSettings(self.config_file)
@@ -120,8 +141,9 @@ class PlotTs():
         parms['replica alpha'] = parms_ts.get(["time series plot", "replica alpha"]) or 1.0
         parms['replica marker size'] = parms_ts.get(["time series plot", "replica marker size"]) or 5
         parms['replica marker'] = parms_ts.get(["time series plot", "replica marker"]) or 'o'
-        parms['number of up replicas'] = parms_ts.get(["time series plot", "number of up replicas"])
-        parms['number of down replicas'] = parms_ts.get(["time series plot", "number of down replicas"])
+        parms['replica pair count'] = self._validateReplicaPairCount(
+            parms_ts.get(["time series plot", "replica pair count"])
+        )
 
         self.parms['time series plot'] = parms
 
@@ -272,6 +294,8 @@ class PlotTs():
         # update: flag indicating if the plot should be updated or a new one created
 
         self.updateSettings()
+        if self.default_style is None:
+            self.default_style = DefaultTimeSeriesStyle.fromParams(self.parms)
 
         if update:
             source_snapshot = self._remove_rendered_snapshot_for_update()
@@ -289,8 +313,10 @@ class PlotTs():
             if ref_coords is None:
                 ref_coords = source_data.ref_coords
             random_marker_color_flag = False
+            style = TimeSeriesStyle.fromParams(source_snapshot.style.params)
         else:
             random_marker_color_flag = self.random_marker_color_flag
+            style = self.default_style.snapshotStyle()
 
         self.initializeAxes()
 
@@ -319,10 +345,9 @@ class PlotTs():
             return
 
         if random_marker_color_flag:
-            rand_color = np.random.rand(3, )
-            self.parms['time series plot']['marker color'] = self.parms['time series plot']['line color'] = rand_color
-
-        style = TimeSeriesStyle.fromParams(self.parms)
+            rand_color = randomTimeSeriesColor()
+            style.params['time series plot']['marker color'] = rand_color
+            style.params['time series plot']['line color'] = rand_color
         items, residuals_values = self._render_time_series(series, style, plot_multiple=plot_multiple)
         if residuals_values is not None:
             series = series.withResiduals(residuals_values)
@@ -442,13 +467,16 @@ class PlotTs():
         marker_alpha = parms['replica alpha']
         marker_size_replica = parms['replica marker size']
         marker_replica = parms['replica marker']
-        number_of_up_replicas = parms['number of up replicas']
-        number_of_down_replicas = parms['number of down replicas']
+        runtime_plot_parms = self.parms.get("time series plot", {})
+        replica_pair_count = self._validateReplicaPairCount(
+            runtime_plot_parms.get("replica pair count")
+        )
         self._last_replica_y_data = []
 
-        # plot multiple replicas
+        # Plot symmetric positive/negative replica pairs around the source series.
         replicate_up_list = []
-        for i in range(number_of_up_replicas):
+        replicate_dn_list = []
+        for i in range(replica_pair_count):
             replicate_value = self.replicate_value * (i + 1)
 
             if i % 2 == 0:
@@ -468,19 +496,15 @@ class PlotTs():
             replicate_up_list.append(replicate_up)
             self._last_replica_y_data.append(series.plot_values + replicate_value)
 
-        replicate_dn_list = []
-        for i in range(number_of_down_replicas):
-            replicate_value = self.replicate_value * (i + 1)
-
-            if i % 2 == 0:
-                marker_replica_color = marker_color_2
-            else:
-                marker_replica_color = marker_color_1
-
-            replicate_dn = pg.ScatterPlotItem(x=x, y=series.plot_values - replicate_value,
-                                              symbol=self._symbol(marker_replica), size=marker_size_replica,
-                                              pen=None,
-                                              brush=self._brush(marker_replica_color, marker_alpha))
+            down_color = marker_color_2 if i % 2 == 0 else marker_color_1
+            replicate_dn = pg.ScatterPlotItem(
+                x=x,
+                y=series.plot_values - replicate_value,
+                symbol=self._symbol(marker_replica),
+                size=marker_size_replica,
+                pen=None,
+                brush=self._brush(down_color, marker_alpha),
+            )
             self.ax.addItem(replicate_dn)
             replicate_dn_list.append(replicate_dn)
             self._last_replica_y_data.append(series.plot_values - replicate_value)
@@ -867,6 +891,62 @@ class PlotTs():
 
     def _brush(self, color=None, alpha=1.0):
         return pg.mkBrush(self._color(color, alpha))
+
+    def rerenderTimeSeriesSnapshots(self, snapshots: List[TimeSeriesSnapshot]) -> None:
+        """Re-render selected snapshots in place and issue one final draw."""
+        selected_ids = {id(snapshot) for snapshot in snapshots}
+        for snapshot in self.series_history:
+            if id(snapshot) not in selected_ids:
+                continue
+            self._remove_snapshot_graphics(snapshot)
+            graphics, residuals = self._render_time_series(snapshot.data, snapshot.style)
+            snapshot.graphics = graphics
+            if residuals is not None:
+                snapshot.data = snapshot.data.withResiduals(residuals)
+        self._rebuildYDataRanges()
+        if self.ax is not None:
+            self.setYlims(
+                ax=self.ax,
+                parms=self.parms["time series plot"],
+            )
+
+        if self.ax_residuals is not None:
+            self.setYlims(
+                ax=self.ax_residuals,
+                parms=self.parms["residual plot"],
+            )
+
+        self._draw()
+
+    def selectedTimeSeriesSnapshots(self) -> List[TimeSeriesSnapshot]:
+        """Return the snapshots currently targeted for editing."""
+        snapshot = self.current_series()
+        return [snapshot] if snapshot is not None else []
+
+    def hasSelectedTimeSeries(self) -> bool:
+        """Return whether at least one time-series snapshot is selected."""
+        return bool(self.selectedTimeSeriesSnapshots())
+
+    def selectedTimeSeriesCount(self) -> int:
+        """Return the number of selected time-series snapshots."""
+        return len(self.selectedTimeSeriesSnapshots())
+
+    def setCurrentSeriesStyleAsDefault(self) -> bool:
+        """Copy the current series style into the new-series default source."""
+        snapshot = self.current_series()
+        if snapshot is None:
+            return False
+        if self.default_style is None:
+            self.default_style = DefaultTimeSeriesStyle.fromParams(snapshot.style.params)
+        else:
+            self.default_style.replaceFromSeries(snapshot.style)
+        return True
+
+    def defaultTimeSeriesStyle(self) -> TimeSeriesStyle:
+        """Return a defensive copy of the style used for future series."""
+        if self.default_style is None:
+            self.default_style = DefaultTimeSeriesStyle.fromParams(self.parms)
+        return self.default_style.snapshotStyle()
 
     def add_series(self, snapshot: TimeSeriesSnapshot) -> None:
         """Store a plotted time-series snapshot."""
