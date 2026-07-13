@@ -92,9 +92,17 @@ class TimeSeriesStylePopup(QWidget):
     fitLineTypeChanged = pyqtSignal(str)
     fitLineColorChanged = pyqtSignal(str)
     fitLineWidthChanged = pyqtSignal(float)
+    residualMarkerTypeChanged = pyqtSignal(str)
+    residualMarkerColorChanged = pyqtSignal(str)
+    residualMarkerSizeChanged = pyqtSignal(float)
+    residualLineTypeChanged = pyqtSignal(str)
+    residualLineColorChanged = pyqtSignal(str)
+    residualLineWidthChanged = pyqtSignal(float)
     randomizeColorRequested = pyqtSignal()
     setCurrentStyleAsDefaultRequested = pyqtSignal()
     setCurrentFitStyleAsDefaultRequested = pyqtSignal()
+    randomizeResidualColorRequested = pyqtSignal()
+    setCurrentResidualStyleAsDefaultRequested = pyqtSignal()
 
     def __init__(self, parent=None):
         """Create compact tabbed style controls without applying changes."""
@@ -108,6 +116,7 @@ class TimeSeriesStylePopup(QWidget):
         layout.addWidget(self.tabs)
         self._createSeriesTab()
         self._createFitTab()
+        self._createResidualTab()
         self.setMaximumWidth(360)
         self.setSelectionState(False)
 
@@ -222,6 +231,61 @@ class TimeSeriesStylePopup(QWidget):
         self.fit_default_button.clicked.connect(self.setCurrentFitStyleAsDefaultRequested.emit)
         self.tabs.addTab(tab, "Fit")
 
+    def _createResidualTab(self):
+        """Build residual-series controls by reusing the compact Series widgets."""
+        tab = QWidget(self.tabs)
+        layout = QVBoxLayout(tab)
+        self.residual_target_label = QLabel("Editing: Residual series", tab)
+        layout.addWidget(self.residual_target_label)
+        self.residual_marker_group = QGroupBox("Marker", tab)
+        ml = QFormLayout(self.residual_marker_group)
+        self.residual_marker_type = QComboBox(self.residual_marker_group)
+        self.residual_marker_type.addItems(list(MARKER_OPTIONS))
+        self.residual_marker_color = CompactColorButton("●", "Select residual marker color", self.residual_marker_group)
+        self.residual_marker_size = QDoubleSpinBox(self.residual_marker_group)
+        self.residual_marker_size.setRange(*MARKER_SIZE_RANGE)
+        self.residual_marker_size.setDecimals(NUMERIC_DECIMALS)
+        self.residual_marker_size.setSingleStep(NUMERIC_STEP)
+        ml.addRow("Type", self.residual_marker_type); ml.addRow("Color", self.residual_marker_color); ml.addRow("Size", self.residual_marker_size)
+        self.residual_line_group = QGroupBox("Line", tab)
+        ll = QFormLayout(self.residual_line_group)
+        self.residual_line_type = QComboBox(self.residual_line_group)
+        self.residual_line_type.addItems(list(LINE_STYLE_OPTIONS))
+        self.residual_line_color = CompactColorButton("━", "Select residual line color", self.residual_line_group)
+        self.residual_line_width = QDoubleSpinBox(self.residual_line_group)
+        self.residual_line_width.setRange(*LINE_WIDTH_RANGE)
+        self.residual_line_width.setDecimals(NUMERIC_DECIMALS)
+        self.residual_line_width.setSingleStep(NUMERIC_STEP)
+        ll.addRow("Type", self.residual_line_type); ll.addRow("Color", self.residual_line_color); ll.addRow("Width", self.residual_line_width)
+        groups = QHBoxLayout(); groups.setContentsMargins(0,0,0,0)
+        groups.addWidget(self.residual_marker_group); groups.addWidget(self.residual_line_group); layout.addLayout(groups)
+        self.residual_randomize_button = QPushButton(tab)
+        self.residual_randomize_button.setIcon(QIcon(":/icons/icons/plot_random_color.svg"))
+        configure_compact_command_button(self.residual_randomize_button)
+        self.residual_randomize_button.setToolTip("Randomize residual marker and line color")
+        self.residual_default_button = QPushButton("Set as default", tab)
+        actions = QHBoxLayout(); actions.addWidget(self.residual_randomize_button); actions.addStretch(1); actions.addWidget(self.residual_default_button); layout.addLayout(actions)
+        self.residual_marker_type.currentTextChanged.connect(lambda v: None if self._loading else self.residualMarkerTypeChanged.emit(v))
+        self.residual_marker_size.valueChanged.connect(lambda v: None if self._loading else self.residualMarkerSizeChanged.emit(float(v)))
+        self.residual_line_type.currentTextChanged.connect(lambda v: None if self._loading else self.residualLineTypeChanged.emit(v))
+        self.residual_line_width.valueChanged.connect(lambda v: None if self._loading else self.residualLineWidthChanged.emit(float(v)))
+        self.residual_marker_color.colorChanged.connect(self.residualMarkerColorChanged.emit)
+        self.residual_line_color.colorChanged.connect(self.residualLineColorChanged.emit)
+        self.residual_randomize_button.clicked.connect(self.randomizeResidualColorRequested.emit)
+        self.residual_default_button.clicked.connect(self.setCurrentResidualStyleAsDefaultRequested.emit)
+        self.tabs.addTab(tab, "Residual")
+
+    def setResidualStyle(self, residual_style):
+        """Populate Residual controls without emitting edits."""
+        self._loading = True
+        self.residual_marker_type.setCurrentText(residual_style.marker)
+        self.residual_marker_color.setColor(residual_style.marker_color)
+        self.residual_marker_size.setValue(float(residual_style.marker_size))
+        self.residual_line_type.setCurrentText(residual_style.line_style)
+        self.residual_line_color.setColor(residual_style.line_color)
+        self.residual_line_width.setValue(float(residual_style.line_width))
+        self._loading = False
+
     def setSelectionState(self, selected, count=0):
         """Update target text and enablement for the current selection."""
         selected = bool(selected)
@@ -238,6 +302,10 @@ class TimeSeriesStylePopup(QWidget):
             self.default_button,
             self.fit_group,
             self.fit_default_button,
+            self.residual_marker_group,
+            self.residual_line_group,
+            self.residual_randomize_button,
+            self.residual_default_button,
         ):
             widget.setEnabled(selected)
 
