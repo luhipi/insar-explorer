@@ -2,7 +2,7 @@ import os
 
 from qgis.gui import QgsMapToolEmitPoint
 from qgis.PyQt.QtWidgets import QFileDialog, QMenu, QComboBox
-from qgis.PyQt.QtCore import QObject, QSettings, QStandardPaths, QTimer, QVariant, pyqtSignal
+from qgis.PyQt.QtCore import QObject, QPoint, QRect, QSettings, QStandardPaths, QTimer, QVariant, pyqtSignal
 from qgis.PyQt.QtGui import QIcon, QTransform
 
 from . import map_click_handler as cph
@@ -14,8 +14,15 @@ from ..external.setting_manager_ui.setting_ui import SettingsTableDialog
 from ..external.setting_manager_ui.json_settings import JsonSettings
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 from .ui_windows.color_picker import ColorPicker
-from .qt_compat import RASTER_LAYER, VECTOR_LAYER
+from .ui.popups.time_series_style_popup import TimeSeriesStylePopup
+from .qt_compat import (
+    RASTER_LAYER,
+    VECTOR_LAYER,
+    available_screen_geometry,
+    screen_aware_popup_position,
+)
 from .time_series.fit_state import TimeSeriesFitState
+from .time_series.style_controller import TimeSeriesStyleController
 
 
 class GuiController(QObject):
@@ -41,6 +48,8 @@ class GuiController(QObject):
         )
         self.time_series_replica_interval_mm = self._loadReplicaInterval()
         self.time_series_replica_pair_count = self._loadReplicaPairCount()
+        self.time_series_style_popup = TimeSeriesStylePopup(self.ui)
+        self.time_series_style_controller = TimeSeriesStyleController()
         self.last_save_path = self._initialExportDirectory()
         self.last_save_ts_name = "ts_plot.png"
         self.last_export_ts_name = "ts_data.csv"
@@ -65,40 +74,8 @@ class GuiController(QObject):
         self.setVectorFields()
 
     def initializeUiParams(self):
-        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
-        parms.load(block_key="timeseries settings")
-
-        # plot marker size
-        marker_size = parms.get(["time series plot", "marker size"]) or 5.0
-        self.ui.sb_marker_size.setValue(marker_size)
-
-        # plot marker color
-        marker_color = parms.get(["time series plot", "marker color"]) or "#000000"
-        self.ui.cb_marker_color.setStyleSheet(f"QPushButton:enabled {{ color: {marker_color}; }} ")
-
-        # marker style
-        marker_style_options = parms.get(["time series plot", "marker"], sub_key="options") or ["", "o"]
-        marker_style = parms.get(["time series plot", "marker"])
-        self.ui.cmb_marker_style.clear()
-        if isinstance(marker_style_options, list):
-            self.ui.cmb_marker_style.addItems(marker_style_options)
-        self.ui.cmb_marker_style.setCurrentText(marker_style)
-
-        # line style
-        line_style_options = parms.get(["time series plot", "line style"], sub_key="options") or ["", "-"]
-        line_style = parms.get(["time series plot", "line style"])
-        self.ui.cmb_line_style.clear()
-        if isinstance(line_style_options, list):
-            self.ui.cmb_line_style.addItems(line_style_options)
-        self.ui.cmb_line_style.setCurrentText(line_style)
-
-        # line color
-        line_color = parms.get(["time series plot", "line color"]) or "#000000"
-        self.ui.cb_line_color.setStyleSheet(f"QPushButton:enabled {{ color: {line_color}; }} ")
-
-        # line width
-        line_width = parms.get(["time series plot", "line width"]) or 1.0
-        self.ui.sb_line_width.setValue(line_width)
+        """Initialize code-created controls; migrated style controls live in the popup."""
+        return
 
     def initializeSelection(self):
         if self.selection_type == "point":
@@ -320,19 +297,22 @@ class GuiController(QObject):
         self.ui.time_series_toolbar.replicaPairCountChanged.connect(
             self.setTimeSeriesReplicaPairCount
         )
+        self.ui.time_series_toolbar.plotStyleRequested.connect(self.showTimeSeriesStylePopup)
+        popup = self.time_series_style_popup
+        popup.markerTypeChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_type", value))
+        popup.markerColorChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_color", value))
+        popup.markerSizeChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_size", value))
+        popup.lineTypeChanged.connect(lambda value: self._applySelectedSeriesStyle("line_type", value))
+        popup.lineColorChanged.connect(lambda value: self._applySelectedSeriesStyle("line_color", value))
+        popup.lineWidthChanged.connect(lambda value: self._applySelectedSeriesStyle("line_width", value))
+        popup.randomizeColorRequested.connect(self.randomizeSelectedTimeSeriesColor)
+        popup.setCurrentStyleAsDefaultRequested.connect(self.setCurrentSeriesStyleAsDefault)
         self._restoreTimeSeriesFitState()
         # Plot setting
         self._restoreTimeSeriesYAxisMode()
         self._restoreTimeSeriesReplicaState()
         self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
         self.ui.cb_remove_last_plot.clicked.connect(self.removeLastPlotClicked)
-        self.ui.cb_marker_color_auto.toggled.connect(self.markerColorAutoClicked)
-        self.ui.sb_marker_size.valueChanged.connect(self.markerSizeValueChanged)
-        self.ui.cb_marker_color.clicked.connect(self.markerColorClicked)
-        self.ui.cmb_marker_style.currentTextChanged.connect(self.markerStyleChanged)
-        self.ui.cmb_line_style.currentTextChanged.connect(self.lineStyleChanged)
-        self.ui.cb_line_color.clicked.connect(self.lineColorClicked)
-        self.ui.sb_line_width.valueChanged.connect(self.lineWidthChanged)
         # TS save
         self.ui.time_series_toolbar.plotExportRequested.connect(self.saveTsPlot)
         self.ui.time_series_toolbar.dataExportRequested.connect(self.exportTs)
@@ -547,6 +527,81 @@ class GuiController(QObject):
             if enabled else "Residual plot disabled.", "i", 0
         )
 
+    def selectedTimeSeriesSnapshots(self):
+        """Return all explicit style-edit targets for current and future selection UIs."""
+        return self.choose_point_click_handler.plot_ts.selectedTimeSeriesSnapshots()
+
+    def selectedSeriesStyles(self):
+        """Return styles for all currently selected time-series snapshots."""
+        return self.time_series_style_controller.selectedSeriesStyles(
+            self.selectedTimeSeriesSnapshots()
+        )
+
+    def _selectedTimeSeriesSnapshots(self):
+        """Return explicit current style-edit targets from the plotter selection API."""
+        return self.selectedTimeSeriesSnapshots()
+
+    def _applySelectedSeriesStyle(self, property_name, value):
+        """Apply one style property to selected series and redraw exactly once."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        if not snapshots:
+            return
+        changed = self.time_series_style_controller.applyProperty(snapshots, property_name, value)
+        self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+
+    def randomizeSelectedTimeSeriesColor(self):
+        """Randomize only selected series colors while preserving future defaults."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        if not snapshots:
+            return
+        changed = self.time_series_style_controller.randomizeColor(snapshots)
+        self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+        self.time_series_style_popup.setStyle(changed[0].style)
+
+    def setCurrentSeriesStyleAsDefault(self):
+        """Persist the selected series style as the default for newly-created series."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        if not snapshots:
+            return
+        style = snapshots[0].style
+        plot_params = style.params.get("time series plot", {})
+        keys = ("marker", "marker color", "marker size", "line style", "line color", "line width")
+        settings = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
+        settings.load(block_key="timeseries settings")
+        for key in keys:
+            if key in plot_params:
+                settings.set(["time series plot", key], plot_params[key])
+        settings.save()
+        self.choose_point_click_handler.plot_ts.default_style.replaceFromSeries(style)
+        self.msg_signal.emit("Current plot style set as default for new time series.", "done", 3000)
+
+    def showTimeSeriesStylePopup(self):
+        """Open the style popup anchored below the Plot style toolbar action."""
+        plotter = self.choose_point_click_handler.plot_ts
+        snapshots = plotter.selectedTimeSeriesSnapshots()
+        self.time_series_style_popup.setSelectionState(bool(snapshots), len(snapshots))
+        if snapshots:
+            styles = self.time_series_style_controller.selectedSeriesStyles(snapshots)
+            self.time_series_style_popup.setStyle(styles[0])
+            self.time_series_style_popup.setMixedProperties(
+                self.time_series_style_controller.mixedProperties(snapshots)
+            )
+        toolbar = self.ui.time_series_toolbar
+        action_widget = toolbar.widgetForAction(toolbar.plot_style_action)
+        anchor = action_widget or toolbar
+        self.time_series_style_popup.adjustSize()
+        anchor_top_left = anchor.mapToGlobal(QPoint(0, 0))
+        anchor_rect = QRect(anchor_top_left, anchor.size())
+        available_geometry = available_screen_geometry(anchor_rect.center(), anchor)
+        point = screen_aware_popup_position(
+            anchor_rect,
+            self.time_series_style_popup.sizeHint(),
+            available_geometry,
+        )
+        self.time_series_style_popup.move(point)
+        self.time_series_style_popup.show()
+        self.time_series_style_popup.raise_()
+
     def holdOnPlot(self, status):
         self.choose_point_click_handler.plot_ts.hold_on_flag = status
         if status:
@@ -560,59 +615,6 @@ class GuiController(QObject):
         # TODO: move polygon drawing methods to PolygonDrawingTool class
         self.removePolygonDrawingTool(reference=False)
         self.removePolygonDrawingTool(reference=True)
-
-    def markerSizeValueChanged(self, value):
-        value = float(value)
-        self.updateConfigFile(["time series plot", "marker size"], "float", new_value=value)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-
-        if value == 0 and self.ui.cmb_line_style.currentText() == "":
-            self.msg_signal.emit("No time series plot: 'Marker size' is 0 and no 'Line style' is selected. ", "e", 0)
-        else:
-            self.msg_signal.emit("", "", 0)
-
-    def markerColorClicked(self):
-        marker_color = self.updateConfigFile(["time series plot", "marker color"], "color")
-        self.choose_point_click_handler.plot_ts.random_marker_color_flag = False
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-        self.ui.cb_marker_color.setStyleSheet(f"QPushButton:enabled {{ color: {marker_color}; }} ")
-        self.ui.cb_marker_color_auto.setChecked(False)
-        self.msg_signal.emit("", "", 0)
-
-    def markerColorAutoClicked(self, status):
-        self.choose_point_click_handler.plot_ts.random_marker_color_flag = status
-        self.ui.cb_marker_color.setEnabled(not status)
-        self.ui.cb_line_color.setEnabled(not status)
-        if status:
-            self.msg_signal.emit("Random marker color enabled: each time series will have a random color.", "t", 0)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-
-    def markerStyleChanged(self, value):
-        self.updateConfigFile(["time series plot", "marker"], "string", new_value=value)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-
-        self.msg_signal.emit("", "", 0)
-
-    def lineStyleChanged(self, value):
-        self.updateConfigFile(["time series plot", "line style"], "string", new_value=value)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-
-        if value == "" and self.ui.sb_marker_size.value() == 0:
-            self.msg_signal.emit("No time series plot: No 'Line style' is selected and 'Marker size' is 0. ", "e", 0)
-        else:
-            self.msg_signal.emit("", "", 0)
-
-    def lineColorClicked(self):
-        line_color = self.updateConfigFile(["time series plot", "line color"], "color")
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-        self.ui.cb_line_color.setStyleSheet(f"QPushButton:enabled {{ color: {line_color}; }} ")
-        self.msg_signal.emit("", "", 0)
-
-    def lineWidthChanged(self, value):
-        value = float(value)
-        self.updateConfigFile(["time series plot", "line width"], "float", new_value=value)
-        self.choose_point_click_handler.plot_ts.plotTs(update=True)
-        self.msg_signal.emit("", "", 0)
 
     def updateConfigFile(self, key_list, value_type, new_value=None):
         block_key = "timeseries settings"

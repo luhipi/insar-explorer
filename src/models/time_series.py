@@ -9,6 +9,12 @@ from typing import Any, List, Optional
 import numpy as np
 
 
+def randomTimeSeriesColor() -> str:
+    """Return a random canonical ``#RRGGBB`` color string."""
+    channels = np.random.randint(0, 256, size=3)
+    return "#{:02x}{:02x}{:02x}".format(*(int(channel) for channel in channels))
+
+
 def _readonlyArray(values: Any, *, dtype: Any = None, ndmin: int = 0) -> np.ndarray:
     """Return a defensive, read-only numpy array copy."""
     array = np.array(values, dtype=dtype, copy=True, ndmin=ndmin)

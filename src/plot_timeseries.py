@@ -18,6 +18,7 @@ from .models.time_series import (
     DefaultTimeSeriesStyle,
     TimeSeriesStyle,
     buildTimeSeriesData,
+    randomTimeSeriesColor,
 )
 
 try:
@@ -339,7 +340,7 @@ class PlotTs():
             return
 
         if random_marker_color_flag:
-            rand_color = np.random.rand(3, )
+            rand_color = randomTimeSeriesColor()
             style.params['time series plot']['marker color'] = rand_color
             style.params['time series plot']['line color'] = rand_color
         items, residuals_values = self._render_time_series(series, style, plot_multiple=plot_multiple)
