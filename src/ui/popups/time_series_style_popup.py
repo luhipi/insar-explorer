@@ -1,4 +1,4 @@
-"""Compact popup editor for time-series marker and line styles."""
+"""Compact popup editor for time-series series and fit-line styles."""
 
 from qgis.PyQt.QtCore import pyqtSignal
 from qgis.PyQt.QtGui import QColor, QIcon
@@ -28,6 +28,7 @@ from qgis.PyQt.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -84,21 +85,37 @@ class TimeSeriesStylePopup(QWidget):
     lineTypeChanged = pyqtSignal(str)
     lineColorChanged = pyqtSignal(str)
     lineWidthChanged = pyqtSignal(float)
+    fitLineTypeChanged = pyqtSignal(str)
+    fitLineColorChanged = pyqtSignal(str)
+    fitLineWidthChanged = pyqtSignal(float)
     randomizeColorRequested = pyqtSignal()
     setCurrentStyleAsDefaultRequested = pyqtSignal()
+    setCurrentFitStyleAsDefaultRequested = pyqtSignal()
 
     def __init__(self, parent=None):
-        """Create compact grouped style controls without applying changes."""
+        """Create compact tabbed style controls without applying changes."""
         super().__init__(parent, POPUP_WINDOW_FLAG)
         self.setObjectName("timeSeriesStylePopup")
         self._loading = False
 
         layout = QVBoxLayout(self)
-        self.target_label = QLabel("No active series", self)
+        self.tabs = QTabWidget(self)
+        self.tabs.setObjectName("tabs_time_series_style")
+        layout.addWidget(self.tabs)
+        self._createSeriesTab()
+        self._createFitTab()
+        self.setMaximumWidth(360)
+        self.setSelectionState(False)
+
+    def _createSeriesTab(self):
+        """Build the existing Series controls without redesigning them."""
+        tab = QWidget(self.tabs)
+        layout = QVBoxLayout(tab)
+        self.target_label = QLabel("No active series", tab)
         self.target_label.setObjectName("label_ts_style_target")
         layout.addWidget(self.target_label)
 
-        self.marker_group = QGroupBox("Marker", self)
+        self.marker_group = QGroupBox("Marker", tab)
         marker_layout = QFormLayout(self.marker_group)
         self.marker_type = QComboBox(self.marker_group)
         self.marker_type.addItems(list(MARKER_OPTIONS))
@@ -111,7 +128,7 @@ class TimeSeriesStylePopup(QWidget):
         marker_layout.addRow("Size", self.marker_size)
         marker_layout.addRow("Color", self.marker_color)
 
-        self.line_group = QGroupBox("Line", self)
+        self.line_group = QGroupBox("Line", tab)
         line_layout = QFormLayout(self.line_group)
         self.line_type = QComboBox(self.line_group)
         self.line_type.addItems(list(LINE_STYLE_OPTIONS))
@@ -130,11 +147,11 @@ class TimeSeriesStylePopup(QWidget):
         groups_layout.addWidget(self.line_group)
         layout.addLayout(groups_layout)
 
-        self.randomize_button = QPushButton(self)
+        self.randomize_button = QPushButton(tab)
         self.randomize_button.setIcon(QIcon(":/icons/icons/plot_random_color.svg"))
         configure_compact_command_button(self.randomize_button)
         self.randomize_button.setToolTip("Randomize marker and line color")
-        self.default_button = QPushButton("Set as default", self)
+        self.default_button = QPushButton("Set as default", tab)
         self.default_button.setToolTip(
             "Use the current series style as the default for newly created time series."
         )
@@ -157,8 +174,49 @@ class TimeSeriesStylePopup(QWidget):
             editor.setMaximumWidth(110)
         self.marker_group.setSizePolicy(SIZE_POLICY_MAXIMUM, SIZE_POLICY_PREFERRED)
         self.line_group.setSizePolicy(SIZE_POLICY_MAXIMUM, SIZE_POLICY_PREFERRED)
-        self.setMaximumWidth(360)
-        self.setSelectionState(False)
+        self.tabs.addTab(tab, "Series")
+
+    def _createFitTab(self):
+        """Build fit-line controls from the same compact widgets and schema."""
+        tab = QWidget(self.tabs)
+        layout = QVBoxLayout(tab)
+        self.fit_target_label = QLabel("Editing: Fit line", tab)
+        self.fit_target_label.setObjectName("label_fit_style_target")
+        layout.addWidget(self.fit_target_label)
+
+        self.fit_group = QGroupBox("Fit line", tab)
+        fit_layout = QFormLayout(self.fit_group)
+        self.fit_line_type = QComboBox(self.fit_group)
+        self.fit_line_type.addItems(list(LINE_STYLE_OPTIONS))
+        self.fit_line_color = CompactColorButton("━", "Select fit line color", self.fit_group)
+        self.fit_line_width = QDoubleSpinBox(self.fit_group)
+        self.fit_line_width.setRange(*LINE_WIDTH_RANGE)
+        self.fit_line_width.setDecimals(NUMERIC_DECIMALS)
+        self.fit_line_width.setSingleStep(NUMERIC_STEP)
+        fit_layout.addRow("Type", self.fit_line_type)
+        fit_layout.addRow("Width", self.fit_line_width)
+        fit_layout.addRow("Color", self.fit_line_color)
+        self.fit_line_type.setMaximumWidth(110)
+        self.fit_line_width.setMaximumWidth(110)
+        self.fit_group.setSizePolicy(SIZE_POLICY_MAXIMUM, SIZE_POLICY_PREFERRED)
+        layout.addWidget(self.fit_group)
+
+        self.fit_default_button = QPushButton("Set as default", tab)
+        self.fit_default_button.setToolTip(
+            "Use the current fit-line style as the default for newly created time series."
+        )
+        actions_layout = QHBoxLayout()
+        actions_layout.setContentsMargins(0, 0, 0, 0)
+        actions_layout.addStretch(1)
+        actions_layout.addWidget(self.fit_default_button)
+        layout.addLayout(actions_layout)
+        layout.addStretch(1)
+
+        self.fit_line_type.currentTextChanged.connect(self._emitFitLineType)
+        self.fit_line_width.valueChanged.connect(self._emitFitLineWidth)
+        self.fit_line_color.colorChanged.connect(self.fitLineColorChanged.emit)
+        self.fit_default_button.clicked.connect(self.setCurrentFitStyleAsDefaultRequested.emit)
+        self.tabs.addTab(tab, "Fit")
 
     def setSelectionState(self, selected, count=0):
         """Update target text and enablement for the current selection."""
@@ -169,11 +227,18 @@ class TimeSeriesStylePopup(QWidget):
             self.target_label.setText(f"Editing: {int(count)} selected series")
         else:
             self.target_label.setText("Editing: Current series")
-        for widget in (self.marker_group, self.line_group, self.randomize_button, self.default_button):
+        for widget in (
+            self.marker_group,
+            self.line_group,
+            self.randomize_button,
+            self.default_button,
+            self.fit_group,
+            self.fit_default_button,
+        ):
             widget.setEnabled(selected)
 
     def setStyle(self, style):
-        """Populate controls from a TimeSeriesStyle without emitting edits."""
+        """Populate Series controls from a TimeSeriesStyle without emitting edits."""
         params = style.params.get("time series plot", {}) if style is not None else {}
         self._loading = True
         self.marker_type.setCurrentText(str(params.get("marker", "")))
@@ -182,6 +247,14 @@ class TimeSeriesStylePopup(QWidget):
         self.line_width.setValue(float(params.get("line width", 0.0)))
         self.marker_color.setColor(params.get("marker color", "#000000"))
         self.line_color.setColor(params.get("line color", "#000000"))
+        self._loading = False
+
+    def setFitStyle(self, fit_style):
+        """Populate Fit controls without emitting edits."""
+        self._loading = True
+        self.fit_line_type.setCurrentText(fit_style.line_style)
+        self.fit_line_color.setColor(fit_style.line_color)
+        self.fit_line_width.setValue(float(fit_style.line_width))
         self._loading = False
 
     def setMixedProperties(self, properties):
@@ -203,3 +276,11 @@ class TimeSeriesStylePopup(QWidget):
     def _emitLineWidth(self, value):
         if not self._loading:
             self.lineWidthChanged.emit(float(value))
+
+    def _emitFitLineType(self, value):
+        if not self._loading:
+            self.fitLineTypeChanged.emit(value)
+
+    def _emitFitLineWidth(self, value):
+        if not self._loading:
+            self.fitLineWidthChanged.emit(float(value))
