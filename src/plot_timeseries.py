@@ -11,6 +11,7 @@ from qgis.PyQt.QtGui import QColor, QFont
 from .model_fitting import FittingModels
 from ..external.setting_manager_ui.json_settings import JsonSettings
 from .export_plot import TimeSeriesPlotExporter
+from .time_series.style_config import TimeSeriesStyleConfig
 from .models.time_series import (
     TimeSeriesData,
     TimeSeriesGraphics,
@@ -76,6 +77,10 @@ class PlotTs():
         self.random_marker_color_flag = False
         self.parms = {}
         self.updateSettings()
+        self.style_config = TimeSeriesStyleConfig(self.config_file)
+        self.default_style = DefaultTimeSeriesStyle(
+            self.style_config.load_default_style(self.parms)
+        )
         self.coords = None
         self.ref_coords = None
         self._y_data_ranges = {}
