@@ -1,5 +1,5 @@
 import os
-import sys
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
@@ -73,6 +73,11 @@ class PlotTs():
         self.fit_seasonal_flag = False
         self.replicate_flag = False
         self.plot_y_axis = "from_data"
+        self.manual_y_lower = None
+        self.manual_y_upper = None
+        self.residual_y_axis_mode = "from_data"
+        self.residual_manual_y_lower = None
+        self.residual_manual_y_upper = None
         self.replicate_value = 5.6 / 2
         self.ax_residuals = None
         self.plot_residuals_flag = False
@@ -134,8 +139,6 @@ class PlotTs():
         series_line_width = parms_ts.get(["time series plot", "series line width"])
         parms['series line width'] = ENSEMBLE_MEMBER_WIDTH_DEFAULT if series_line_width is None else series_line_width
 
-        parms['ymin'] = parms_ts.get(["time series plot", "ymin"])
-        parms['ymax'] = parms_ts.get(["time series plot", "ymax"])
         parms['grid'] = parms_ts.get(["time series plot", "grid"])
         parms['background color'] = parms_ts.get(["time series plot", "background color"]) or 'white'
         parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
@@ -182,8 +185,6 @@ class PlotTs():
         parms['line color'] = parms_ts.get(["residual plot", "line color"]) or None
         parms['line alpha'] = self._alphaOrDefault(parms_ts.get(["residual plot", "line alpha"]), 1.0)
         parms['line width'] = parms_ts.get(["residual plot", "line width"])
-        parms['ymin'] = parms_ts.get(["residual plot", "ymin"])
-        parms['ymax'] = parms_ts.get(["residual plot", "ymax"])
 
         # other parameters from time series plot
         parms['grid'] = parms_ts.get(["time series plot", "grid"])
@@ -701,29 +702,84 @@ class PlotTs():
 
         # get min/max from axis
         y_min, y_max = self._y_data_ranges.get(id(ax), ax.viewRange()[1])
-        if self.plot_y_axis != "from_data":
-            y_max = np.abs([y_min, y_max]).max()
-            y_min = -y_max
+        mode = self.plot_y_axis if ax is self.ax else self.residual_y_axis_mode
+        if mode == "manual":
+            lower = self.manual_y_lower if ax is self.ax else self.residual_manual_y_lower
+            upper = self.manual_y_upper if ax is self.ax else self.residual_manual_y_upper
+            data_span = y_max - y_min
+            from_data_lower = y_min - data_span * 0.05
+            from_data_upper = y_max + data_span * 0.05
+            ymin = from_data_lower if lower is None else lower
+            ymax = from_data_upper if upper is None else upper
+        else:
+            if mode in {"symmetric", "adaptive"}:
+                y_max = np.abs([y_min, y_max]).max()
+                y_min = -y_max
 
-        if self.plot_y_axis == "adaptive":
-            y_range = y_max - y_min
-            y_min_rounded = -5
-            y_max_rounded = 5
-            for i in [10000, 1000, 100, 10]:
-                if y_range >= i:
-                    y_min_rounded = np.floor(y_min / i) * i
-                    y_max_rounded = np.ceil(y_max / i) * i
-                    break
+            if mode == "adaptive":
+                y_range = y_max - y_min
+                y_min_rounded = -5
+                y_max_rounded = 5
+                for i in [10000, 1000, 100, 10]:
+                    if y_range >= i:
+                        y_min_rounded = np.floor(y_min / i) * i
+                        y_max_rounded = np.ceil(y_max / i) * i
+                        break
 
-            y_min = np.min([y_min_rounded, -5])
-            y_max = np.max([y_max_rounded, 5])
+                y_min = np.min([y_min_rounded, -5])
+                y_max = np.max([y_max_rounded, 5])
 
-        ymin = parms['ymin'] if parms['ymin'] is not None else y_min
-        ymax = parms['ymax'] if parms['ymax'] is not None else y_max
+            ymin = y_min
+            ymax = y_max
         if ymin == ymax:
             ymin -= 1
             ymax += 1
-        ax.setYRange(ymin, ymax, padding=0.05)
+        ax.setYRange(ymin, ymax, padding=0 if mode == "manual" else 0.05)
+
+    def setManualYRange(self, axis_name, lower=None, upper=None):
+        """Store and preview manual bounds on exactly one plot axis."""
+        if axis_name == "residual":
+            self.residual_y_axis_mode = "manual"
+            self.residual_manual_y_lower = lower
+            self.residual_manual_y_upper = upper
+            axis = self.ax_residuals
+            parms = self.parms["residual plot"]
+        else:
+            self.plot_y_axis = "manual"
+            self.manual_y_lower = lower
+            self.manual_y_upper = upper
+            axis = self.ax
+            parms = self.parms["time series plot"]
+        if axis is not None:
+            self.setYlims(ax=axis, parms=parms)
+            self._draw()
+
+    def captureViewport(self):
+        """Return current plot ranges for restoration after graphics-only redraws."""
+        viewport = {}
+        for name, axis in (("main", self.ax), ("residual", self.ax_residuals)):
+            if axis is not None:
+                ranges = axis.viewRange()
+                viewport[name] = (tuple(ranges[0]), tuple(ranges[1]))
+        return viewport
+
+    def restoreViewport(self, viewport):
+        """Restore a viewport previously returned by :meth:`captureViewport`."""
+        for name, axis in (("main", self.ax), ("residual", self.ax_residuals)):
+            ranges = viewport.get(name)
+            if axis is None or ranges is None:
+                continue
+            axis.setXRange(ranges[0][0], ranges[0][1], padding=0)
+            axis.setYRange(ranges[1][0], ranges[1][1], padding=0)
+
+    @contextmanager
+    def preserveViewport(self):
+        """Preserve main and residual plot ranges across a graphics redraw."""
+        viewport = self.captureViewport()
+        try:
+            yield
+        finally:
+            self.restoreViewport(viewport)
 
     def setAxisStyle(self, ax=None, parms={}):
         if not ax:
@@ -913,30 +969,19 @@ class PlotTs():
         return pg.mkBrush(self._color(color, alpha))
 
     def rerenderTimeSeriesSnapshots(self, snapshots: List[TimeSeriesSnapshot]) -> None:
-        """Re-render selected snapshots in place and issue one final draw."""
-        selected_ids = {id(snapshot) for snapshot in snapshots}
-        for snapshot in self.series_history:
-            if id(snapshot) not in selected_ids:
-                continue
-            self._remove_snapshot_graphics(snapshot)
-            graphics, residuals = self._render_time_series(snapshot.data, snapshot.style)
-            snapshot.graphics = graphics
-            if residuals is not None:
-                snapshot.data = snapshot.data.withResiduals(residuals)
-        self._rebuildYDataRanges()
-        if self.ax is not None:
-            self.setYlims(
-                ax=self.ax,
-                parms=self.parms["time series plot"],
-            )
-
-        if self.ax_residuals is not None:
-            self.setYlims(
-                ax=self.ax_residuals,
-                parms=self.parms["residual plot"],
-            )
-
-        self._draw()
+        """Re-render selected snapshots while preserving the user's viewport."""
+        with self.preserveViewport():
+            selected_ids = {id(snapshot) for snapshot in snapshots}
+            for snapshot in self.series_history:
+                if id(snapshot) not in selected_ids:
+                    continue
+                self._remove_snapshot_graphics(snapshot)
+                graphics, residuals = self._render_time_series(snapshot.data, snapshot.style)
+                snapshot.graphics = graphics
+                if residuals is not None:
+                    snapshot.data = snapshot.data.withResiduals(residuals)
+            self._rebuildYDataRanges()
+            self._draw()
 
     def selectedTimeSeriesSnapshots(self) -> List[TimeSeriesSnapshot]:
         """Return the snapshots currently targeted for editing."""

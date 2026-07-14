@@ -31,6 +31,7 @@ class TimeSeriesToolbar(QToolBar):
     seasonalEnabledChanged = pyqtSignal(bool)
     residualEnabledChanged = pyqtSignal(bool)
     yAxisModeChanged = pyqtSignal(str)
+    manualYAxisEditRequested = pyqtSignal()
     replicaEnabledChanged = pyqtSignal(bool)
     replicaIntervalChanged = pyqtSignal(float)
     replicaPairCountChanged = pyqtSignal(int)
@@ -98,6 +99,7 @@ class TimeSeriesToolbar(QToolBar):
             "action_ts_show_residual",
         )
         self.addAction(self.residual_action)
+        self.addSeparator()
 
         self.y_axis_button = QToolButton(self)
         self.y_axis_button.setObjectName("tool_ts_y_axis")
@@ -130,6 +132,13 @@ class TimeSeriesToolbar(QToolBar):
                 ":/icons/icons/y_axis_adaptive.svg",
                 "action_ts_y_adaptive",
             ),
+            (
+                "manual",
+                "Manual",
+                "Apply stored manual Y-axis ranges",
+                ":/icons/icons/y_axis_manual.svg",
+                "action_ts_y_manual",
+            ),
         ):
             action = QAction(QIcon(icon_path), text, self.y_axis_group)
             action.setObjectName(object_name)
@@ -140,6 +149,11 @@ class TimeSeriesToolbar(QToolBar):
             self.y_axis_menu.addAction(action)
             self.y_axis_actions[mode] = action
         self.y_axis_actions["from_data"].setChecked(True)
+        self.y_axis_menu.addSeparator()
+        self.edit_manual_y_axis_action = QAction("Edit Manual ranges…", self.y_axis_menu)
+        self.edit_manual_y_axis_action.setObjectName("action_ts_y_edit_manual")
+        self.edit_manual_y_axis_action.setToolTip("Edit stored manual Y-axis ranges")
+        self.y_axis_menu.addAction(self.edit_manual_y_axis_action)
         self.y_axis_button.setMenu(self.y_axis_menu)
         self.y_axis_button.setCheckable(False)
         self._updateYAxisSelector(self.y_axis_actions["from_data"])
@@ -264,6 +278,7 @@ class TimeSeriesToolbar(QToolBar):
         self.seasonal_action.toggled.connect(self.seasonalEnabledChanged.emit)
         self.residual_action.toggled.connect(self.residualEnabledChanged.emit)
         self.y_axis_group.triggered.connect(self._yAxisActionTriggered)
+        self.edit_manual_y_axis_action.triggered.connect(self.manualYAxisEditRequested.emit)
         self.replica_enabled_action.toggled.connect(self.replicaEnabledChanged.emit)
         self.replica_interval_group.triggered.connect(self._replicaIntervalActionTriggered)
         self.replica_pairs_action.triggered.connect(self._configureReplicaPairs)
@@ -308,13 +323,36 @@ class TimeSeriesToolbar(QToolBar):
         self.fit_enabled_action.setWhatsThis(f"Fit using {model_name} model")
         self.fit_model_button.setAccessibleName(f"Selected fit model: {model_name}")
 
-    def setSelectedYAxisMode(self, mode):
+    def setSelectedYAxisMode(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True):
         """Update the selected Y-axis mode without emitting a user-change signal."""
         action = self.y_axis_actions[mode]
+        if mode == "manual":
+            self.setManualYAxisSummary(lower, upper, residual_lower, residual_upper, residual_active)
         previous = self.y_axis_group.blockSignals(True)
         action.setChecked(True)
         self.y_axis_group.blockSignals(previous)
         self._updateYAxisSelector(action)
+
+    def setManualYAxisSummary(self, lower, upper, residual_lower=None, residual_upper=None, residual_active=True):
+        """Update Manual action text and metadata with its configured bounds."""
+        def display(value):
+            if value is None:
+                return "Auto"
+            return f"{value:g}"
+
+        action = self.y_axis_actions["manual"]
+        action.setText("Manual")
+        residual_summary = (
+            f"{display(residual_lower)} to {display(residual_upper)}"
+            if residual_active
+            else "Inactive"
+        )
+        action.setToolTip(
+            f"Time series: {display(lower)} to {display(upper)}\n"
+            f"Residuals: {residual_summary}"
+        )
+        if action.isChecked():
+            self._updateYAxisSelector(action)
 
     def _yAxisActionTriggered(self, action):
         """Update selector presentation and emit the selected Y-axis mode."""

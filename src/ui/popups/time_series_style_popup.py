@@ -147,12 +147,14 @@ class TimeSeriesStylePopup(QWidget):
         """Build the existing Series controls without redesigning them."""
         tab = QWidget(self.tabs)
         layout = QVBoxLayout(tab)
-        self.target_label = QLabel("No active series", tab)
+        self.target_label = QLabel("No active series.", tab)
         self.target_label.setObjectName("label_ts_style_target")
+        self.target_label.setWordWrap(False)
         layout.addWidget(self.target_label)
         self.series_status_label = QLabel("No active series.", tab)
         self.series_status_label.setToolTip("No active series.")
         self.series_status_label.hide()
+        self.series_status_label.setWordWrap(False)
         layout.addWidget(self.series_status_label)
 
         self.marker_group = QGroupBox("Marker", tab)
@@ -228,10 +230,12 @@ class TimeSeriesStylePopup(QWidget):
         layout = QVBoxLayout(tab)
         self.fit_target_label = QLabel("Editing: Fit line", tab)
         self.fit_target_label.setObjectName("label_fit_style_target")
+        self.fit_target_label.setWordWrap(False)
         layout.addWidget(self.fit_target_label)
-        self.fit_status_label = QLabel("Enable Fit in the toolbar to edit its style.", tab)
-        self.fit_status_label.setToolTip("Enable Fit in the toolbar to edit its style.")
+        self.fit_status_label = QLabel("Fit inactive.", tab)
+        self.fit_status_label.setToolTip("Fit inactive.")
         self.fit_status_label.hide()
+        self.fit_status_label.setWordWrap(False)
         layout.addWidget(self.fit_status_label)
 
         self.fit_group = QGroupBox("Fit line", tab)
@@ -277,10 +281,12 @@ class TimeSeriesStylePopup(QWidget):
         tab = QWidget(self.tabs)
         layout = QVBoxLayout(tab)
         self.residual_target_label = QLabel("Editing: Residual series", tab)
+        self.residual_target_label.setWordWrap(False)
         layout.addWidget(self.residual_target_label)
-        self.residual_status_label = QLabel("Enable Residual in the toolbar to edit its style.", tab)
-        self.residual_status_label.setToolTip("Enable Residual in the toolbar to edit its style.")
+        self.residual_status_label = QLabel("Residual inactive.", tab)
+        self.residual_status_label.setToolTip("Residual inactive.")
         self.residual_status_label.hide()
+        self.residual_status_label.setWordWrap(False)
         layout.addWidget(self.residual_status_label)
         self.residual_marker_group = QGroupBox("Marker", tab)
         ml = QFormLayout(self.residual_marker_group)
@@ -335,12 +341,14 @@ class TimeSeriesStylePopup(QWidget):
         """Build compact member-line and spread controls for ensemble snapshots."""
         tab = QWidget(self.tabs)
         layout = QVBoxLayout(tab)
-        self.ensemble_target_label = QLabel("No ensemble data", tab)
+        self.ensemble_target_label = QLabel("No ensemble data.", tab)
         self.ensemble_target_label.setObjectName("label_ensemble_style_target")
         layout.addWidget(self.ensemble_target_label)
-        self.ensemble_status_label = QLabel("Select multiple points to edit ensemble style.", tab)
-        self.ensemble_status_label.setToolTip("Select multiple points to edit ensemble style.")
+        self.ensemble_status_label = QLabel("No ensemble data.", tab)
+        self.ensemble_status_label.setToolTip("No ensemble data.")
         self.ensemble_status_label.hide()
+        self.ensemble_status_label.setWordWrap(False)
+        self.ensemble_target_label.setWordWrap(False)
         layout.addWidget(self.ensemble_status_label)
 
         groups = QHBoxLayout()
@@ -399,7 +407,7 @@ class TimeSeriesStylePopup(QWidget):
         """Keep the Ensemble tab stable while disabling unavailable controls."""
         available = bool(available)
         if not available:
-            text = "No ensemble data"
+            text = "No ensemble data."
         elif int(applicable_count) > 1:
             text = f"Editing: {int(applicable_count)} selected series"
         else:
@@ -427,7 +435,7 @@ class TimeSeriesStylePopup(QWidget):
         count = int(count)
         selected_count = int(selected_count)
         if count <= 0:
-            return "No active series"
+            return "No active series."
         if count == 1 and selected_count == 1:
             return "Editing: Current series"
         if count == selected_count:

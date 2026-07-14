@@ -11,11 +11,11 @@ try:
     except ImportError:
         from qgis.PyQt.QtWidgets import QAction, QActionGroup
         from qgis.PyQt.QtGui import QGuiApplication
-    from qgis.PyQt.QtWidgets import QApplication, QColorDialog, QMessageBox, QSizePolicy, QToolButton
+    from qgis.PyQt.QtWidgets import QApplication, QColorDialog, QFrame, QMessageBox, QSizePolicy, QToolButton
 except ImportError:
     from PySide6.QtCore import QPoint, QRect, QSize, Qt
     from PySide6.QtGui import QAction, QActionGroup, QGuiApplication
-    from PySide6.QtWidgets import QApplication, QColorDialog, QMessageBox, QSizePolicy, QToolButton
+    from PySide6.QtWidgets import QApplication, QColorDialog, QFrame, QMessageBox, QSizePolicy, QToolButton
 
 try:
     from qgis.core import QgsMapLayer, QgsWkbTypes
@@ -54,6 +54,10 @@ PEN_STYLE_BY_NAME = {
 
 # Qt window flags
 POPUP_WINDOW_FLAG = _enum_value(Qt, "WindowType", "Popup")
+
+
+# QFrame enums
+FRAME_SHAPE_STYLED_PANEL = _enum_value(QFrame, "Shape", "StyledPanel")
 
 # QSizePolicy enums
 SIZE_POLICY_FIXED = _enum_value(QSizePolicy, "Policy", "Fixed")
