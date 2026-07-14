@@ -298,11 +298,13 @@ class TimeSeriesStylePopup(QWidget):
         """Update target text and enablement for the current selection."""
         selected = bool(selected)
         if not selected:
-            self.target_label.setText("No active series")
+            target_text = "No active series"
         elif int(count) > 1:
-            self.target_label.setText(f"Editing: {int(count)} selected series")
+            target_text = f"Editing: {int(count)} selected series"
         else:
-            self.target_label.setText("Editing: Current series")
+            target_text = "Editing: Current series"
+        for label in (self.target_label, self.fit_target_label, self.residual_target_label):
+            label.setText(target_text)
         for widget in (
             self.marker_group,
             self.line_group,
