@@ -7,6 +7,8 @@ from typing import Iterable
 from ..models.time_series import TimeSeriesSnapshot, TimeSeriesStyle
 from .style_schema import normalize_color, normalize_number
 
+ENSEMBLE_MEMBER_LINE_STYLE = "series line style"
+ENSEMBLE_MEMBER_LINE_SOLID_STYLE = "-"
 ENSEMBLE_MEMBER_LINE_COLOR = "series line color"
 ENSEMBLE_MEMBER_LINE_WIDTH = "series line width"
 ENSEMBLE_MEMBER_LINE_ALPHA = "series line alpha"

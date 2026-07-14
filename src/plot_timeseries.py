@@ -127,10 +127,11 @@ class PlotTs():
 
         parms['series fill color'] = parms_ts.get(["time series plot", "series fill color"]) or 'blue'
         parms['series fill alpha'] = parms_ts.get(["time series plot", "series fill alpha"]) or 0.2
-        parms['series line style'] = parms_ts.get(["time series plot", "series line style"]) or ''
+        parms['series line style'] = '-'
         parms['series line color'] = parms_ts.get(["time series plot", "series line color"]) or None
         parms['series line alpha'] = parms_ts.get(["time series plot", "series line alpha"]) or 1.0
-        parms['series line width'] = parms_ts.get(["time series plot", "series line width"]) or 0.2
+        series_line_width = parms_ts.get(["time series plot", "series line width"])
+        parms['series line width'] = 0.5 if series_line_width is None else series_line_width
 
         parms['ymin'] = parms_ts.get(["time series plot", "ymin"])
         parms['ymax'] = parms_ts.get(["time series plot", "ymax"])
@@ -396,11 +397,11 @@ class PlotTs():
             main_y_data.extend([lower_bound, upper_bound])
 
         if series.plot_multiple_values is not None:
-            series_line_style = parms['series line style']
+            series_line_style = '-'
             series_line_color = parms['series line color']
             series_line_alpha = parms['series line alpha']
             series_line_width = parms['series line width']
-            if series_line_style and series_line_width > 0 and series_line_alpha > 0:
+            if series_line_width > 0 and series_line_alpha > 0:
                 for i in range(series.plot_multiple_values.shape[1]):
                     item = self.ax.plot(
                         x, series.plot_multiple_values[:, i],

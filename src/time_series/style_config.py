@@ -5,7 +5,13 @@ from copy import deepcopy
 from ...external.setting_manager_ui.json_settings import JsonSettings
 from ..models.time_series import TimeSeriesStyle
 from .fit_style_controller import FIT_STYLE_KEYS, FitStyle
-from .ensemble_style import ENSEMBLE_STYLE_KEYS, EnsembleStyle, EnsembleStyleController
+from .ensemble_style import (
+    ENSEMBLE_MEMBER_LINE_SOLID_STYLE,
+    ENSEMBLE_MEMBER_LINE_STYLE,
+    ENSEMBLE_STYLE_KEYS,
+    EnsembleStyle,
+    EnsembleStyleController,
+)
 from .residual_style_controller import RESIDUAL_STYLE_KEYS, ResidualStyle
 from .style_schema import (
     FIT_LINE_STYLE_OPTIONS,
@@ -87,6 +93,13 @@ class TimeSeriesStyleConfig:
             entry = plot.get(key, {})
             value = entry.get("value", entry.get("default")) if isinstance(entry, dict) else None
             values[key] = EnsembleStyleController._normalize(key, value)
+
+        style_entry = plot.get(ENSEMBLE_MEMBER_LINE_STYLE)
+        if isinstance(style_entry, dict):
+            current_style = style_entry.get("value", style_entry.get("default"))
+            if current_style != ENSEMBLE_MEMBER_LINE_SOLID_STYLE:
+                style_entry["value"] = ENSEMBLE_MEMBER_LINE_SOLID_STYLE
+                settings.save(self.BLOCK_KEY, block)
         return values
 
     def load_default_ensemble_style(self):

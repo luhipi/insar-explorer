@@ -142,14 +142,11 @@
                 "type": "dropdown",
                 "value": "-",
                 "options": [
-                    "",
-                    "-",
-                    "--",
-                    "-.",
-                    ":"
+                    "-"
                 ],
-                "default": "",
-                "advanced": true
+                "default": "-",
+                "advanced": true,
+                "description": "Ensemble member lines always use a solid line style."
             },
             "series line color": {
                 "type": "color",
