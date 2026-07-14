@@ -23,6 +23,7 @@ ENSEMBLE_STYLE_KEYS = (
     ENSEMBLE_FILL_ALPHA,
 )
 ENSEMBLE_MEMBER_WIDTH_RANGE = (0.0, 20.0)
+ENSEMBLE_MEMBER_WIDTH_DEFAULT = 0.5
 ENSEMBLE_OPACITY_RANGE = (0.0, 1.0)
 
 
@@ -31,7 +32,7 @@ class EnsembleStyle:
     """Appearance of member lines and spread for one ensemble snapshot."""
 
     member_line_color: str = "gray"
-    member_line_width: float = 0.5
+    member_line_width: float = ENSEMBLE_MEMBER_WIDTH_DEFAULT
     member_line_alpha: float = 0.5
     fill_color: str = "#1f77b4"
     fill_alpha: float = 0.2
@@ -42,7 +43,7 @@ class EnsembleStyle:
         values = params.get("time series plot", {}) if isinstance(params, dict) else {}
         return cls(
             member_line_color=normalize_color(values.get(ENSEMBLE_MEMBER_LINE_COLOR), "gray"),
-            member_line_width=normalize_number(values.get(ENSEMBLE_MEMBER_LINE_WIDTH), ENSEMBLE_MEMBER_WIDTH_RANGE, 0.5),
+            member_line_width=normalize_number(values.get(ENSEMBLE_MEMBER_LINE_WIDTH), ENSEMBLE_MEMBER_WIDTH_RANGE, ENSEMBLE_MEMBER_WIDTH_DEFAULT),
             member_line_alpha=normalize_number(values.get(ENSEMBLE_MEMBER_LINE_ALPHA), ENSEMBLE_OPACITY_RANGE, 0.5),
             fill_color=normalize_color(values.get(ENSEMBLE_FILL_COLOR), "#1f77b4"),
             fill_alpha=normalize_number(values.get(ENSEMBLE_FILL_ALPHA), ENSEMBLE_OPACITY_RANGE, 0.2),
@@ -116,7 +117,7 @@ class EnsembleStyleController:
         if key in (ENSEMBLE_MEMBER_LINE_COLOR, ENSEMBLE_FILL_COLOR):
             return normalize_color(value, "gray" if key == ENSEMBLE_MEMBER_LINE_COLOR else "#1f77b4")
         if key == ENSEMBLE_MEMBER_LINE_WIDTH:
-            return normalize_number(value, ENSEMBLE_MEMBER_WIDTH_RANGE, 0.5)
+            return normalize_number(value, ENSEMBLE_MEMBER_WIDTH_RANGE, ENSEMBLE_MEMBER_WIDTH_DEFAULT)
         if key in (ENSEMBLE_MEMBER_LINE_ALPHA, ENSEMBLE_FILL_ALPHA):
             return normalize_number(value, ENSEMBLE_OPACITY_RANGE, 0.5 if key == ENSEMBLE_MEMBER_LINE_ALPHA else 0.2)
         return value
