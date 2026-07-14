@@ -1,4 +1,5 @@
 import os
+from dataclasses import replace
 
 from qgis.gui import QgsMapToolEmitPoint
 from qgis.PyQt.QtWidgets import QFileDialog, QMenu, QComboBox, QLabel
@@ -29,16 +30,89 @@ from .time_series.residual_style_controller import ResidualStyleController
 from .time_series.style_availability import TimeSeriesStyleAvailability
 from .time_series.style_controller import TimeSeriesStyleController
 from .time_series.style_schema import percent_to_alpha, EDITABLE_STYLE_KEYS
+from .time_series.settings.model import AxisManualRange, SeriesStyleSettings
+from .time_series.settings.persistence import build_legacy_plot_params
 
 
 class GuiController(QObject):
     msg_signal = pyqtSignal(str, str, int)
+
+    @property
+    def time_series_y_axis_mode(self):
+        return self.time_series_settings.y_axis.policy
+
+    @time_series_y_axis_mode.setter
+    def time_series_y_axis_mode(self, value):
+        self.time_series_settings.update_property("y_axis", "policy", value)
+
+    residual_y_axis_mode = time_series_y_axis_mode
+
+    @property
+    def time_series_manual_y_lower(self):
+        return self.time_series_settings.y_axis.series_manual.lower
+
+    @time_series_manual_y_lower.setter
+    def time_series_manual_y_lower(self, value):
+        axis = self.time_series_settings.y_axis
+        self.time_series_settings.replace_domain("y_axis", replace(axis, series_manual=replace(axis.series_manual, lower=value)))
+
+    @property
+    def time_series_manual_y_upper(self):
+        return self.time_series_settings.y_axis.series_manual.upper
+
+    @time_series_manual_y_upper.setter
+    def time_series_manual_y_upper(self, value):
+        axis = self.time_series_settings.y_axis
+        self.time_series_settings.replace_domain("y_axis", replace(axis, series_manual=replace(axis.series_manual, upper=value)))
+
+    @property
+    def residual_manual_y_lower(self):
+        return self.time_series_settings.y_axis.residual_manual.lower
+
+    @residual_manual_y_lower.setter
+    def residual_manual_y_lower(self, value):
+        axis = self.time_series_settings.y_axis
+        self.time_series_settings.replace_domain("y_axis", replace(axis, residual_manual=replace(axis.residual_manual, lower=value)))
+
+    @property
+    def residual_manual_y_upper(self):
+        return self.time_series_settings.y_axis.residual_manual.upper
+
+    @residual_manual_y_upper.setter
+    def residual_manual_y_upper(self, value):
+        axis = self.time_series_settings.y_axis
+        self.time_series_settings.replace_domain("y_axis", replace(axis, residual_manual=replace(axis.residual_manual, upper=value)))
+
+    @property
+    def time_series_replica_enabled(self):
+        return self.time_series_settings.replica.enabled
+
+    @time_series_replica_enabled.setter
+    def time_series_replica_enabled(self, value):
+        self.time_series_settings.update_property("replica", "enabled", bool(value))
+
+    @property
+    def time_series_replica_interval_mm(self):
+        return self.time_series_settings.replica.interval_mm
+
+    @time_series_replica_interval_mm.setter
+    def time_series_replica_interval_mm(self, value):
+        self.time_series_settings.update_property("replica", "interval_mm", float(value))
+
+    @property
+    def time_series_replica_pair_count(self):
+        return self.time_series_settings.replica.pair_count
+
+    @time_series_replica_pair_count.setter
+    def time_series_replica_pair_count(self, value):
+        self.time_series_settings.update_property("replica", "pair_count", self._validateReplicaPairCount(value))
 
     def __init__(self, plugin):
         super().__init__()
         self.iface = plugin.iface
         self.ui = plugin.dockwidget
         self.choose_point_click_handler = cph.ClickHandler(plugin, msg_signal=self.msg_signal)
+        self.time_series_settings = self.choose_point_click_handler.plot_ts.settings_model
         self.click_tool = None  # plugin.click_tool
         self.drawing_tool = None  # for polygon drawing
         self.drawing_tool_reference = None  # for reference polygon drawing
@@ -431,8 +505,22 @@ class GuiController(QObject):
 
     def onSettingDialogChanged(self):
         """Synchronize Settings defaults, selected styles, popup, and plot once."""
-        self._reloadReplicaPairCountFromConfig()
         plotter = self.choose_point_click_handler.plot_ts
+        current_replica = plotter.settings_model.replica
+        reloaded_model = plotter.settings_persistence.load()
+        persistent_replica = replace(
+            current_replica, pair_count=reloaded_model.replica.pair_count
+        )
+        plotter.settings_model.replace_domains({
+            "series_defaults": reloaded_model.series_defaults,
+            "fit_defaults": reloaded_model.fit_defaults,
+            "residual_defaults": reloaded_model.residual_defaults,
+            "ensemble_defaults": reloaded_model.ensemble_defaults,
+            "replica": persistent_replica,
+            "appearance": reloaded_model.appearance,
+            "export": reloaded_model.export,
+        })
+        self._syncTimeSeriesReplicaControls()
         previous = getattr(self, "_settings_style_before", plotter.style_config.load_style_values())
         previous_fit = getattr(self, "_settings_fit_style_before", plotter.style_config.load_fit_style_values())
         previous_residual = getattr(
@@ -443,19 +531,10 @@ class GuiController(QObject):
             self, "_settings_ensemble_style_before",
             plotter.style_config.load_ensemble_style_values(),
         )
-        plotter.updateSettings()
         current = plotter.style_config.load_style_values()
         current_fit = plotter.style_config.load_fit_style_values()
         current_residual = plotter.style_config.load_residual_style_values()
         current_ensemble = plotter.style_config.load_ensemble_style_values()
-        plotter.default_style.replaceFromSeries(
-            plotter.style_config.load_default_style(plotter.parms)
-        )
-        default_params = plotter.default_style.params
-        default_params.setdefault("model fit", {}).update(current_fit)
-        default_params.setdefault("residual plot", {}).update(current_residual)
-        default_params.setdefault("time series plot", {}).update(current_ensemble)
-        plotter.default_style = type(plotter.default_style).fromParams(default_params)
         changed_values = {
             key: current[key]
             for key in EDITABLE_STYLE_KEYS
@@ -746,10 +825,8 @@ class GuiController(QObject):
             return
         ensemble_style = self.ensemble_style_controller.ensembleStyle(snapshots[0])
         plotter = self.choose_point_click_handler.plot_ts
-        plotter.style_config.save_default_ensemble_style(ensemble_style)
-        params = plotter.default_style.params
-        params.setdefault("time series plot", {}).update(ensemble_style.asParams())
-        plotter.default_style = type(plotter.default_style).fromParams(params)
+        plotter.settings_model.replace_domain("ensemble_defaults", ensemble_style)
+        plotter.settings_persistence.save_ensemble_defaults(ensemble_style)
         self._settings_ensemble_style_before = plotter.style_config.load_ensemble_style_values()
         self._refreshTimeSeriesStylePopup()
         self.msg_signal.emit("Current ensemble style set as default for future ensemble plots.", "done", 3000)
@@ -761,10 +838,8 @@ class GuiController(QObject):
             return
         residual_style = self.residual_style_controller.residualStyle(snapshots[0])
         plotter = self.choose_point_click_handler.plot_ts
-        plotter.style_config.save_default_residual_style(residual_style)
-        params = plotter.default_style.params
-        params.setdefault("residual plot", {}).update(residual_style.asParams())
-        plotter.default_style = type(plotter.default_style).fromParams(params)
+        plotter.settings_model.replace_domain("residual_defaults", residual_style)
+        plotter.settings_persistence.save_residual_defaults(residual_style)
         self._settings_residual_style_before = plotter.style_config.load_residual_style_values()
         self._refreshTimeSeriesStylePopup()
         self.msg_signal.emit("Current residual style set as default for new time series.", "done", 3000)
@@ -785,8 +860,9 @@ class GuiController(QObject):
             return
         style = snapshots[0].style
         plotter = self.choose_point_click_handler.plot_ts
-        plotter.style_config.save_default_style(style)
-        plotter.default_style.replaceFromSeries(style)
+        series_defaults = SeriesStyleSettings.from_params(style.params)
+        plotter.settings_model.replace_domain("series_defaults", series_defaults)
+        plotter.settings_persistence.save_series_defaults(series_defaults)
         self._settings_style_before = plotter.style_config.load_style_values()
         self.msg_signal.emit("Current plot style set as default for new time series.", "done", 3000)
 
@@ -797,10 +873,8 @@ class GuiController(QObject):
             return
         fit_style = self.fit_style_controller.fitStyle(snapshots[0])
         plotter = self.choose_point_click_handler.plot_ts
-        plotter.style_config.save_default_fit_style(fit_style)
-        default_params = plotter.default_style.params
-        default_params.setdefault("model fit", {}).update(fit_style.asParams())
-        plotter.default_style = type(plotter.default_style).fromParams(default_params)
+        plotter.settings_model.replace_domain("fit_defaults", fit_style)
+        plotter.settings_persistence.save_fit_defaults(fit_style)
         self._settings_fit_style_before = plotter.style_config.load_fit_style_values()
         self.time_series_style_popup.setFitStyle(fit_style)
         self.msg_signal.emit("Current fit style set as default for new time series.", "done", 3000)
@@ -928,6 +1002,10 @@ class GuiController(QObject):
             mode = "from_data"
         self.time_series_y_axis_mode = mode
         self.residual_y_axis_mode = mode
+        current_axis = self.time_series_settings.y_axis
+        self.time_series_settings.replace_domain(
+            "y_axis", replace(current_axis, policy=mode)
+        )
         plotter = self.choose_point_click_handler.plot_ts
         plotter.plot_y_axis = mode
         plotter.residual_y_axis_mode = mode
@@ -955,12 +1033,7 @@ class GuiController(QObject):
         plotter = self.choose_point_click_handler.plot_ts
         viewport = plotter.captureViewport()
         self._manual_y_axis_session = {
-            "series_mode": self.time_series_y_axis_mode,
-            "residual_mode": self.residual_y_axis_mode,
-            "series_lower": self.time_series_manual_y_lower,
-            "series_upper": self.time_series_manual_y_upper,
-            "residual_lower": self.residual_manual_y_lower,
-            "residual_upper": self.residual_manual_y_upper,
+            "y_axis": self.time_series_settings.y_axis,
             "viewport": viewport,
         }
         series_view = viewport.get("main", ((0, 1), tuple(plotter.ax.viewRange()[1])))[1]
@@ -992,9 +1065,17 @@ class GuiController(QObject):
         if axis_name == "residual":
             self.residual_manual_y_lower = lower
             self.residual_manual_y_upper = upper
+            axis_state = self.time_series_settings.y_axis
+            self.time_series_settings.replace_domain(
+                "y_axis", replace(axis_state, residual_manual=AxisManualRange(lower, upper))
+            )
         else:
             self.time_series_manual_y_lower = lower
             self.time_series_manual_y_upper = upper
+            axis_state = self.time_series_settings.y_axis
+            self.time_series_settings.replace_domain(
+                "y_axis", replace(axis_state, series_manual=AxisManualRange(lower, upper))
+            )
         self._manual_y_axis_session = None
         self.manual_y_axis_popup.closeAfterCommit()
         self._applyTimeSeriesYAxisMode("manual", refresh=True)
@@ -1026,20 +1107,9 @@ class GuiController(QObject):
             return
         self._manual_y_axis_session = None
         plotter = self.choose_point_click_handler.plot_ts
-        self.time_series_y_axis_mode = session["series_mode"]
-        self.residual_y_axis_mode = session["residual_mode"]
-        self.time_series_manual_y_lower = session["series_lower"]
-        self.time_series_manual_y_upper = session["series_upper"]
-        self.residual_manual_y_lower = session["residual_lower"]
-        self.residual_manual_y_upper = session["residual_upper"]
-        plotter.plot_y_axis = session["series_mode"]
-        plotter.residual_y_axis_mode = session["residual_mode"]
-        plotter.manual_y_lower = session["series_lower"]
-        plotter.manual_y_upper = session["series_upper"]
-        plotter.residual_manual_y_lower = session["residual_lower"]
-        plotter.residual_manual_y_upper = session["residual_upper"]
+        self.time_series_settings.replace_domain("y_axis", session["y_axis"])
         plotter.restoreViewport(session["viewport"])
-        self._syncTimeSeriesYAxisControls(session["series_mode"])
+        self._syncTimeSeriesYAxisControls(session["y_axis"].policy)
         plotter._draw()
 
     def _loadReplicaInterval(self):
@@ -1058,17 +1128,17 @@ class GuiController(QObject):
 
     def _loadReplicaPairCount(self):
         """Load the symmetric Replica pair count from the canonical JSON config."""
-        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
-        parms.load(block_key="timeseries settings")
-        value = parms.get(["time series plot", "replica pair count"])
-        return self._validateReplicaPairCount(value)
+        return self.choose_point_click_handler.plot_ts.settings_model.replica.pair_count
 
     def _reloadReplicaPairCountFromConfig(self):
         """Reload the canonical Replica pair count and synchronize its toolbar view."""
-        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
-        parms.load(block_key="timeseries settings")
-        value = parms.get(["time series plot", "replica pair count"])
-        self.time_series_replica_pair_count = self._validateReplicaPairCount(value)
+        reloaded = self.choose_point_click_handler.plot_ts.settings_persistence.load()
+        self.choose_point_click_handler.plot_ts.settings_model.replace_domain(
+            "replica", replace(reloaded.replica,
+                               enabled=self.time_series_replica_enabled,
+                               interval_mm=self.time_series_replica_interval_mm)
+        )
+        self.time_series_replica_pair_count = self.time_series_settings.replica.pair_count
         self._syncTimeSeriesReplicaControls()
 
     def _restoreTimeSeriesReplicaState(self):
@@ -1086,7 +1156,12 @@ class GuiController(QObject):
     def _applyTimeSeriesReplicaState(self, refresh=True):
         """Apply Replica state and optionally redraw the active plot exactly once."""
         plot = self.choose_point_click_handler.plot_ts
-        plot.replicate_flag = self.time_series_replica_enabled
+        replica = replace(self.time_series_settings.replica,
+                          enabled=self.time_series_replica_enabled,
+                          interval_mm=self.time_series_replica_interval_mm,
+                          pair_count=self.time_series_replica_pair_count)
+        self.time_series_settings.replace_domain("replica", replica)
+        plot.replicate_flag = replica.enabled
         plot.replicate_value = self.time_series_replica_interval_mm
         plot.parms["time series plot"][
             "replica pair count"
@@ -1127,11 +1202,9 @@ class GuiController(QObject):
 
     def _persistReplicaPairCount(self, pair_count):
         """Persist the validated Replica pair count to the plot configuration."""
-        block_key = "timeseries settings"
-        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
-        settings_block = parms.load(block_key=block_key)
-        settings_block["time series plot"]["replica pair count"]["value"] = pair_count
-        parms.save(block_key, settings_block)
+        replica = replace(self.time_series_settings.replica, pair_count=pair_count)
+        self.time_series_settings.replace_domain("replica", replica)
+        self.choose_point_click_handler.plot_ts.settings_persistence.save_replica_defaults(replica)
 
     def setTimeSeriesReplicaPairCount(self, pair_count):
         """Persist, apply, and redraw a toolbar Replica pair-count change once."""
