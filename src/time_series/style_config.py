@@ -5,6 +5,7 @@ from copy import deepcopy
 from ...external.setting_manager_ui.json_settings import JsonSettings
 from ..models.time_series import TimeSeriesStyle
 from .fit_style_controller import FIT_STYLE_KEYS, FitStyle
+from .ensemble_style import ENSEMBLE_STYLE_KEYS, EnsembleStyle, EnsembleStyleController
 from .residual_style_controller import RESIDUAL_STYLE_KEYS, ResidualStyle
 from .style_schema import (
     FIT_LINE_STYLE_OPTIONS,
@@ -74,6 +75,38 @@ class TimeSeriesStyleConfig:
 
         settings.save(self.BLOCK_KEY, block)
 
+
+
+    def load_ensemble_style_values(self):
+        """Load and normalize persisted Ensemble defaults from existing plot keys."""
+        settings = JsonSettings(self.config_file)
+        block = settings.load(block_key=self.BLOCK_KEY)
+        plot = block.get(self.PLOT_KEY, {})
+        values = {}
+        for key in ENSEMBLE_STYLE_KEYS:
+            entry = plot.get(key, {})
+            value = entry.get("value", entry.get("default")) if isinstance(entry, dict) else None
+            values[key] = EnsembleStyleController._normalize(key, value)
+        return values
+
+    def load_default_ensemble_style(self):
+        """Return normalized persisted Ensemble defaults."""
+        return EnsembleStyle.fromParams({self.PLOT_KEY: self.load_ensemble_style_values()})
+
+    def save_default_ensemble_style(self, ensemble_style):
+        """Persist Ensemble defaults while retaining unrelated config metadata."""
+        values = ensemble_style.asParams() if isinstance(ensemble_style, EnsembleStyle) else dict(ensemble_style)
+        settings = JsonSettings(self.config_file)
+        block = settings.load(block_key=self.BLOCK_KEY)
+        plot = block.get(self.PLOT_KEY)
+        if not isinstance(plot, dict):
+            raise KeyError("Missing timeseries settings/time series plot configuration block")
+        for key in ENSEMBLE_STYLE_KEYS:
+            entry = plot.get(key)
+            if not isinstance(entry, dict):
+                raise KeyError(f"Missing ensemble style setting: {key}")
+            entry["value"] = EnsembleStyleController._normalize(key, values.get(key))
+        settings.save(self.BLOCK_KEY, block)
 
     def load_fit_style_values(self):
         """Load and normalize persisted fit-line defaults."""

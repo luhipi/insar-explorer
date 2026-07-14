@@ -23,6 +23,7 @@ from .qt_compat import (
 )
 from .time_series.fit_state import TimeSeriesFitState
 from .time_series.fit_style_controller import FitStyleController
+from .time_series.ensemble_style import EnsembleStyleController
 from .time_series.residual_style_controller import ResidualStyleController
 from .time_series.style_controller import TimeSeriesStyleController
 from .time_series.style_schema import EDITABLE_STYLE_KEYS
@@ -54,6 +55,7 @@ class GuiController(QObject):
         self.time_series_style_popup = TimeSeriesStylePopup(self.ui)
         self.time_series_style_controller = TimeSeriesStyleController()
         self.fit_style_controller = FitStyleController()
+        self.ensemble_style_controller = EnsembleStyleController()
         self.residual_style_controller = ResidualStyleController()
         self.last_save_path = self._initialExportDirectory()
         self.last_save_ts_name = "ts_plot.png"
@@ -324,6 +326,12 @@ class GuiController(QObject):
         popup.residualLineWidthChanged.connect(lambda value: self._applySelectedResidualStyle("line_width", value))
         popup.randomizeResidualColorRequested.connect(self.randomizeSelectedResidualColor)
         popup.setCurrentResidualStyleAsDefaultRequested.connect(self.setCurrentResidualStyleAsDefault)
+        popup.ensembleMemberColorChanged.connect(lambda value: self._applySelectedEnsembleStyle("member_color", value))
+        popup.ensembleMemberWidthChanged.connect(lambda value: self._applySelectedEnsembleStyle("member_width", value))
+        popup.ensembleMemberOpacityChanged.connect(lambda value: self._applySelectedEnsembleStyle("member_opacity", value))
+        popup.ensembleFillColorChanged.connect(lambda value: self._applySelectedEnsembleStyle("fill_color", value))
+        popup.ensembleFillOpacityChanged.connect(lambda value: self._applySelectedEnsembleStyle("fill_opacity", value))
+        popup.ensembleSetAsDefaultRequested.connect(self.setCurrentEnsembleStyleAsDefault)
         self._restoreTimeSeriesFitState()
         # Plot setting
         self._restoreTimeSeriesYAxisMode()
@@ -370,6 +378,7 @@ class GuiController(QObject):
         self._settings_style_before = plotter.style_config.load_style_values()
         self._settings_fit_style_before = plotter.style_config.load_fit_style_values()
         self._settings_residual_style_before = plotter.style_config.load_residual_style_values()
+        self._settings_ensemble_style_before = plotter.style_config.load_ensemble_style_values()
         dialog = SettingsTableDialog(json_file_path, block_key=block_key)
         self._configureTimeSeriesSettingsScope(dialog)
         dialog.accepted.connect(self.onSettingDialogChanged)
@@ -405,16 +414,22 @@ class GuiController(QObject):
             self, "_settings_residual_style_before",
             plotter.style_config.load_residual_style_values(),
         )
+        previous_ensemble = getattr(
+            self, "_settings_ensemble_style_before",
+            plotter.style_config.load_ensemble_style_values(),
+        )
         plotter.updateSettings()
         current = plotter.style_config.load_style_values()
         current_fit = plotter.style_config.load_fit_style_values()
         current_residual = plotter.style_config.load_residual_style_values()
+        current_ensemble = plotter.style_config.load_ensemble_style_values()
         plotter.default_style.replaceFromSeries(
             plotter.style_config.load_default_style(plotter.parms)
         )
         default_params = plotter.default_style.params
         default_params.setdefault("model fit", {}).update(current_fit)
         default_params.setdefault("residual plot", {}).update(current_residual)
+        default_params.setdefault("time series plot", {}).update(current_ensemble)
         plotter.default_style = type(plotter.default_style).fromParams(default_params)
         changed_values = {
             key: current[key]
@@ -431,6 +446,11 @@ class GuiController(QObject):
             for key in current_residual
             if previous_residual.get(key) != current_residual.get(key)
         }
+        changed_ensemble_values = {
+            key: current_ensemble[key]
+            for key in current_ensemble
+            if previous_ensemble.get(key) != current_ensemble.get(key)
+        }
         snapshots = self.selectedTimeSeriesSnapshots()
         if snapshots:
             changed = self.time_series_style_controller.applySettingsChanges(
@@ -444,10 +464,13 @@ class GuiController(QObject):
                 changed = self.residual_style_controller.applyValues(
                     changed, changed_residual_values
                 )
+            if changed_ensemble_values:
+                self.ensemble_style_controller.applyValues(snapshots, changed_ensemble_values)
             plotter.rerenderTimeSeriesSnapshots(changed)
         self._settings_style_before = current
         self._settings_fit_style_before = current_fit
         self._settings_residual_style_before = current_residual
+        self._settings_ensemble_style_before = current_ensemble
         self._refreshTimeSeriesStylePopup()
 
     def setSymbologyUpperRange(self):
@@ -647,6 +670,19 @@ class GuiController(QObject):
         changed = self.fit_style_controller.applyProperty(snapshots, property_name, value)
         self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
 
+
+    def _applySelectedEnsembleStyle(self, property_name, value):
+        """Apply one Ensemble property to applicable selected snapshots and redraw once."""
+        snapshots = self._selectedTimeSeriesSnapshots()
+        changed = self.ensemble_style_controller.applyProperty(snapshots, property_name, value)
+        if not changed:
+            return
+        plotter = self.choose_point_click_handler.plot_ts
+        y_axis_mode = self.time_series_y_axis_mode
+        plotter.rerenderTimeSeriesSnapshots(changed)
+        self.time_series_y_axis_mode = y_axis_mode
+        self._refreshTimeSeriesStylePopup()
+
     def _applySelectedResidualStyle(self, property_name, value):
         """Apply one residual-series property and redraw exactly once."""
         snapshots = self._selectedTimeSeriesSnapshots()
@@ -664,6 +700,24 @@ class GuiController(QObject):
         changed = self.residual_style_controller.randomizeColor(snapshots)
         self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
         self._refreshTimeSeriesStylePopup()
+
+
+    def setCurrentEnsembleStyleAsDefault(self):
+        """Persist selected Ensemble appearance for future ensemble snapshots only."""
+        snapshots = self.ensemble_style_controller.applicableSnapshots(
+            self._selectedTimeSeriesSnapshots()
+        )
+        if not snapshots:
+            return
+        ensemble_style = self.ensemble_style_controller.ensembleStyle(snapshots[0])
+        plotter = self.choose_point_click_handler.plot_ts
+        plotter.style_config.save_default_ensemble_style(ensemble_style)
+        params = plotter.default_style.params
+        params.setdefault("time series plot", {}).update(ensemble_style.asParams())
+        plotter.default_style = type(plotter.default_style).fromParams(params)
+        self._settings_ensemble_style_before = plotter.style_config.load_ensemble_style_values()
+        self._refreshTimeSeriesStylePopup()
+        self.msg_signal.emit("Current ensemble style set as default for future ensemble plots.", "done", 3000)
 
     def setCurrentResidualStyleAsDefault(self):
         """Persist selected residual appearance for future series only."""
@@ -734,10 +788,15 @@ class GuiController(QObject):
             popup.setStyle(styles[0])
             popup.setFitStyle(self.fit_style_controller.fitStyle(snapshots[0]))
             popup.setResidualStyle(self.residual_style_controller.residualStyle(snapshots[0]))
+            ensemble_snapshots = self.ensemble_style_controller.applicableSnapshots(snapshots)
+            popup.setEnsembleAvailability(bool(ensemble_snapshots), len(ensemble_snapshots))
+            if ensemble_snapshots:
+                popup.setEnsembleStyle(self.ensemble_style_controller.ensembleStyle(ensemble_snapshots[0]))
             popup.setMixedProperties(
                 self.time_series_style_controller.mixedProperties(snapshots)
             )
         else:
+            popup.setEnsembleAvailability(False)
             popup.setMixedProperties(set())
 
     def showTimeSeriesStylePopup(self):

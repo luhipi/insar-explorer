@@ -4,6 +4,10 @@ from qgis.PyQt.QtCore import pyqtSignal
 from qgis.PyQt.QtGui import QColor, QIcon
 
 from ...ui_windows.color_picker import ColorPicker
+from ...time_series.ensemble_style import (
+    ENSEMBLE_MEMBER_WIDTH_RANGE,
+    ENSEMBLE_OPACITY_RANGE,
+)
 from ...time_series.style_schema import (
     FIT_LINE_STYLE_OPTIONS,
     FIT_LINE_WIDTH_DECIMALS,
@@ -107,6 +111,12 @@ class TimeSeriesStylePopup(QWidget):
     setCurrentFitStyleAsDefaultRequested = pyqtSignal()
     randomizeResidualColorRequested = pyqtSignal()
     setCurrentResidualStyleAsDefaultRequested = pyqtSignal()
+    ensembleMemberColorChanged = pyqtSignal(str)
+    ensembleMemberWidthChanged = pyqtSignal(float)
+    ensembleMemberOpacityChanged = pyqtSignal(float)
+    ensembleFillColorChanged = pyqtSignal(str)
+    ensembleFillOpacityChanged = pyqtSignal(float)
+    ensembleSetAsDefaultRequested = pyqtSignal()
 
     def __init__(self, parent=None):
         """Create compact tabbed style controls without applying changes."""
@@ -121,6 +131,7 @@ class TimeSeriesStylePopup(QWidget):
         self._createSeriesTab()
         self._createFitTab()
         self._createResidualTab()
+        self._createEnsembleTab()
         self.setMaximumWidth(360)
         self.setSelectionState(False)
 
@@ -283,6 +294,86 @@ class TimeSeriesStylePopup(QWidget):
         self.residual_default_button.clicked.connect(self.setCurrentResidualStyleAsDefaultRequested.emit)
         self.tabs.addTab(tab, "Residual")
 
+
+    def _createEnsembleTab(self):
+        """Build compact member-line and spread controls for ensemble snapshots."""
+        tab = QWidget(self.tabs)
+        layout = QVBoxLayout(tab)
+        self.ensemble_target_label = QLabel("No ensemble data", tab)
+        self.ensemble_target_label.setObjectName("label_ensemble_style_target")
+        layout.addWidget(self.ensemble_target_label)
+
+        groups = QHBoxLayout()
+        groups.setContentsMargins(0, 0, 0, 0)
+        self.ensemble_member_group = QGroupBox("Member series", tab)
+        member_layout = QFormLayout(self.ensemble_member_group)
+        self.ensemble_member_color = CompactColorButton("━", "Select ensemble member color", self.ensemble_member_group)
+        self.ensemble_member_width = QDoubleSpinBox(self.ensemble_member_group)
+        self.ensemble_member_width.setRange(*ENSEMBLE_MEMBER_WIDTH_RANGE)
+        self.ensemble_member_width.setDecimals(NUMERIC_DECIMALS)
+        self.ensemble_member_width.setSingleStep(NUMERIC_STEP)
+        self.ensemble_member_opacity = QDoubleSpinBox(self.ensemble_member_group)
+        self.ensemble_member_opacity.setRange(*ENSEMBLE_OPACITY_RANGE)
+        self.ensemble_member_opacity.setDecimals(2)
+        self.ensemble_member_opacity.setSingleStep(0.05)
+        member_layout.addRow("Color", self.ensemble_member_color)
+        member_layout.addRow("Width", self.ensemble_member_width)
+        member_layout.addRow("Opacity", self.ensemble_member_opacity)
+
+        self.ensemble_spread_group = QGroupBox("Spread", tab)
+        spread_layout = QFormLayout(self.ensemble_spread_group)
+        self.ensemble_fill_color = CompactColorButton("■", "Select ensemble spread color", self.ensemble_spread_group)
+        self.ensemble_fill_opacity = QDoubleSpinBox(self.ensemble_spread_group)
+        self.ensemble_fill_opacity.setRange(*ENSEMBLE_OPACITY_RANGE)
+        self.ensemble_fill_opacity.setDecimals(2)
+        self.ensemble_fill_opacity.setSingleStep(0.05)
+        spread_layout.addRow("Fill color", self.ensemble_fill_color)
+        spread_layout.addRow("Opacity", self.ensemble_fill_opacity)
+        groups.addWidget(self.ensemble_member_group)
+        groups.addWidget(self.ensemble_spread_group)
+        layout.addLayout(groups)
+
+        self.ensemble_default_button = QPushButton("Set as default", tab)
+        self.ensemble_default_button.setToolTip("Use the current ensemble style as the default for future ensemble plots.")
+        actions = QHBoxLayout()
+        actions.addStretch(1)
+        actions.addWidget(self.ensemble_default_button)
+        layout.addLayout(actions)
+        layout.addStretch(1)
+
+        self.ensemble_member_color.colorChanged.connect(self.ensembleMemberColorChanged.emit)
+        self.ensemble_member_width.valueChanged.connect(lambda v: None if self._loading else self.ensembleMemberWidthChanged.emit(float(v)))
+        self.ensemble_member_opacity.valueChanged.connect(lambda v: None if self._loading else self.ensembleMemberOpacityChanged.emit(float(v)))
+        self.ensemble_fill_color.colorChanged.connect(self.ensembleFillColorChanged.emit)
+        self.ensemble_fill_opacity.valueChanged.connect(lambda v: None if self._loading else self.ensembleFillOpacityChanged.emit(float(v)))
+        self.ensemble_default_button.clicked.connect(self.ensembleSetAsDefaultRequested.emit)
+        for editor in (self.ensemble_member_width, self.ensemble_member_opacity, self.ensemble_fill_opacity):
+            editor.setMaximumWidth(90)
+        self.tabs.addTab(tab, "Ensemble")
+
+    def setEnsembleStyle(self, ensemble_style):
+        """Populate Ensemble controls without emitting user-action signals."""
+        self._loading = True
+        self.ensemble_member_color.setColor(ensemble_style.member_line_color)
+        self.ensemble_member_width.setValue(float(ensemble_style.member_line_width))
+        self.ensemble_member_opacity.setValue(float(ensemble_style.member_line_alpha))
+        self.ensemble_fill_color.setColor(ensemble_style.fill_color)
+        self.ensemble_fill_opacity.setValue(float(ensemble_style.fill_alpha))
+        self._loading = False
+
+    def setEnsembleAvailability(self, available, applicable_count=0):
+        """Keep the Ensemble tab stable while disabling unavailable controls."""
+        available = bool(available)
+        if not available:
+            text = "No ensemble data"
+        elif int(applicable_count) > 1:
+            text = f"Editing: {int(applicable_count)} selected series"
+        else:
+            text = "Editing: Ensemble"
+        self.ensemble_target_label.setText(text)
+        for widget in (self.ensemble_member_group, self.ensemble_spread_group, self.ensemble_default_button):
+            widget.setEnabled(available)
+
     def setResidualStyle(self, residual_style):
         """Populate Residual controls without emitting edits."""
         self._loading = True
@@ -305,6 +396,7 @@ class TimeSeriesStylePopup(QWidget):
             target_text = "Editing: Current series"
         for label in (self.target_label, self.fit_target_label, self.residual_target_label):
             label.setText(target_text)
+        self.setEnsembleAvailability(False)
         for widget in (
             self.marker_group,
             self.line_group,

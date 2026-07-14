@@ -44,6 +44,14 @@ class TimeSeriesData:
         values = np.asarray(self.plot_values, dtype=np.float64)
         return bool(np.sum(np.isfinite(values)) > 0)
 
+    def hasEnsembleData(self) -> bool:
+        """Return True when this snapshot contains multiple member time series."""
+        return bool(
+            self.plot_multiple_values is not None
+            and np.asarray(self.plot_multiple_values).ndim == 2
+            and np.asarray(self.plot_multiple_values).shape[1] > 1
+        )
+
     def dateStrings(self) -> List[str]:
         """Return dates formatted for ASCII export."""
         return [date.strftime('%Y-%m-%d') for date in self.dates]

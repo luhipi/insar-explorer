@@ -382,17 +382,17 @@ class PlotTs():
             upper_bound = series.max_plot_values
             series_fill_color = parms['series fill color']
             series_fill_alpha = parms['series fill alpha']
-            lower_line = pg.PlotCurveItem(x, lower_bound, pen=None)
-            upper_line = pg.PlotCurveItem(x, upper_bound, pen=None)
-            fill = pg.FillBetweenItem(
-                lower_line,
-                upper_line,
-                brush=self._brush(series_fill_color, series_fill_alpha)
-            )
-            self.ax.addItem(lower_line)
-            self.ax.addItem(upper_line)
-            self.ax.addItem(fill)
-            items.plot_multiple_fill = [lower_line, upper_line, fill]
+            if series_fill_alpha > 0:
+                lower_line = pg.PlotCurveItem(x, lower_bound, pen=None)
+                upper_line = pg.PlotCurveItem(x, upper_bound, pen=None)
+                fill = pg.FillBetweenItem(
+                    lower_line, upper_line,
+                    brush=self._brush(series_fill_color, series_fill_alpha)
+                )
+                self.ax.addItem(lower_line)
+                self.ax.addItem(upper_line)
+                self.ax.addItem(fill)
+                items.plot_multiple_fill = [lower_line, upper_line, fill]
             main_y_data.extend([lower_bound, upper_bound])
 
         if series.plot_multiple_values is not None:
@@ -400,13 +400,14 @@ class PlotTs():
             series_line_color = parms['series line color']
             series_line_alpha = parms['series line alpha']
             series_line_width = parms['series line width']
+            if series_line_style and series_line_width > 0 and series_line_alpha > 0:
+                for i in range(series.plot_multiple_values.shape[1]):
+                    item = self.ax.plot(
+                        x, series.plot_multiple_values[:, i],
+                        pen=self._pen(series_line_color, series_line_width, series_line_alpha, series_line_style)
+                    )
+                    items.plot_multiple_lines.append(item)
             for i in range(series.plot_multiple_values.shape[1]):
-                item = self.ax.plot(
-                    x,
-                    series.plot_multiple_values[:, i],
-                    pen=self._pen(series_line_color, series_line_width, series_line_alpha, series_line_style)
-                )
-                items.plot_multiple_lines.append(item)
                 main_y_data.append(series.plot_multiple_values[:, i])
 
         if marker_size > 0:

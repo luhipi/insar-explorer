@@ -122,17 +122,21 @@
                 "type": "color",
                 "value": "#1f77b4",
                 "default": "#1f77b4",
-                "advanced": true
+                "advanced": true,
+                "description": "Default ensemble spread fill color for newly created ensemble plots."
             },
             "series fill alpha": {
                 "type": "float",
                 "value": 0.2,
                 "default": 0.2,
                 "range": [
-                    0,
-                    1
+                    0.0,
+                    1.0
                 ],
-                "advanced": true
+                "advanced": true,
+                "step": 0.05,
+                "decimals": 2,
+                "description": "Default ensemble spread opacity for newly created ensemble plots. A value of 0 hides the spread."
             },
             "series line style": {
                 "type": "dropdown",
@@ -151,27 +155,34 @@
                 "type": "color",
                 "value": "gray",
                 "default": "gray",
-                "advanced": true
+                "advanced": true,
+                "description": "Default ensemble member line color for newly created ensemble plots."
             },
             "series line alpha": {
                 "type": "float",
                 "value": 0.5,
                 "default": 0.5,
                 "range": [
-                    0,
-                    1
+                    0.0,
+                    1.0
                 ],
-                "advanced": true
+                "advanced": true,
+                "step": 0.05,
+                "decimals": 2,
+                "description": "Default ensemble member line opacity for newly created ensemble plots."
             },
             "series line width": {
                 "type": "float",
                 "value": 0.5,
                 "default": 0.2,
                 "range": [
-                    0,
-                    100
+                    0.0,
+                    20.0
                 ],
-                "advanced": true
+                "advanced": true,
+                "step": 0.5,
+                "decimals": 1,
+                "description": "Default ensemble member line width for newly created ensemble plots. A value of 0 hides member lines."
             },
             "ymax": {
                 "type": "float",
