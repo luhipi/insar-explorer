@@ -122,7 +122,8 @@ class PlotTs():
         parms['line style'] = parms_ts.get(["time series plot", "line style"]) or ''
         parms['line color'] = parms_ts.get(["time series plot", "line color"]) or None
         parms['line alpha'] = parms_ts.get(["time series plot", "line alpha"]) or 1.0
-        parms['line width'] = parms_ts.get(["time series plot", "line width"]) or 1
+        line_width = parms_ts.get(["time series plot", "line width"])
+        parms['line width'] = 1.0 if line_width is None else line_width
 
         parms['series fill color'] = parms_ts.get(["time series plot", "series fill color"]) or 'blue'
         parms['series fill alpha'] = parms_ts.get(["time series plot", "series fill alpha"]) or 0.2
@@ -170,7 +171,7 @@ class PlotTs():
         parms['title'] = parms_ts.get(["residual plot", "title"]) or ""
         parms['xlabel'] = parms_ts.get(["residual plot", "xlabel"]) or ""
         parms['ylabel'] = parms_ts.get(["residual plot", "ylabel"]) or ""
-        parms['marker'] = parms_ts.get(["residual plot", "marker"]) or "."
+        parms['marker'] = parms_ts.get(["residual plot", "marker"]) or "o"
         parms['marker color'] = parms_ts.get(["residual plot", "marker color"]) or None
         parms['marker alpha'] = parms_ts.get(["residual plot", "marker alpha"]) or 1.0
         parms['marker edge color'] = parms_ts.get(["residual plot", "marker edge color"]) or None
@@ -196,7 +197,8 @@ class PlotTs():
         )
         parms['line color'] = parms_ts.get(["model fit", "line color"]) or 'black'
         parms['line alpha'] = parms_ts.get(["model fit", "line alpha"]) or 1.0
-        parms['line width'] = parms_ts.get(["model fit", "line width"]) or 2.0
+        fit_line_width = parms_ts.get(["model fit", "line width"])
+        parms['line width'] = 2.0 if fit_line_width is None else fit_line_width
         self.parms['model fit'] = parms
 
     def clear(self):
@@ -416,7 +418,7 @@ class PlotTs():
 
         main_y_data.append(series.plot_values)
 
-        if line_style != '':
+        if line_style and line_width > 0:
             items.line = self.ax.plot(
                 x,
                 series.plot_values,
@@ -536,11 +538,13 @@ class PlotTs():
             fit_model = self.fit_models[0]
             model_values, model_x, model_y = (
                 FittingModels(series.dates, series.plot_values, model=fit_model).fit(seasonal=fit_seasonal))
-            fit_plot = self.ax.plot(
-                self._datesToX(model_x),
-                model_y,
-                pen=self._pen(fit_line_color, fit_line_width, fit_line_alpha, fit_line_type)
-            )
+            fit_plot = None
+            if fit_line_type and fit_line_width > 0:
+                fit_plot = self.ax.plot(
+                    self._datesToX(model_x),
+                    model_y,
+                    pen=self._pen(fit_line_color, fit_line_width, fit_line_alpha, fit_line_type)
+                )
             residuals_values = series.plot_values - model_values
             self.plotResiduals(series, style, graphics, residuals_values)
 
@@ -575,7 +579,7 @@ class PlotTs():
                     brush=self._brush(marker_color, marker_alpha)
                 )
                 self.ax_residuals.addItem(items.residual_scatter)
-            if line_style:
+            if line_style and line_width > 0:
                 items.residual_line = self.ax_residuals.plot(
                     x,
                     residuals_values,
