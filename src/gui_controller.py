@@ -25,6 +25,7 @@ from .time_series.fit_state import TimeSeriesFitState
 from .time_series.fit_style_controller import FitStyleController
 from .time_series.ensemble_style import EnsembleStyleController
 from .time_series.residual_style_controller import ResidualStyleController
+from .time_series.style_availability import TimeSeriesStyleAvailability
 from .time_series.style_controller import TimeSeriesStyleController
 from .time_series.style_schema import EDITABLE_STYLE_KEYS
 
@@ -605,6 +606,8 @@ class GuiController(QObject):
         self._syncTimeSeriesFitControls()
         if refresh:
             plotter.plotTs(update=True)
+        if hasattr(self, "time_series_style_popup"):
+            self._refreshTimeSeriesStylePopup()
 
     def setTimeSeriesFitEnabled(self, enabled):
         """Enable or disable the currently selected model in one operation."""
@@ -643,6 +646,14 @@ class GuiController(QObject):
     def selectedTimeSeriesSnapshots(self):
         """Return all explicit style-edit targets for current and future selection UIs."""
         return self.choose_point_click_handler.plot_ts.selectedTimeSeriesSnapshots()
+
+    def timeSeriesStyleAvailability(self, snapshots=None):
+        """Return centralized style-layer availability for the current selection."""
+        snapshots = self.selectedTimeSeriesSnapshots() if snapshots is None else snapshots
+        state = self.time_series_fit_state
+        return TimeSeriesStyleAvailability.fromSelection(
+            snapshots, fit_enabled=state.fit_enabled, residual_enabled=state.residual_enabled
+        )
 
     def selectedSeriesStyles(self):
         """Return styles for all currently selected time-series snapshots."""
@@ -782,21 +793,22 @@ class GuiController(QObject):
         """Refresh popup controls from actual selected snapshot styles without edits."""
         snapshots = self.selectedTimeSeriesSnapshots()
         popup = self.time_series_style_popup
-        popup.setSelectionState(bool(snapshots), len(snapshots))
+        availability = self.timeSeriesStyleAvailability(snapshots)
+        popup.setLayerAvailability(availability)
         if snapshots:
             styles = self.time_series_style_controller.selectedSeriesStyles(snapshots)
             popup.setStyle(styles[0])
-            popup.setFitStyle(self.fit_style_controller.fitStyle(snapshots[0]))
-            popup.setResidualStyle(self.residual_style_controller.residualStyle(snapshots[0]))
+            if availability.fit_available:
+                popup.setFitStyle(self.fit_style_controller.fitStyle(snapshots[0]))
+            if availability.residual_available:
+                popup.setResidualStyle(self.residual_style_controller.residualStyle(snapshots[0]))
             ensemble_snapshots = self.ensemble_style_controller.applicableSnapshots(snapshots)
-            popup.setEnsembleAvailability(bool(ensemble_snapshots), len(ensemble_snapshots))
             if ensemble_snapshots:
                 popup.setEnsembleStyle(self.ensemble_style_controller.ensembleStyle(ensemble_snapshots[0]))
             popup.setMixedProperties(
                 self.time_series_style_controller.mixedProperties(snapshots)
             )
         else:
-            popup.setEnsembleAvailability(False)
             popup.setMixedProperties(set())
 
     def showTimeSeriesStylePopup(self):
@@ -829,6 +841,7 @@ class GuiController(QObject):
     def removeLastPlotClicked(self):
         # TODO: remove the last plot and show the previous plot polygon/point highlight
         self.choose_point_click_handler.removeLastPlot()
+        self._refreshTimeSeriesStylePopup()
         # TODO: move polygon drawing methods to PolygonDrawingTool class
         self.removePolygonDrawingTool(reference=False)
         self.removePolygonDrawingTool(reference=True)

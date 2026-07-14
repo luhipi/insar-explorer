@@ -142,6 +142,10 @@ class TimeSeriesStylePopup(QWidget):
         self.target_label = QLabel("No active series", tab)
         self.target_label.setObjectName("label_ts_style_target")
         layout.addWidget(self.target_label)
+        self.series_status_label = QLabel("No active series.", tab)
+        self.series_status_label.setToolTip("No active series.")
+        self.series_status_label.hide()
+        layout.addWidget(self.series_status_label)
 
         self.marker_group = QGroupBox("Marker", tab)
         marker_layout = QFormLayout(self.marker_group)
@@ -211,6 +215,10 @@ class TimeSeriesStylePopup(QWidget):
         self.fit_target_label = QLabel("Editing: Fit line", tab)
         self.fit_target_label.setObjectName("label_fit_style_target")
         layout.addWidget(self.fit_target_label)
+        self.fit_status_label = QLabel("Enable Fit in the toolbar to edit its style.", tab)
+        self.fit_status_label.setToolTip("Enable Fit in the toolbar to edit its style.")
+        self.fit_status_label.hide()
+        layout.addWidget(self.fit_status_label)
 
         self.fit_group = QGroupBox("Fit line", tab)
         fit_layout = QFormLayout(self.fit_group)
@@ -252,6 +260,10 @@ class TimeSeriesStylePopup(QWidget):
         layout = QVBoxLayout(tab)
         self.residual_target_label = QLabel("Editing: Residual series", tab)
         layout.addWidget(self.residual_target_label)
+        self.residual_status_label = QLabel("Enable Residual in the toolbar to edit its style.", tab)
+        self.residual_status_label.setToolTip("Enable Residual in the toolbar to edit its style.")
+        self.residual_status_label.hide()
+        layout.addWidget(self.residual_status_label)
         self.residual_marker_group = QGroupBox("Marker", tab)
         ml = QFormLayout(self.residual_marker_group)
         self.residual_marker_type = QComboBox(self.residual_marker_group)
@@ -302,6 +314,10 @@ class TimeSeriesStylePopup(QWidget):
         self.ensemble_target_label = QLabel("No ensemble data", tab)
         self.ensemble_target_label.setObjectName("label_ensemble_style_target")
         layout.addWidget(self.ensemble_target_label)
+        self.ensemble_status_label = QLabel("Select multiple points to edit ensemble style.", tab)
+        self.ensemble_status_label.setToolTip("Select multiple points to edit ensemble style.")
+        self.ensemble_status_label.hide()
+        layout.addWidget(self.ensemble_status_label)
 
         groups = QHBoxLayout()
         groups.setContentsMargins(0, 0, 0, 0)
@@ -385,30 +401,76 @@ class TimeSeriesStylePopup(QWidget):
         self.residual_line_width.setValue(float(residual_style.line_width))
         self._loading = False
 
+    @staticmethod
+    def _targetText(count, selected_count):
+        """Return concise scope text for one style layer."""
+        count = int(count)
+        selected_count = int(selected_count)
+        if count <= 0:
+            return "No active series"
+        if count == 1 and selected_count == 1:
+            return "Editing: Current series"
+        if count == selected_count:
+            return f"Editing: {count} selected series"
+        return f"Editing: {count} applicable series"
+
+    def setLayerAvailability(self, availability):
+        """Apply centralized layer availability without emitting edit signals."""
+        selected_count = int(availability.selected_count)
+        configurations = (
+            (
+                self.target_label,
+                self.series_status_label,
+                availability.series_available,
+                availability.series_target_count,
+                (self.marker_group, self.line_group, self.randomize_button, self.default_button),
+            ),
+            (
+                self.fit_target_label,
+                self.fit_status_label,
+                availability.fit_available,
+                availability.fit_target_count,
+                (self.fit_group, self.fit_default_button),
+            ),
+            (
+                self.residual_target_label,
+                self.residual_status_label,
+                availability.residual_available,
+                availability.residual_target_count,
+                (self.residual_marker_group, self.residual_line_group,
+                 self.residual_randomize_button, self.residual_default_button),
+            ),
+            (
+                self.ensemble_target_label,
+                self.ensemble_status_label,
+                availability.ensemble_available,
+                availability.ensemble_target_count,
+                (self.ensemble_member_group, self.ensemble_spread_group,
+                 self.ensemble_default_button),
+            ),
+        )
+        for label, status, available, count, widgets in configurations:
+            if available:
+                label.setText(self._targetText(count, selected_count))
+                label.show()
+                status.hide()
+            else:
+                label.hide()
+                status.show()
+            for widget in widgets:
+                widget.setEnabled(bool(available))
+
     def setSelectionState(self, selected, count=0):
-        """Update target text and enablement for the current selection."""
+        """Compatibility entry point for Series selection state only."""
         selected = bool(selected)
-        if not selected:
-            target_text = "No active series"
-        elif int(count) > 1:
-            target_text = f"Editing: {int(count)} selected series"
+        if selected:
+            self.target_label.setText(self._targetText(int(count), int(count)))
+            self.target_label.show()
+            self.series_status_label.hide()
         else:
-            target_text = "Editing: Current series"
-        for label in (self.target_label, self.fit_target_label, self.residual_target_label):
-            label.setText(target_text)
-        self.setEnsembleAvailability(False)
-        for widget in (
-            self.marker_group,
-            self.line_group,
-            self.randomize_button,
-            self.default_button,
-            self.fit_group,
-            self.fit_default_button,
-            self.residual_marker_group,
-            self.residual_line_group,
-            self.residual_randomize_button,
-            self.residual_default_button,
-        ):
+            self.target_label.hide()
+            self.series_status_label.show()
+        for widget in (self.marker_group, self.line_group, self.randomize_button, self.default_button):
             widget.setEnabled(selected)
 
     def setStyle(self, style):
