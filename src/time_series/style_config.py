@@ -189,6 +189,8 @@ class TimeSeriesStyleConfig:
         if key == "line width": return normalize_number(value, RESIDUAL_LINE_WIDTH_RANGE, 1.0)
         if key == "marker color": return normalize_color(value, "#d62728")
         if key == "line color": return normalize_color(value, "#1f77b4")
+        if key == "marker alpha": return normalize_number(value, (0.0, 1.0), 0.8)
+        if key == "line alpha": return normalize_number(value, (0.0, 1.0), 0.8)
         return value
 
     def normalize_fit_property(self, key, value):
@@ -199,6 +201,8 @@ class TimeSeriesStyleConfig:
             return normalize_color(value, "#242424")
         if key == "line width":
             return normalize_number(value, FIT_LINE_WIDTH_RANGE, FIT_LINE_WIDTH_DEFAULT)
+        if key == "line alpha":
+            return normalize_number(value, (0.0, 1.0), 1.0)
         return value
 
     def normalize_property(self, key, value):

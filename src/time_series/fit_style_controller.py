@@ -12,10 +12,10 @@ from .style_schema import (
     FIT_LINE_WIDTH_RANGE,
     normalize_color,
     normalize_fit_line_style,
-    normalize_number,
+    normalize_number, normalize_alpha,
 )
 
-FIT_STYLE_KEYS = ("line style", "line color", "line width")
+FIT_STYLE_KEYS = ("line style", "line color", "line width", "line alpha")
 
 
 @dataclass(frozen=True)
@@ -25,6 +25,7 @@ class FitStyle:
     line_style: str = FIT_LINE_STYLE_DEFAULT
     line_color: str = "#242424"
     line_width: float = FIT_LINE_WIDTH_DEFAULT
+    line_alpha: float = 1.0
 
     @classmethod
     def fromParams(cls, params):
@@ -36,6 +37,7 @@ class FitStyle:
             line_width=normalize_number(
                 values.get("line width"), FIT_LINE_WIDTH_RANGE, FIT_LINE_WIDTH_DEFAULT
             ),
+            line_alpha=normalize_alpha(values.get("line alpha"), 1.0),
         )
 
     def asParams(self):
@@ -44,6 +46,7 @@ class FitStyle:
             "line style": self.line_style,
             "line color": self.line_color,
             "line width": self.line_width,
+            "line alpha": self.line_alpha,
         }
 
 
@@ -54,6 +57,7 @@ class FitStyleController:
         "line_type": "line style",
         "line_color": "line color",
         "line_width": "line width",
+        "line_opacity": "line alpha",
     }
 
     def fitStyle(self, snapshot: TimeSeriesSnapshot):
@@ -103,6 +107,8 @@ class FitStyleController:
             return normalize_color(value, "#242424")
         if key == "line width":
             return normalize_number(value, FIT_LINE_WIDTH_RANGE, FIT_LINE_WIDTH_DEFAULT)
+        if key == "line alpha":
+            return normalize_alpha(value, 1.0)
         return value
 
     @staticmethod

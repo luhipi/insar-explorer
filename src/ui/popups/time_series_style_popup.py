@@ -23,6 +23,8 @@ from ...time_series.style_schema import (
     RESIDUAL_LINE_WIDTH_RANGE,
     RESIDUAL_MARKER_OPTIONS,
     RESIDUAL_MARKER_SIZE_RANGE,
+    OPACITY_PERCENT_MIN, OPACITY_PERCENT_MAX, OPACITY_PERCENT_STEP,
+    alpha_to_percent,
 )
 from ...qt_compat import (
     POPUP_WINDOW_FLAG,
@@ -39,6 +41,7 @@ from qgis.PyQt.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QSpinBox,
     QPushButton,
     QTabWidget,
     QVBoxLayout,
@@ -94,18 +97,23 @@ class TimeSeriesStylePopup(QWidget):
     markerTypeChanged = pyqtSignal(str)
     markerColorChanged = pyqtSignal(str)
     markerSizeChanged = pyqtSignal(float)
+    markerOpacityChanged = pyqtSignal(int)
     lineTypeChanged = pyqtSignal(str)
     lineColorChanged = pyqtSignal(str)
     lineWidthChanged = pyqtSignal(float)
+    lineOpacityChanged = pyqtSignal(int)
     fitLineTypeChanged = pyqtSignal(str)
     fitLineColorChanged = pyqtSignal(str)
     fitLineWidthChanged = pyqtSignal(float)
+    fitOpacityChanged = pyqtSignal(int)
     residualMarkerTypeChanged = pyqtSignal(str)
     residualMarkerColorChanged = pyqtSignal(str)
     residualMarkerSizeChanged = pyqtSignal(float)
+    residualMarkerOpacityChanged = pyqtSignal(int)
     residualLineTypeChanged = pyqtSignal(str)
     residualLineColorChanged = pyqtSignal(str)
     residualLineWidthChanged = pyqtSignal(float)
+    residualLineOpacityChanged = pyqtSignal(int)
     randomizeColorRequested = pyqtSignal()
     setCurrentStyleAsDefaultRequested = pyqtSignal()
     setCurrentFitStyleAsDefaultRequested = pyqtSignal()
@@ -113,9 +121,9 @@ class TimeSeriesStylePopup(QWidget):
     setCurrentResidualStyleAsDefaultRequested = pyqtSignal()
     ensembleMemberColorChanged = pyqtSignal(str)
     ensembleMemberWidthChanged = pyqtSignal(float)
-    ensembleMemberOpacityChanged = pyqtSignal(float)
+    ensembleMemberOpacityChanged = pyqtSignal(int)
     ensembleFillColorChanged = pyqtSignal(str)
-    ensembleFillOpacityChanged = pyqtSignal(float)
+    ensembleFillOpacityChanged = pyqtSignal(int)
     ensembleSetAsDefaultRequested = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -159,6 +167,8 @@ class TimeSeriesStylePopup(QWidget):
         marker_layout.addRow("Type", self.marker_type)
         marker_layout.addRow("Size", self.marker_size)
         marker_layout.addRow("Color", self.marker_color)
+        self.marker_opacity = self._createOpacitySpinBox(self.marker_group)
+        marker_layout.addRow("Opacity", self.marker_opacity)
 
         self.line_group = QGroupBox("Line", tab)
         line_layout = QFormLayout(self.line_group)
@@ -172,6 +182,8 @@ class TimeSeriesStylePopup(QWidget):
         line_layout.addRow("Type", self.line_type)
         line_layout.addRow("Width", self.line_width)
         line_layout.addRow("Color", self.line_color)
+        self.line_opacity = self._createOpacitySpinBox(self.line_group)
+        line_layout.addRow("Opacity", self.line_opacity)
 
         groups_layout = QHBoxLayout()
         groups_layout.setContentsMargins(0, 0, 0, 0)
@@ -196,13 +208,15 @@ class TimeSeriesStylePopup(QWidget):
 
         self.marker_type.currentTextChanged.connect(self._emitMarkerType)
         self.marker_size.valueChanged.connect(self._emitMarkerSize)
+        self.marker_opacity.valueChanged.connect(lambda v: None if self._loading else self.markerOpacityChanged.emit(int(v)))
         self.line_type.currentTextChanged.connect(self._emitLineType)
         self.line_width.valueChanged.connect(self._emitLineWidth)
+        self.line_opacity.valueChanged.connect(lambda v: None if self._loading else self.lineOpacityChanged.emit(int(v)))
         self.marker_color.colorChanged.connect(self.markerColorChanged.emit)
         self.line_color.colorChanged.connect(self.lineColorChanged.emit)
         self.randomize_button.clicked.connect(self.randomizeColorRequested.emit)
         self.default_button.clicked.connect(self.setCurrentStyleAsDefaultRequested.emit)
-        for editor in (self.marker_type, self.marker_size, self.line_type, self.line_width):
+        for editor in (self.marker_type, self.marker_size, self.marker_opacity, self.line_type, self.line_width, self.line_opacity):
             editor.setMaximumWidth(110)
         self.marker_group.setSizePolicy(SIZE_POLICY_MAXIMUM, SIZE_POLICY_PREFERRED)
         self.line_group.setSizePolicy(SIZE_POLICY_MAXIMUM, SIZE_POLICY_PREFERRED)
@@ -232,8 +246,11 @@ class TimeSeriesStylePopup(QWidget):
         fit_layout.addRow("Type", self.fit_line_type)
         fit_layout.addRow("Width", self.fit_line_width)
         fit_layout.addRow("Color", self.fit_line_color)
+        self.fit_line_opacity = self._createOpacitySpinBox(self.fit_group)
+        fit_layout.addRow("Opacity", self.fit_line_opacity)
         self.fit_line_type.setMaximumWidth(110)
         self.fit_line_width.setMaximumWidth(110)
+        self.fit_line_opacity.setMaximumWidth(76)
         self.fit_group.setSizePolicy(SIZE_POLICY_MAXIMUM, SIZE_POLICY_PREFERRED)
         layout.addWidget(self.fit_group)
 
@@ -250,6 +267,7 @@ class TimeSeriesStylePopup(QWidget):
 
         self.fit_line_type.currentTextChanged.connect(self._emitFitLineType)
         self.fit_line_width.valueChanged.connect(self._emitFitLineWidth)
+        self.fit_line_opacity.valueChanged.connect(lambda v: None if self._loading else self.fitOpacityChanged.emit(int(v)))
         self.fit_line_color.colorChanged.connect(self.fitLineColorChanged.emit)
         self.fit_default_button.clicked.connect(self.setCurrentFitStyleAsDefaultRequested.emit)
         self.tabs.addTab(tab, "Fit")
@@ -276,6 +294,8 @@ class TimeSeriesStylePopup(QWidget):
         ml.addRow("Type", self.residual_marker_type)
         ml.addRow("Size", self.residual_marker_size)
         ml.addRow("Color", self.residual_marker_color)
+        self.residual_marker_opacity = self._createOpacitySpinBox(self.residual_marker_group)
+        ml.addRow("Opacity", self.residual_marker_opacity)
         self.residual_line_group = QGroupBox("Line", tab)
         ll = QFormLayout(self.residual_line_group)
         self.residual_line_type = QComboBox(self.residual_line_group)
@@ -287,7 +307,9 @@ class TimeSeriesStylePopup(QWidget):
         self.residual_line_width.setSingleStep(NUMERIC_STEP)
         ll.addRow("Type", self.residual_line_type)
         ll.addRow("Width", self.residual_line_width)
-        ll.addRow("Color", self.residual_line_color);
+        ll.addRow("Color", self.residual_line_color)
+        self.residual_line_opacity = self._createOpacitySpinBox(self.residual_line_group)
+        ll.addRow("Opacity", self.residual_line_opacity)
         groups = QHBoxLayout(); groups.setContentsMargins(0,0,0,0)
         groups.addWidget(self.residual_marker_group); groups.addWidget(self.residual_line_group); layout.addLayout(groups)
         self.residual_randomize_button = QPushButton(tab)
@@ -298,8 +320,10 @@ class TimeSeriesStylePopup(QWidget):
         actions = QHBoxLayout(); actions.addWidget(self.residual_randomize_button); actions.addStretch(1); actions.addWidget(self.residual_default_button); layout.addLayout(actions)
         self.residual_marker_type.currentTextChanged.connect(lambda v: None if self._loading else self.residualMarkerTypeChanged.emit(v))
         self.residual_marker_size.valueChanged.connect(lambda v: None if self._loading else self.residualMarkerSizeChanged.emit(float(v)))
+        self.residual_marker_opacity.valueChanged.connect(lambda v: None if self._loading else self.residualMarkerOpacityChanged.emit(int(v)))
         self.residual_line_type.currentTextChanged.connect(lambda v: None if self._loading else self.residualLineTypeChanged.emit(v))
         self.residual_line_width.valueChanged.connect(lambda v: None if self._loading else self.residualLineWidthChanged.emit(float(v)))
+        self.residual_line_opacity.valueChanged.connect(lambda v: None if self._loading else self.residualLineOpacityChanged.emit(int(v)))
         self.residual_marker_color.colorChanged.connect(self.residualMarkerColorChanged.emit)
         self.residual_line_color.colorChanged.connect(self.residualLineColorChanged.emit)
         self.residual_randomize_button.clicked.connect(self.randomizeResidualColorRequested.emit)
@@ -328,10 +352,7 @@ class TimeSeriesStylePopup(QWidget):
         self.ensemble_member_width.setRange(*ENSEMBLE_MEMBER_WIDTH_RANGE)
         self.ensemble_member_width.setDecimals(NUMERIC_DECIMALS)
         self.ensemble_member_width.setSingleStep(NUMERIC_STEP)
-        self.ensemble_member_opacity = QDoubleSpinBox(self.ensemble_member_group)
-        self.ensemble_member_opacity.setRange(*ENSEMBLE_OPACITY_RANGE)
-        self.ensemble_member_opacity.setDecimals(2)
-        self.ensemble_member_opacity.setSingleStep(0.05)
+        self.ensemble_member_opacity = self._createOpacitySpinBox(self.ensemble_member_group)
         member_layout.addRow("Color", self.ensemble_member_color)
         member_layout.addRow("Width", self.ensemble_member_width)
         member_layout.addRow("Opacity", self.ensemble_member_opacity)
@@ -339,10 +360,7 @@ class TimeSeriesStylePopup(QWidget):
         self.ensemble_spread_group = QGroupBox("Spread", tab)
         spread_layout = QFormLayout(self.ensemble_spread_group)
         self.ensemble_fill_color = CompactColorButton("■", "Select ensemble spread color", self.ensemble_spread_group)
-        self.ensemble_fill_opacity = QDoubleSpinBox(self.ensemble_spread_group)
-        self.ensemble_fill_opacity.setRange(*ENSEMBLE_OPACITY_RANGE)
-        self.ensemble_fill_opacity.setDecimals(2)
-        self.ensemble_fill_opacity.setSingleStep(0.05)
+        self.ensemble_fill_opacity = self._createOpacitySpinBox(self.ensemble_spread_group)
         spread_layout.addRow("Fill color", self.ensemble_fill_color)
         spread_layout.addRow("Opacity", self.ensemble_fill_opacity)
         groups.addWidget(self.ensemble_member_group)
@@ -359,9 +377,9 @@ class TimeSeriesStylePopup(QWidget):
 
         self.ensemble_member_color.colorChanged.connect(self.ensembleMemberColorChanged.emit)
         self.ensemble_member_width.valueChanged.connect(lambda v: None if self._loading else self.ensembleMemberWidthChanged.emit(float(v)))
-        self.ensemble_member_opacity.valueChanged.connect(lambda v: None if self._loading else self.ensembleMemberOpacityChanged.emit(float(v)))
+        self.ensemble_member_opacity.valueChanged.connect(lambda v: None if self._loading else self.ensembleMemberOpacityChanged.emit(int(v)))
         self.ensemble_fill_color.colorChanged.connect(self.ensembleFillColorChanged.emit)
-        self.ensemble_fill_opacity.valueChanged.connect(lambda v: None if self._loading else self.ensembleFillOpacityChanged.emit(float(v)))
+        self.ensemble_fill_opacity.valueChanged.connect(lambda v: None if self._loading else self.ensembleFillOpacityChanged.emit(int(v)))
         self.ensemble_default_button.clicked.connect(self.ensembleSetAsDefaultRequested.emit)
         for editor in (self.ensemble_member_width, self.ensemble_member_opacity, self.ensemble_fill_opacity):
             editor.setMaximumWidth(90)
@@ -372,9 +390,9 @@ class TimeSeriesStylePopup(QWidget):
         self._loading = True
         self.ensemble_member_color.setColor(ensemble_style.member_line_color)
         self.ensemble_member_width.setValue(float(ensemble_style.member_line_width))
-        self.ensemble_member_opacity.setValue(float(ensemble_style.member_line_alpha))
+        self.ensemble_member_opacity.setValue(alpha_to_percent(ensemble_style.member_line_alpha))
         self.ensemble_fill_color.setColor(ensemble_style.fill_color)
-        self.ensemble_fill_opacity.setValue(float(ensemble_style.fill_alpha))
+        self.ensemble_fill_opacity.setValue(alpha_to_percent(ensemble_style.fill_alpha))
         self._loading = False
 
     def setEnsembleAvailability(self, available, applicable_count=0):
@@ -396,9 +414,11 @@ class TimeSeriesStylePopup(QWidget):
         self.residual_marker_type.setCurrentText(residual_style.marker)
         self.residual_marker_color.setColor(residual_style.marker_color)
         self.residual_marker_size.setValue(float(residual_style.marker_size))
+        self.residual_marker_opacity.setValue(alpha_to_percent(residual_style.marker_alpha))
         self.residual_line_type.setCurrentText(residual_style.line_style)
         self.residual_line_color.setColor(residual_style.line_color)
         self.residual_line_width.setValue(float(residual_style.line_width))
+        self.residual_line_opacity.setValue(alpha_to_percent(residual_style.line_alpha))
         self._loading = False
 
     @staticmethod
@@ -473,6 +493,17 @@ class TimeSeriesStylePopup(QWidget):
         for widget in (self.marker_group, self.line_group, self.randomize_button, self.default_button):
             widget.setEnabled(selected)
 
+    @staticmethod
+    def _createOpacitySpinBox(parent):
+        """Create a compact percentage editor shared by all style tabs."""
+        editor = QSpinBox(parent)
+        editor.setRange(OPACITY_PERCENT_MIN, OPACITY_PERCENT_MAX)
+        editor.setSingleStep(OPACITY_PERCENT_STEP)
+        editor.setSuffix("%")
+        editor.setMaximumWidth(76)
+        editor.setToolTip("0% hides the element; 100% is fully opaque.")
+        return editor
+
     def setStyle(self, style):
         """Populate Series controls from a TimeSeriesStyle without emitting edits."""
         params = style.params.get("time series plot", {}) if style is not None else {}
@@ -482,7 +513,9 @@ class TimeSeriesStylePopup(QWidget):
         self.line_type.setCurrentText(str(params.get("line style", "")))
         self.line_width.setValue(float(params.get("line width", 0.0)))
         self.marker_color.setColor(params.get("marker color", "#000000"))
+        self.marker_opacity.setValue(alpha_to_percent(params.get("marker alpha", 1.0)))
         self.line_color.setColor(params.get("line color", "#000000"))
+        self.line_opacity.setValue(alpha_to_percent(params.get("line alpha", 1.0)))
         self._loading = False
 
     def setFitStyle(self, fit_style):
@@ -491,6 +524,7 @@ class TimeSeriesStylePopup(QWidget):
         self.fit_line_type.setCurrentText(fit_style.line_style)
         self.fit_line_color.setColor(fit_style.line_color)
         self.fit_line_width.setValue(float(fit_style.line_width))
+        self.fit_line_opacity.setValue(alpha_to_percent(fit_style.line_alpha))
         self._loading = False
 
     def setMixedProperties(self, properties):

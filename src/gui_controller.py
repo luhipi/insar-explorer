@@ -27,7 +27,7 @@ from .time_series.ensemble_style import EnsembleStyleController
 from .time_series.residual_style_controller import ResidualStyleController
 from .time_series.style_availability import TimeSeriesStyleAvailability
 from .time_series.style_controller import TimeSeriesStyleController
-from .time_series.style_schema import EDITABLE_STYLE_KEYS
+from .time_series.style_schema import percent_to_alpha, EDITABLE_STYLE_KEYS
 
 
 class GuiController(QObject):
@@ -310,28 +310,33 @@ class GuiController(QObject):
         popup.markerTypeChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_type", value))
         popup.markerColorChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_color", value))
         popup.markerSizeChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_size", value))
+        popup.markerOpacityChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_opacity", percent_to_alpha(value)))
         popup.lineTypeChanged.connect(lambda value: self._applySelectedSeriesStyle("line_type", value))
         popup.lineColorChanged.connect(lambda value: self._applySelectedSeriesStyle("line_color", value))
         popup.lineWidthChanged.connect(lambda value: self._applySelectedSeriesStyle("line_width", value))
+        popup.lineOpacityChanged.connect(lambda value: self._applySelectedSeriesStyle("line_opacity", percent_to_alpha(value)))
         popup.fitLineTypeChanged.connect(lambda value: self._applySelectedFitStyle("line_type", value))
         popup.fitLineColorChanged.connect(lambda value: self._applySelectedFitStyle("line_color", value))
         popup.fitLineWidthChanged.connect(lambda value: self._applySelectedFitStyle("line_width", value))
+        popup.fitOpacityChanged.connect(lambda value: self._applySelectedFitStyle("line_opacity", percent_to_alpha(value)))
         popup.randomizeColorRequested.connect(self.randomizeSelectedTimeSeriesColor)
         popup.setCurrentStyleAsDefaultRequested.connect(self.setCurrentSeriesStyleAsDefault)
         popup.setCurrentFitStyleAsDefaultRequested.connect(self.setCurrentFitStyleAsDefault)
         popup.residualMarkerTypeChanged.connect(lambda value: self._applySelectedResidualStyle("marker_type", value))
         popup.residualMarkerColorChanged.connect(lambda value: self._applySelectedResidualStyle("marker_color", value))
         popup.residualMarkerSizeChanged.connect(lambda value: self._applySelectedResidualStyle("marker_size", value))
+        popup.residualMarkerOpacityChanged.connect(lambda value: self._applySelectedResidualStyle("marker_opacity", percent_to_alpha(value)))
         popup.residualLineTypeChanged.connect(lambda value: self._applySelectedResidualStyle("line_type", value))
         popup.residualLineColorChanged.connect(lambda value: self._applySelectedResidualStyle("line_color", value))
         popup.residualLineWidthChanged.connect(lambda value: self._applySelectedResidualStyle("line_width", value))
+        popup.residualLineOpacityChanged.connect(lambda value: self._applySelectedResidualStyle("line_opacity", percent_to_alpha(value)))
         popup.randomizeResidualColorRequested.connect(self.randomizeSelectedResidualColor)
         popup.setCurrentResidualStyleAsDefaultRequested.connect(self.setCurrentResidualStyleAsDefault)
         popup.ensembleMemberColorChanged.connect(lambda value: self._applySelectedEnsembleStyle("member_color", value))
         popup.ensembleMemberWidthChanged.connect(lambda value: self._applySelectedEnsembleStyle("member_width", value))
-        popup.ensembleMemberOpacityChanged.connect(lambda value: self._applySelectedEnsembleStyle("member_opacity", value))
+        popup.ensembleMemberOpacityChanged.connect(lambda value: self._applySelectedEnsembleStyle("member_opacity", percent_to_alpha(value)))
         popup.ensembleFillColorChanged.connect(lambda value: self._applySelectedEnsembleStyle("fill_color", value))
-        popup.ensembleFillOpacityChanged.connect(lambda value: self._applySelectedEnsembleStyle("fill_opacity", value))
+        popup.ensembleFillOpacityChanged.connect(lambda value: self._applySelectedEnsembleStyle("fill_opacity", percent_to_alpha(value)))
         popup.ensembleSetAsDefaultRequested.connect(self.setCurrentEnsembleStyleAsDefault)
         self._restoreTimeSeriesFitState()
         # Plot setting

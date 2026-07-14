@@ -19,9 +19,11 @@ class TimeSeriesStyleController:
         "marker_type": "marker",
         "marker_color": "marker color",
         "marker_size": "marker size",
+        "marker_opacity": "marker alpha",
         "line_type": "line style",
         "line_color": "line color",
         "line_width": "line width",
+        "line_opacity": "line alpha",
     }
 
     def selectedSeriesStyles(self, snapshots: Iterable[TimeSeriesSnapshot]):

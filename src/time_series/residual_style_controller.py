@@ -8,12 +8,12 @@ from ..models.time_series import TimeSeriesSnapshot, TimeSeriesStyle
 from .style_schema import (
     RESIDUAL_LINE_STYLE_OPTIONS, RESIDUAL_LINE_WIDTH_RANGE,
     RESIDUAL_MARKER_OPTIONS, RESIDUAL_MARKER_SIZE_RANGE, normalize_color,
-    normalize_number, normalize_residual_line_style, normalize_residual_marker,
+    normalize_number, normalize_residual_line_style, normalize_residual_marker, normalize_alpha,
 )
 
 RESIDUAL_STYLE_KEYS = (
-    "marker", "marker color", "marker size",
-    "line style", "line color", "line width",
+    "marker", "marker color", "marker size", "marker alpha",
+    "line style", "line color", "line width", "line alpha",
 )
 
 @dataclass(frozen=True)
@@ -22,9 +22,11 @@ class ResidualStyle:
     marker: str = "o"
     marker_color: str = "#d62728"
     marker_size: float = 5.0
+    marker_alpha: float = 0.8
     line_style: str = ""
     line_color: str = "#1f77b4"
     line_width: float = 1.0
+    line_alpha: float = 0.8
 
     @classmethod
     def fromParams(cls, params):
@@ -33,24 +35,29 @@ class ResidualStyle:
             marker=normalize_residual_marker(values.get("marker"), "o"),
             marker_color=normalize_color(values.get("marker color"), "#d62728"),
             marker_size=normalize_number(values.get("marker size"), RESIDUAL_MARKER_SIZE_RANGE, 5.0),
+            marker_alpha=normalize_alpha(values.get("marker alpha"), 0.8),
             line_style=normalize_residual_line_style(values.get("line style"), ""),
             line_color=normalize_color(values.get("line color"), "#1f77b4"),
             line_width=normalize_number(values.get("line width"), RESIDUAL_LINE_WIDTH_RANGE, 1.0),
+            line_alpha=normalize_alpha(values.get("line alpha"), 0.8),
         )
 
     def asParams(self):
         return {
             "marker": self.marker, "marker color": self.marker_color,
-            "marker size": self.marker_size, "line style": self.line_style,
-            "line color": self.line_color, "line width": self.line_width,
+            "marker size": self.marker_size, "marker alpha": self.marker_alpha,
+            "line style": self.line_style, "line color": self.line_color,
+            "line width": self.line_width, "line alpha": self.line_alpha,
         }
 
 class ResidualStyleController:
     """Apply residual-only style changes without touching series or fit styling."""
     STYLE_KEYS = {
         "marker_type": "marker", "marker_color": "marker color",
-        "marker_size": "marker size", "line_type": "line style",
+        "marker_size": "marker size", "marker_opacity": "marker alpha",
+        "line_type": "line style",
         "line_color": "line color", "line_width": "line width",
+        "line_opacity": "line alpha",
     }
 
     def residualStyle(self, snapshot: TimeSeriesSnapshot):
@@ -87,4 +94,6 @@ class ResidualStyleController:
         if key == "line width": return normalize_number(value, RESIDUAL_LINE_WIDTH_RANGE, 1.0)
         if key == "marker color": return normalize_color(value, "#d62728")
         if key == "line color": return normalize_color(value, "#1f77b4")
+        if key == "marker alpha": return normalize_alpha(value, 0.8)
+        if key == "line alpha": return normalize_alpha(value, 0.8)
         return value
