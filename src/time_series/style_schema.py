@@ -4,6 +4,10 @@ from collections import OrderedDict
 
 MARKER_OPTIONS = ("o", "s", "^", "v", "+", "x", "d", "*")
 LINE_STYLE_OPTIONS = ("", "-", "--", ":", "-.")
+RESIDUAL_MARKER_OPTIONS = ("o", "s", "^", "v", "+", "x", "d", "*")
+RESIDUAL_LINE_STYLE_OPTIONS = ("", "-", "--", ":", "-.")
+RESIDUAL_MARKER_SIZE_RANGE = (0.0, 100.0)
+RESIDUAL_LINE_WIDTH_RANGE = (0.0, 20.0)
 FIT_LINE_STYLE_OPTIONS = ("-", "--", ":", "-.")
 FIT_LINE_STYLE_DEFAULT = "--"
 MARKER_SIZE_RANGE = (0.0, 100.0)
@@ -62,6 +66,16 @@ def normalize_marker(value, fallback="o"):
 def normalize_line_style(value, fallback=""):
     """Return a supported Series line-style option."""
     return value if isinstance(value, str) and value in LINE_STYLE_OPTIONS else fallback
+
+
+def normalize_residual_marker(value, fallback="o"):
+    """Return a supported residual marker option."""
+    return value if isinstance(value, str) and value in RESIDUAL_MARKER_OPTIONS else fallback
+
+
+def normalize_residual_line_style(value, fallback=""):
+    """Return a supported residual line-style option."""
+    return value if isinstance(value, str) and value in RESIDUAL_LINE_STYLE_OPTIONS else fallback
 
 
 def normalize_fit_line_style(value, fallback=FIT_LINE_STYLE_DEFAULT):

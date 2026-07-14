@@ -15,6 +15,10 @@ from ...time_series.style_schema import (
     MARKER_SIZE_RANGE,
     NUMERIC_DECIMALS,
     NUMERIC_STEP,
+    RESIDUAL_LINE_STYLE_OPTIONS,
+    RESIDUAL_LINE_WIDTH_RANGE,
+    RESIDUAL_MARKER_OPTIONS,
+    RESIDUAL_MARKER_SIZE_RANGE,
 )
 from ...qt_compat import (
     POPUP_WINDOW_FLAG,
@@ -240,10 +244,10 @@ class TimeSeriesStylePopup(QWidget):
         self.residual_marker_group = QGroupBox("Marker", tab)
         ml = QFormLayout(self.residual_marker_group)
         self.residual_marker_type = QComboBox(self.residual_marker_group)
-        self.residual_marker_type.addItems(list(MARKER_OPTIONS))
+        self.residual_marker_type.addItems(list(RESIDUAL_MARKER_OPTIONS))
         self.residual_marker_color = CompactColorButton("●", "Select residual marker color", self.residual_marker_group)
         self.residual_marker_size = QDoubleSpinBox(self.residual_marker_group)
-        self.residual_marker_size.setRange(*MARKER_SIZE_RANGE)
+        self.residual_marker_size.setRange(*RESIDUAL_MARKER_SIZE_RANGE)
         self.residual_marker_size.setDecimals(NUMERIC_DECIMALS)
         self.residual_marker_size.setSingleStep(NUMERIC_STEP)
         ml.addRow("Type", self.residual_marker_type)
@@ -252,10 +256,10 @@ class TimeSeriesStylePopup(QWidget):
         self.residual_line_group = QGroupBox("Line", tab)
         ll = QFormLayout(self.residual_line_group)
         self.residual_line_type = QComboBox(self.residual_line_group)
-        self.residual_line_type.addItems(list(LINE_STYLE_OPTIONS))
+        self.residual_line_type.addItems(list(RESIDUAL_LINE_STYLE_OPTIONS))
         self.residual_line_color = CompactColorButton("━", "Select residual line color", self.residual_line_group)
         self.residual_line_width = QDoubleSpinBox(self.residual_line_group)
-        self.residual_line_width.setRange(*LINE_WIDTH_RANGE)
+        self.residual_line_width.setRange(*RESIDUAL_LINE_WIDTH_RANGE)
         self.residual_line_width.setDecimals(NUMERIC_DECIMALS)
         self.residual_line_width.setSingleStep(NUMERIC_STEP)
         ll.addRow("Type", self.residual_line_type)

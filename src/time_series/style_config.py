@@ -20,6 +20,10 @@ from .style_schema import (
     normalize_line_style,
     normalize_marker,
     normalize_number,
+    normalize_residual_line_style,
+    normalize_residual_marker,
+    RESIDUAL_LINE_WIDTH_RANGE,
+    RESIDUAL_MARKER_SIZE_RANGE,
 )
 
 
@@ -133,10 +137,10 @@ class TimeSeriesStyleConfig:
         settings.save(self.BLOCK_KEY, block)
 
     def normalize_residual_property(self, key, value):
-        if key == "marker": return normalize_marker(value, "o")
-        if key == "marker size": return normalize_number(value, MARKER_SIZE_RANGE, 5.0)
-        if key == "line style": return normalize_line_style(value, "")
-        if key == "line width": return normalize_number(value, LINE_WIDTH_RANGE, 1.0)
+        if key == "marker": return normalize_residual_marker(value, "o")
+        if key == "marker size": return normalize_number(value, RESIDUAL_MARKER_SIZE_RANGE, 5.0)
+        if key == "line style": return normalize_residual_line_style(value, "")
+        if key == "line width": return normalize_number(value, RESIDUAL_LINE_WIDTH_RANGE, 1.0)
         if key == "marker color": return normalize_color(value, "#d62728")
         if key == "line color": return normalize_color(value, "#1f77b4")
         return value
