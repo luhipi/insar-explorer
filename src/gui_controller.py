@@ -15,6 +15,7 @@ from ..external.setting_manager_ui.json_settings import JsonSettings
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 from .ui_windows.color_picker import ColorPicker
 from .ui.popups.time_series_style_popup import TimeSeriesStylePopup
+from .ui.popups.manual_y_axis_popup import ManualYAxisPopup
 from .qt_compat import (
     RASTER_LAYER,
     VECTOR_LAYER,
@@ -47,13 +48,26 @@ class GuiController(QObject):
         setup_frames.setupTsFrame(self.ui)
         self.insar_map = InsarMap(self.iface)
         self.settings = QSettings()
-        self.time_series_y_axis_mode = self._loadTimeSeriesYAxisMode()
+        self._clearPersistedYAxisModes()
+        self.time_series_y_axis_mode = "from_data"
+        self.time_series_manual_y_lower = None
+        self.time_series_manual_y_upper = None
+        self.residual_manual_y_lower = None
+        self.residual_manual_y_upper = None
+        self.residual_y_axis_mode = self.time_series_y_axis_mode
+        self.choose_point_click_handler.plot_ts.manual_y_lower = self.time_series_manual_y_lower
+        self.choose_point_click_handler.plot_ts.manual_y_upper = self.time_series_manual_y_upper
+        self.choose_point_click_handler.plot_ts.residual_y_axis_mode = self.residual_y_axis_mode
+        self.choose_point_click_handler.plot_ts.residual_manual_y_lower = self.residual_manual_y_lower
+        self.choose_point_click_handler.plot_ts.residual_manual_y_upper = self.residual_manual_y_upper
         self.time_series_replica_enabled = self.settings.value(
             "insar_explorer/replica_enabled", False, type=bool
         )
         self.time_series_replica_interval_mm = self._loadReplicaInterval()
         self.time_series_replica_pair_count = self._loadReplicaPairCount()
         self.time_series_style_popup = TimeSeriesStylePopup(self.ui)
+        self.manual_y_axis_popup = ManualYAxisPopup(self.ui)
+        self._manual_y_axis_session = None
         self.time_series_style_controller = TimeSeriesStyleController()
         self.fit_style_controller = FitStyleController()
         self.ensemble_style_controller = EnsembleStyleController()
@@ -296,6 +310,11 @@ class GuiController(QObject):
         self.ui.time_series_toolbar.seasonalEnabledChanged.connect(self.setTimeSeriesSeasonalEnabled)
         self.ui.time_series_toolbar.residualEnabledChanged.connect(self.setTimeSeriesResidualEnabled)
         self.ui.time_series_toolbar.yAxisModeChanged.connect(self.setTimeSeriesYAxisMode)
+        self.ui.time_series_toolbar.manualYAxisEditRequested.connect(self.showManualYAxisPopup)
+        self.manual_y_axis_popup.previewChanged.connect(self.previewManualYAxisRange)
+        self.manual_y_axis_popup.applyRequested.connect(self.applyManualYAxisRange)
+        self.manual_y_axis_popup.cancelRequested.connect(self.cancelManualYAxisRange)
+        self.manual_y_axis_popup.currentViewRequested.connect(self.captureCurrentManualYAxisView)
         self.ui.time_series_toolbar.replicaEnabledChanged.connect(
             self.setTimeSeriesReplicaEnabled
         )
@@ -875,43 +894,153 @@ class GuiController(QObject):
         parms.save(block_key, settings_block)
         return new_value
 
-    def _loadTimeSeriesYAxisMode(self):
-        """Load and validate the persisted Time Series Y-axis mode."""
-        mode = self.settings.value(
-            "insar_explorer/time_series_y_axis_mode", "from_data", type=str
-        )
-        return mode if mode in {"from_data", "symmetric", "adaptive"} else "from_data"
+    def _clearPersistedYAxisModes(self):
+        """Remove obsolete persisted Y-axis state; all policy state is session-local."""
+        self.settings.remove("insar_explorer/time_series_y_axis_mode")
+        self.settings.remove("insar_explorer/residual_y_axis_mode")
+        for axis_name in ("time_series", "residual"):
+            for bound_name in ("lower", "upper"):
+                self.settings.remove(
+                    f"insar_explorer/{axis_name}_manual_y_{bound_name}"
+                )
 
     def _restoreTimeSeriesYAxisMode(self):
         """Restore the selected Y-axis mode after UI or plotter lifecycle changes."""
+        plotter = self.choose_point_click_handler.plot_ts
+        plotter.manual_y_lower = self.time_series_manual_y_lower
+        plotter.manual_y_upper = self.time_series_manual_y_upper
         self._applyTimeSeriesYAxisMode(self.time_series_y_axis_mode, refresh=False)
 
     def _syncTimeSeriesYAxisControls(self, mode):
         """Synchronize the code-created toolbar from shared Y-axis state."""
-        self.ui.time_series_toolbar.setSelectedYAxisMode(mode)
+        self.ui.time_series_toolbar.setSelectedYAxisMode(
+            mode,
+            self.time_series_manual_y_lower,
+            self.time_series_manual_y_upper,
+            self.residual_manual_y_lower,
+            self.residual_manual_y_upper,
+            bool(self.choose_point_click_handler.plot_ts.plot_residuals_flag),
+        )
 
     def _applyTimeSeriesYAxisMode(self, mode, refresh=True):
-        """Apply one validated Y-axis mode and optionally redraw the active plot."""
-        if mode not in {"from_data", "symmetric", "adaptive"}:
+        """Apply one shared Y-axis policy to both plot axes."""
+        if mode not in {"from_data", "symmetric", "adaptive", "manual"}:
             mode = "from_data"
         self.time_series_y_axis_mode = mode
-        self.choose_point_click_handler.plot_ts.plot_y_axis = mode
+        self.residual_y_axis_mode = mode
+        plotter = self.choose_point_click_handler.plot_ts
+        plotter.plot_y_axis = mode
+        plotter.residual_y_axis_mode = mode
+        plotter.manual_y_lower = self.time_series_manual_y_lower
+        plotter.manual_y_upper = self.time_series_manual_y_upper
+        plotter.residual_manual_y_lower = self.residual_manual_y_lower
+        plotter.residual_manual_y_upper = self.residual_manual_y_upper
         self._syncTimeSeriesYAxisControls(mode)
-        self.settings.setValue("insar_explorer/time_series_y_axis_mode", mode)
         if refresh:
-            self.choose_point_click_handler.plot_ts.plotTs(update=True)
+            plotter.plotTs(update=True)
 
     def setTimeSeriesYAxisMode(self, mode):
-        """Handle a toolbar Y-axis selection with one state update and redraw."""
+        """Apply a toolbar-selected shared Y-axis policy immediately."""
         self._applyTimeSeriesYAxisMode(mode)
         messages = {
             "from_data": "Y-axis range set from data.",
             "symmetric": "Y-axis range set symmetric.",
-            "adaptive": (
-                "Y-axis range set adaptively: less range change when plotting new time series."
-            ),
+            "adaptive": "Y-axis range set adaptively.",
+            "manual": "Stored manual Y-axis ranges applied.",
         }
         self.msg_signal.emit(messages[self.time_series_y_axis_mode], "i", 0)
+
+    def showManualYAxisPopup(self):
+        """Open the editor and capture both policies and viewports transactionally."""
+        plotter = self.choose_point_click_handler.plot_ts
+        viewport = plotter.captureViewport()
+        self._manual_y_axis_session = {
+            "series_mode": self.time_series_y_axis_mode,
+            "residual_mode": self.residual_y_axis_mode,
+            "series_lower": self.time_series_manual_y_lower,
+            "series_upper": self.time_series_manual_y_upper,
+            "residual_lower": self.residual_manual_y_lower,
+            "residual_upper": self.residual_manual_y_upper,
+            "viewport": viewport,
+        }
+        series_view = viewport.get("main", ((0, 1), tuple(plotter.ax.viewRange()[1])))[1]
+        residual_view = viewport.get("residual", ((0, 1), (0, 1)))[1]
+        popup = self.manual_y_axis_popup
+        popup.openForBounds(
+            (self.time_series_manual_y_lower, self.time_series_manual_y_upper),
+            (self.residual_manual_y_lower, self.residual_manual_y_upper),
+            series_view, residual_view, plotter.ax_residuals is not None,
+        )
+        popup.adjustSize()
+        button = self.ui.time_series_toolbar.y_axis_button
+        top_left = button.mapToGlobal(QPoint(0, 0))
+        anchor = QRect(top_left, button.size())
+        geometry = available_screen_geometry(top_left, popup)
+        popup.move(screen_aware_popup_position(anchor, popup.sizeHint(), geometry))
+        popup.show(); popup.raise_(); popup.activateWindow()
+
+
+    def captureCurrentManualYAxisView(self, axis_name):
+        """Commit the visible Y-range as session-local Manual state and close."""
+        if self._manual_y_axis_session is None:
+            return
+        plotter = self.choose_point_click_handler.plot_ts
+        axis = plotter.ax if axis_name == "series" else plotter.ax_residuals
+        if axis is None:
+            return
+        lower, upper = (float(value) for value in axis.viewRange()[1])
+        if axis_name == "residual":
+            self.residual_manual_y_lower = lower
+            self.residual_manual_y_upper = upper
+        else:
+            self.time_series_manual_y_lower = lower
+            self.time_series_manual_y_upper = upper
+        self._manual_y_axis_session = None
+        self.manual_y_axis_popup.closeAfterCommit()
+        self._applyTimeSeriesYAxisMode("manual", refresh=True)
+
+    def previewManualYAxisRange(self, axis_name, lower, upper):
+        """Preview one tab without changing the other axis or persisted settings."""
+        if self._manual_y_axis_session is not None:
+            self.choose_point_click_handler.plot_ts.setManualYRange(axis_name, lower, upper)
+
+    def applyManualYAxisRange(
+        self, series_lower, series_upper, residual_lower, residual_upper,
+        series_changed, residual_changed,
+    ):
+        """Persist the editor transaction and activate the shared Manual policy."""
+        # Apply is a commit even when the user accepts viewport-seeded Series values.
+        self.time_series_manual_y_lower = series_lower
+        self.time_series_manual_y_upper = series_upper
+        if residual_changed:
+            self.residual_manual_y_lower = residual_lower
+            self.residual_manual_y_upper = residual_upper
+
+        self._manual_y_axis_session = None
+        self._applyTimeSeriesYAxisMode("manual", refresh=True)
+
+    def cancelManualYAxisRange(self):
+        """Restore both original policies and all captured X/Y view ranges."""
+        session = self._manual_y_axis_session
+        if session is None:
+            return
+        self._manual_y_axis_session = None
+        plotter = self.choose_point_click_handler.plot_ts
+        self.time_series_y_axis_mode = session["series_mode"]
+        self.residual_y_axis_mode = session["residual_mode"]
+        self.time_series_manual_y_lower = session["series_lower"]
+        self.time_series_manual_y_upper = session["series_upper"]
+        self.residual_manual_y_lower = session["residual_lower"]
+        self.residual_manual_y_upper = session["residual_upper"]
+        plotter.plot_y_axis = session["series_mode"]
+        plotter.residual_y_axis_mode = session["residual_mode"]
+        plotter.manual_y_lower = session["series_lower"]
+        plotter.manual_y_upper = session["series_upper"]
+        plotter.residual_manual_y_lower = session["residual_lower"]
+        plotter.residual_manual_y_upper = session["residual_upper"]
+        plotter.restoreViewport(session["viewport"])
+        self._syncTimeSeriesYAxisControls(session["series_mode"])
+        plotter._draw()
 
     def _loadReplicaInterval(self):
         """Load and validate the persisted replica half-wavelength interval."""
