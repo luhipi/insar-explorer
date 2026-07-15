@@ -135,10 +135,10 @@ class TimeSeriesSettingsPersistence:
                 figure_background=self._safe_text(self._value(figure, "background color", "white"), "white"),
                 date_format=self._safe_text(self._value(plot, "date format", "%Y-%m-%d"), "%Y-%m-%d"),
             ),
-            export=ExportSettings(
-                dpi=self._safe_text(self._value(export, "dpi", "300"), "300"),
-                aspect_ratio=self._safe_float(self._value(export, "aspect ratio", 4.0), 4.0, 0.01),
-                credit=self._safe_text(self._value(export, "credit", "Powered by InSAR Explorer"), "Powered by InSAR Explorer"),
+            export=ExportSettings.normalized(
+                dpi=self._value(export, "dpi", "300"),
+                aspect_ratio=self._value(export, "aspect ratio", 4.0),
+                credit=self._value(export, "credit", "Powered by InSAR Explorer"),
             ),
         )
 

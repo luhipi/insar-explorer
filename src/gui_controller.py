@@ -19,6 +19,7 @@ from .ui_windows.color_picker import ColorPicker
 from .ui.popups.time_series_style_popup import TimeSeriesStylePopup
 from .ui.popups.manual_y_axis_popup import ManualYAxisPopup
 from .ui.popups.manual_x_axis_popup import ManualXAxisPopup
+from .ui.popups.export_settings_popup import ExportSettingsPopup
 from .qt_compat import (
     RASTER_LAYER,
     VECTOR_LAYER,
@@ -32,7 +33,7 @@ from .time_series.residual_style_controller import ResidualStyleController
 from .time_series.style_availability import TimeSeriesStyleAvailability
 from .time_series.style_controller import TimeSeriesStyleController
 from .time_series.style_schema import percent_to_alpha, EDITABLE_STYLE_KEYS
-from .time_series.settings.model import AxisManualRange, SeriesStyleSettings
+from .time_series.settings.model import AxisManualRange, ExportSettings, SeriesStyleSettings
 from .time_series.settings.persistence import build_legacy_plot_params
 
 
@@ -149,6 +150,7 @@ class GuiController(QObject):
         self.manual_x_axis_popup = ManualXAxisPopup(self.ui)
         self._manual_x_axis_session = None
         self.manual_y_axis_popup = ManualYAxisPopup(self.ui)
+        self.export_settings_popup = ExportSettingsPopup(self.ui)
         self._manual_y_axis_session = None
         self.time_series_style_controller = TimeSeriesStyleController()
         self.fit_style_controller = FitStyleController()
@@ -453,11 +455,14 @@ class GuiController(QObject):
         self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
         self.ui.cb_remove_last_plot.clicked.connect(self.removeLastPlotClicked)
         # TS save
+        self.ui.time_series_toolbar.exportSettingsRequested.connect(self.showExportSettingsPopup)
         self.ui.time_series_toolbar.plotExportRequested.connect(self.saveTsPlot)
         self.ui.time_series_toolbar.dataExportRequested.connect(self.exportTs)
 
         # Setting popup
         self.ui.time_series_toolbar.settingsRequested.connect(self.settingsWidgetPopup)
+        self.export_settings_popup.settingsChanged.connect(self.updateExportSettings)
+        self.export_settings_popup.resetRequested.connect(self.resetExportSettings)
 
     def connectMapSignals(self):
         self.ui.cb_select_field.currentTextChanged.connect(self.selectVectorFieldChanged)
@@ -535,6 +540,7 @@ class GuiController(QObject):
             "appearance": reloaded_model.appearance,
             "export": reloaded_model.export,
         })
+        self.syncExportSettingsPopup()
         self._syncTimeSeriesReplicaControls()
         previous = getattr(self, "_settings_style_before", plotter.style_config.load_style_values())
         previous_fit = getattr(self, "_settings_fit_style_before", plotter.style_config.load_fit_style_values())
@@ -924,6 +930,43 @@ class GuiController(QObject):
             )
         else:
             popup.setMixedProperties(set())
+
+
+    def syncExportSettingsPopup(self):
+        """Refresh the export popup from the authoritative runtime model."""
+        self.export_settings_popup.setSettings(
+            self.choose_point_click_handler.plot_ts.settings_model.export
+        )
+
+    def updateExportSettings(self, dpi, aspect_ratio, credit):
+        """Normalize, commit, and persist one complete export settings value."""
+        plotter = self.choose_point_click_handler.plot_ts
+        settings = ExportSettings.normalized(dpi, aspect_ratio, credit)
+        plotter.settings_model.replace_domain("export", settings)
+        plotter.settings_persistence.save_export(settings)
+        plotter.parms = build_legacy_plot_params(plotter.settings_model, plotter.parms)
+        self.syncExportSettingsPopup()
+
+    def resetExportSettings(self):
+        """Restore and persist schema defaults without redrawing or exporting."""
+        defaults = ExportSettings()
+        self.updateExportSettings(defaults.dpi, defaults.aspect_ratio, defaults.credit)
+
+    def showExportSettingsPopup(self):
+        """Open export defaults anchored to the Export Settings action."""
+        self.syncExportSettingsPopup()
+        toolbar = self.ui.time_series_toolbar
+        action_widget = toolbar.widgetForAction(toolbar.export_settings_action)
+        anchor = action_widget or toolbar
+        self.export_settings_popup.adjustSize()
+        anchor_top_left = anchor.mapToGlobal(QPoint(0, 0))
+        anchor_rect = QRect(anchor_top_left, anchor.size())
+        geometry = available_screen_geometry(anchor_rect.center(), anchor)
+        self.export_settings_popup.move(screen_aware_popup_position(
+            anchor_rect, self.export_settings_popup.sizeHint(), geometry
+        ))
+        self.export_settings_popup.show()
+        self.export_settings_popup.raise_()
 
     def showTimeSeriesStylePopup(self):
         """Open the style popup anchored below the Plot style toolbar action."""
@@ -1674,12 +1717,23 @@ class GuiController(QObject):
         elif ext == '':
             file_path = base + '.png'
 
-        self._rememberExportPath(file_path)
-        self._rememberExportFormat('insar_explorer/plot_export_format', file_path)
-        self.last_plot_export_format = os.path.splitext(file_path)[1].lstrip('.').lower()
-        self.last_save_ts_name = os.path.basename(file_path)
+        result = self.choose_point_click_handler.plot_ts.savePlotAsImage(file_path)
+        if not result.success:
+            self.msg_signal.emit(result.error or "Plot export failed.", 'e', 0)
+            return
 
-        self.choose_point_click_handler.plot_ts.savePlotAsImage(file_path)
+        exported_filename = result.filename
+        self._rememberExportPath(exported_filename)
+        self._rememberExportFormat(
+            'insar_explorer/plot_export_format', exported_filename
+        )
+        self.last_plot_export_format = (
+            os.path.splitext(exported_filename)[1].lstrip('.').lower()
+        )
+        self.last_save_ts_name = os.path.basename(exported_filename)
+        self.msg_signal.emit(
+            f"Plot exported to {exported_filename}", 'done', 0
+        )
 
     def exportTs(self):
         """Export the latest plotted time series to CSV or TXT."""

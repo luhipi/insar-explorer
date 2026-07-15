@@ -24,6 +24,7 @@ class TimeSeriesToolbar(QToolBar):
     """Code-defined toolbar exposing semantic time-series action signals."""
 
     settingsRequested = pyqtSignal()
+    exportSettingsRequested = pyqtSignal()
     plotExportRequested = pyqtSignal()
     dataExportRequested = pyqtSignal()
     fitEnabledChanged = pyqtSignal(bool)
@@ -284,6 +285,12 @@ class TimeSeriesToolbar(QToolBar):
             "Configure time-series plot settings",
             "action_ts_settings",
         )
+        self.export_settings_action = self._createAction(
+            ":/icons/icons/screenshot_settings.svg",
+            "Export settings",
+            "Export settings",
+            "action_ts_export_settings",
+        )
         self.plot_export_action = self._createAction(
             ":/icons/icons/screenshot.svg",
             "Export plot",
@@ -299,6 +306,7 @@ class TimeSeriesToolbar(QToolBar):
 
         self.addAction(self.settings_action)
         self.addSeparator()
+        self.addAction(self.export_settings_action)
         self.addAction(self.plot_export_action)
         self.addAction(self.data_export_action)
 
@@ -311,6 +319,7 @@ class TimeSeriesToolbar(QToolBar):
             self._setActionControlRole(action, "toggle")
         for action in (
             self.settings_action,
+            self.export_settings_action,
             self.plot_export_action,
             self.data_export_action,
             self.plot_style_action,
@@ -319,6 +328,7 @@ class TimeSeriesToolbar(QToolBar):
 
         self.plot_style_action.triggered.connect(self.plotStyleRequested.emit)
         self.settings_action.triggered.connect(self.settingsRequested.emit)
+        self.export_settings_action.triggered.connect(self.exportSettingsRequested.emit)
         self.plot_export_action.triggered.connect(self.plotExportRequested.emit)
         self.data_export_action.triggered.connect(self.dataExportRequested.emit)
         self.fit_enabled_action.toggled.connect(self.fitEnabledChanged.emit)
