@@ -1380,8 +1380,29 @@ class GuiController(QObject):
         toolbar.setReplicaInterval(self.time_series_replica_interval_mm)
         toolbar.setReplicaPairCount(self.time_series_replica_pair_count)
 
+    def _shouldReapplyAutomaticYAxisAfterReplicaChange(self):
+        """Return whether Replica extent changes should reapply the main Y policy."""
+        y_axis = self.time_series_settings.y_axis
+        return (
+            not y_axis.series_custom_view
+            and y_axis.policy in {"from_data", "symmetric", "adaptive"}
+        )
+
+    def _refreshReplicaGraphicsAndYAxis(self):
+        """Refresh Replica graphics and the effective main Y range with one draw."""
+        plot = self.choose_point_click_handler.plot_ts
+        if plot.ax is None or not plot.series_history:
+            return
+
+        plot.rerenderTimeSeriesSnapshots(list(plot.series_history), draw=False)
+        if self._shouldReapplyAutomaticYAxisAfterReplicaChange():
+            with plot.axisViewUpdateGuard():
+                plot.setYlims(ax=plot.ax, parms=plot.parms["time series plot"])
+        self._syncTimeSeriesYAxisControls(self.time_series_settings.y_axis.policy)
+        plot._draw()
+
     def _applyTimeSeriesReplicaState(self, refresh=True):
-        """Apply Replica state and optionally redraw the active plot exactly once."""
+        """Apply Replica state and optionally refresh graphics and Y range once."""
         plot = self.choose_point_click_handler.plot_ts
         replica = replace(self.time_series_settings.replica,
                           enabled=self.time_series_replica_enabled,
@@ -1401,7 +1422,7 @@ class GuiController(QObject):
             "insar_explorer/replica_interval_mm", self.time_series_replica_interval_mm
         )
         if refresh:
-            plot.plotTs(update=True)
+            self._refreshReplicaGraphicsAndYAxis()
 
     def setTimeSeriesReplicaEnabled(self, enabled):
         """Enable or disable replicas while preserving the selected interval."""
@@ -1446,11 +1467,7 @@ class GuiController(QObject):
         self._syncTimeSeriesReplicaControls()
 
         if self.time_series_replica_enabled and plot.series_history:
-            y_axis_mode = plot.plot_y_axis
-            try:
-                plot.rerenderTimeSeriesSnapshots(list(plot.series_history))
-            finally:
-                plot.plot_y_axis = y_axis_mode
+            self._refreshReplicaGraphicsAndYAxis()
 
         self.msg_signal.emit(
             f"Replica pairs set to {self.time_series_replica_pair_count}.", "i", 0

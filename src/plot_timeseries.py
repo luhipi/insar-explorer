@@ -1109,8 +1109,15 @@ class PlotTs():
     def _brush(self, color=None, alpha=1.0):
         return pg.mkBrush(self._color(color, alpha))
 
-    def rerenderTimeSeriesSnapshots(self, snapshots: List[TimeSeriesSnapshot]) -> None:
-        """Re-render selected snapshots while preserving the user's viewport."""
+    def rerenderTimeSeriesSnapshots(
+        self, snapshots: List[TimeSeriesSnapshot], *, draw: bool = True
+    ) -> None:
+        """Re-render selected snapshots while preserving the user's viewport.
+
+        TODO(runtime-settings): remove this compatibility redraw path after plot
+        layers support scoped in-place updates. ``draw=False`` allows callers to
+        compose graphics and axis-policy changes into one visual transaction.
+        """
         with self.preserveViewport():
             selected_ids = {id(snapshot) for snapshot in snapshots}
             for snapshot in self.series_history:
@@ -1122,6 +1129,7 @@ class PlotTs():
                 if residuals is not None:
                     snapshot.data = snapshot.data.withResiduals(residuals)
             self._rebuildYDataRanges()
+        if draw:
             self._draw()
 
     def selectedTimeSeriesSnapshots(self) -> List[TimeSeriesSnapshot]:
