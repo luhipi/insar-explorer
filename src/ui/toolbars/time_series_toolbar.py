@@ -373,11 +373,11 @@ class TimeSeriesToolbar(QToolBar):
         self.fit_enabled_action.setWhatsThis(f"Fit using {model_name} model")
         self.fit_model_button.setAccessibleName(f"Selected fit model: {model_name}")
 
-    def setSelectedXAxisMode(self, mode, start=None, end=None):
+    def setSelectedXAxisMode(self, mode, start=None, end=None, custom_view=False):
         """Update the selected X-axis mode without emitting a user-change signal."""
-        self.refreshXAxisPresentation(mode, start, end)
+        self.refreshXAxisPresentation(mode, start, end, custom_view=custom_view)
 
-    def refreshXAxisPresentation(self, mode, start=None, end=None):
+    def refreshXAxisPresentation(self, mode, start=None, end=None, custom_view=False):
         """Refresh all temporary X-axis toolbar compatibility views.
 
         TODO(phase-appearance-toolbar): remove this compatibility presentation
@@ -396,7 +396,7 @@ class TimeSeriesToolbar(QToolBar):
         previous = self.x_axis_group.blockSignals(True)
         action.setChecked(True)
         self.x_axis_group.blockSignals(previous)
-        self._updateXAxisSelector(action)
+        self._updateXAxisSelector(action, custom_view=custom_view)
 
     def setManualXAxisSummary(self, start, end):
         """Refresh Manual metadata while preserving the selected policy."""
@@ -408,24 +408,40 @@ class TimeSeriesToolbar(QToolBar):
         """Emit the requested policy; the controller owns presentation refresh."""
         self.xAxisModeChanged.emit(action.data())
 
-    def _updateXAxisSelector(self, action):
-        """Render the current X-axis icon, label, check state, and tooltip."""
-        self.x_axis_button.setIcon(action.icon())
+    def _updateXAxisSelector(self, action, *, custom_view=False):
+        """Render X-axis presentation from the base policy and transient viewport state."""
+        if custom_view:
+            tooltip = f"Custom X view\nBase policy: {action.text()}"
+            self.x_axis_button.setIcon(QIcon(":/icons/icons/x_axis_custom.svg"))
+        else:
+            tooltip = action.toolTip()
+            self.x_axis_button.setIcon(action.icon())
         self.x_axis_button.setText(action.text())
-        self.x_axis_button.setToolTip(action.toolTip())
-        self.x_axis_button.setStatusTip(action.toolTip())
-        self.x_axis_button.setWhatsThis(action.toolTip())
+        self.x_axis_button.setToolTip(tooltip)
+        self.x_axis_button.setStatusTip(tooltip)
+        self.x_axis_button.setWhatsThis(tooltip)
         self.x_axis_button.setAccessibleName(f"Selected X-axis mode: {action.text()}")
 
-    def setSelectedYAxisMode(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True):
+    def setSelectedYAxisMode(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True, series_custom_view=False, residual_custom_view=False):
         """Update the selected Y-axis mode without emitting a user-change signal."""
+        self.refreshYAxisPresentation(
+            mode, lower, upper, residual_lower, residual_upper, residual_active,
+            series_custom_view, residual_custom_view,
+        )
+
+    def refreshYAxisPresentation(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True, series_custom_view=False, residual_custom_view=False):
+        """Refresh checked policy, icon, label, and tooltip from runtime Y state."""
         action = self.y_axis_actions[mode]
         if mode == "manual":
             self.setManualYAxisSummary(lower, upper, residual_lower, residual_upper, residual_active)
         previous = self.y_axis_group.blockSignals(True)
         action.setChecked(True)
         self.y_axis_group.blockSignals(previous)
-        self._updateYAxisSelector(action)
+        self._updateYAxisSelector(
+            action,
+            series_custom_view=series_custom_view,
+            residual_custom_view=residual_custom_view,
+        )
 
     def setManualYAxisSummary(self, lower, upper, residual_lower=None, residual_upper=None, residual_active=True):
         """Update Manual action text and metadata with its configured bounds."""
@@ -449,17 +465,23 @@ class TimeSeriesToolbar(QToolBar):
             self._updateYAxisSelector(action)
 
     def _yAxisActionTriggered(self, action):
-        """Update selector presentation and emit the selected Y-axis mode."""
-        self._updateYAxisSelector(action)
+        """Emit the requested policy; the controller owns presentation refresh."""
         self.yAxisModeChanged.emit(action.data())
 
-    def _updateYAxisSelector(self, action):
-        """Render the current Y-axis mode without a checked toolbar state."""
-        self.y_axis_button.setIcon(action.icon())
+    def _updateYAxisSelector(self, action, *, series_custom_view=False, residual_custom_view=False):
+        """Render Y-axis presentation from policy plus independent viewport states."""
+        if series_custom_view:
+            self.y_axis_button.setIcon(QIcon(":/icons/icons/y_axis_custom.svg"))
+            tooltip = f"Time series: Custom view\nBase policy: {action.text()}"
+        else:
+            self.y_axis_button.setIcon(action.icon())
+            tooltip = action.toolTip()
+        if residual_custom_view:
+            tooltip += "\nResiduals: Custom view"
         self.y_axis_button.setText(action.text())
-        self.y_axis_button.setToolTip(action.toolTip())
-        self.y_axis_button.setStatusTip(action.toolTip())
-        self.y_axis_button.setWhatsThis(action.toolTip())
+        self.y_axis_button.setToolTip(tooltip)
+        self.y_axis_button.setStatusTip(tooltip)
+        self.y_axis_button.setWhatsThis(tooltip)
         self.y_axis_button.setAccessibleName(f"Selected Y-axis mode: {action.text()}")
 
     def setSeasonalEnabled(self, enabled):

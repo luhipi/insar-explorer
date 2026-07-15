@@ -115,6 +115,10 @@ class GuiController(QObject):
         self.ui = plugin.dockwidget
         self.choose_point_click_handler = cph.ClickHandler(plugin, msg_signal=self.msg_signal)
         self.time_series_settings = self.choose_point_click_handler.plot_ts.settings_model
+        plotter = self.choose_point_click_handler.plot_ts
+        plotter.axis_view_changed_callback = self._axisViewportChanged
+        plotter.auto_view_requested_callback = self._handlePlotAutoRequest
+        plotter.axis_state_sync_callback = self._syncAxisToolbarControls
         self.click_tool = None  # plugin.click_tool
         self.drawing_tool = None  # for polygon drawing
         self.drawing_tool_reference = None  # for reference polygon drawing
@@ -719,7 +723,8 @@ class GuiController(QObject):
         plotter.plot_residuals_flag = state.residual_enabled and state.fit_enabled
         self._syncTimeSeriesFitControls()
         if refresh:
-            plotter.plotTs(update=True)
+            with plotter.axisViewUpdateGuard():
+                plotter.plotTs(update=True)
         if hasattr(self, "time_series_style_popup"):
             self._refreshTimeSeriesStylePopup()
 
@@ -979,11 +984,81 @@ class GuiController(QObject):
         parms.save(block_key, settings_block)
         return new_value
 
+    def _syncAxisToolbarControls(self):
+        """Refresh both axis selectors from authoritative runtime state without drawing."""
+        self._syncTimeSeriesXAxisControls()
+        self._syncTimeSeriesYAxisControls(self.time_series_settings.y_axis.policy)
+
+    def _axisViewportChanged(self, axis_name):
+        """Mark an interactively changed ViewBox as Custom without redrawing."""
+        if axis_name == "x":
+            state = self.time_series_settings.x_axis
+            if not state.custom_view:
+                self.time_series_settings.replace_domain(
+                    "x_axis", replace(state, custom_view=True)
+                )
+            self._syncTimeSeriesXAxisControls()
+            return
+
+        state = self.time_series_settings.y_axis
+        if axis_name == "series_y":
+            updated = replace(state, series_custom_view=True)
+        elif axis_name == "residual_y":
+            updated = replace(state, residual_custom_view=True)
+        else:
+            return
+        if updated != state:
+            self.time_series_settings.replace_domain("y_axis", updated)
+        self._syncTimeSeriesYAxisControls(updated.policy)
+
+    def _handlePlotAutoRequest(self, axis_name):
+        """Translate pyqtgraph Auto into explicit From-data runtime policies."""
+        plotter = self.choose_point_click_handler.plot_ts
+        if axis_name in {"x", "combined"}:
+            x_state = self.time_series_settings.x_axis
+            self.time_series_settings.replace_domain(
+                "x_axis", replace(x_state, policy="from_data", custom_view=False)
+            )
+        if axis_name in {"series_y", "combined"}:
+            y_state = self.time_series_settings.y_axis
+            self.time_series_settings.replace_domain(
+                "y_axis", replace(
+                    y_state, policy="from_data",
+                    series_custom_view=False, residual_custom_view=False,
+                )
+            )
+            self.time_series_y_axis_mode = "from_data"
+            self.residual_y_axis_mode = "from_data"
+        elif axis_name == "residual_y":
+            y_state = self.time_series_settings.y_axis
+            self.time_series_settings.replace_domain(
+                "y_axis", replace(
+                    y_state, policy="from_data",
+                    series_custom_view=False, residual_custom_view=False,
+                )
+            )
+            self.time_series_y_axis_mode = "from_data"
+            self.residual_y_axis_mode = "from_data"
+
+        with plotter.axisViewUpdateGuard():
+            if axis_name in {"x", "combined"} and plotter.ax is not None:
+                plotter.setXlims(ax=plotter.ax)
+            if axis_name in {"series_y", "residual_y", "combined"} and plotter.ax is not None:
+                plotter.setYlims(ax=plotter.ax, parms=plotter.parms["time series plot"])
+            if axis_name in {"residual_y", "combined"} and plotter.ax_residuals is not None:
+                plotter.setYlims(ax=plotter.ax_residuals, parms=plotter.parms["residual plot"])
+        self._syncTimeSeriesXAxisControls()
+        self._syncTimeSeriesYAxisControls(self.time_series_settings.y_axis.policy)
+        plotter._draw()
+
     def _restoreTimeSeriesXAxisMode(self):
         """Reset the session-only X-axis state and synchronize the toolbar."""
         current = self.time_series_settings.x_axis
         self.time_series_settings.replace_domain(
-            "x_axis", replace(current, policy="from_data", manual_start=None, manual_end=None)
+            "x_axis", replace(
+                current, policy="from_data", manual_start=None, manual_end=None,
+                custom_view=False,
+            )
         )
         self._syncTimeSeriesXAxisControls()
 
@@ -991,7 +1066,7 @@ class GuiController(QObject):
         """Synchronize the toolbar from authoritative X-axis runtime state."""
         state = self.time_series_settings.x_axis
         self.ui.time_series_toolbar.setSelectedXAxisMode(
-            state.policy, state.manual_start, state.manual_end
+            state.policy, state.manual_start, state.manual_end, state.custom_view
         )
 
     def _applyXAxisLimitsToExistingPlot(self):
@@ -1013,7 +1088,9 @@ class GuiController(QObject):
             return False
         if mode not in {"from_data", "manual"}:
             mode = "from_data"
-        self.time_series_settings.replace_domain("x_axis", replace(state, policy=mode))
+        self.time_series_settings.replace_domain(
+            "x_axis", replace(state, policy=mode, custom_view=False)
+        )
         self._syncTimeSeriesXAxisControls()
         if refresh:
             self._applyXAxisLimitsToExistingPlot()
@@ -1069,7 +1146,9 @@ class GuiController(QObject):
                 plotter.applyXAxisViewport(start, end, draw=True)
         state = self.time_series_settings.x_axis
         self.time_series_settings.replace_domain(
-            "x_axis", replace(state, policy="manual", manual_start=start, manual_end=end)
+            "x_axis", replace(
+                state, policy="manual", manual_start=start, manual_end=end, custom_view=False
+            )
         )
         self._manual_x_axis_session = None
         self._syncTimeSeriesXAxisControls()
@@ -1082,7 +1161,9 @@ class GuiController(QObject):
         start, end = plotter.currentVisibleDateRange()
         state = self.time_series_settings.x_axis
         self.time_series_settings.replace_domain(
-            "x_axis", replace(state, policy="manual", manual_start=start, manual_end=end)
+            "x_axis", replace(
+                state, policy="manual", manual_start=start, manual_end=end, custom_view=False
+            )
         )
         self._manual_x_axis_session = None
         self.manual_x_axis_popup.closeAfterCommit()
@@ -1121,6 +1202,7 @@ class GuiController(QObject):
 
     def _syncTimeSeriesYAxisControls(self, mode):
         """Synchronize the code-created toolbar from shared Y-axis state."""
+        state = self.time_series_settings.y_axis
         self.ui.time_series_toolbar.setSelectedYAxisMode(
             mode,
             self.time_series_manual_y_lower,
@@ -1128,6 +1210,8 @@ class GuiController(QObject):
             self.residual_manual_y_lower,
             self.residual_manual_y_upper,
             bool(self.choose_point_click_handler.plot_ts.plot_residuals_flag),
+            state.series_custom_view,
+            state.residual_custom_view,
         )
 
     def _applyTimeSeriesYAxisMode(self, mode, refresh=True):
@@ -1138,7 +1222,12 @@ class GuiController(QObject):
         self.residual_y_axis_mode = mode
         current_axis = self.time_series_settings.y_axis
         self.time_series_settings.replace_domain(
-            "y_axis", replace(current_axis, policy=mode)
+            "y_axis", replace(
+                current_axis,
+                policy=mode,
+                series_custom_view=False,
+                residual_custom_view=False,
+            )
         )
         plotter = self.choose_point_click_handler.plot_ts
         plotter.plot_y_axis = mode
@@ -1148,8 +1237,12 @@ class GuiController(QObject):
         plotter.residual_manual_y_lower = self.residual_manual_y_lower
         plotter.residual_manual_y_upper = self.residual_manual_y_upper
         self._syncTimeSeriesYAxisControls(mode)
-        if refresh:
-            plotter.plotTs(update=True)
+        if refresh and plotter.ax is not None:
+            with plotter.axisViewUpdateGuard():
+                plotter.setYlims(ax=plotter.ax, parms=plotter.parms["time series plot"])
+                if plotter.ax_residuals is not None:
+                    plotter.setYlims(ax=plotter.ax_residuals, parms=plotter.parms["residual plot"])
+            plotter._draw()
 
     def setTimeSeriesYAxisMode(self, mode):
         """Apply a toolbar-selected shared Y-axis policy immediately."""

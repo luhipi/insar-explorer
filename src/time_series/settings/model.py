@@ -174,20 +174,23 @@ class AxisManualRange:
 
 @dataclass(frozen=True)
 class YAxisSettings:
-    """Session-only Y-axis policy and independent manual ranges."""
+    """Session-only Y-axis policy, manual ranges, and transient viewport state."""
 
     policy: str = "from_data"
     series_manual: AxisManualRange = field(default_factory=AxisManualRange)
     residual_manual: AxisManualRange = field(default_factory=AxisManualRange)
+    series_custom_view: bool = False
+    residual_custom_view: bool = False
 
 
 @dataclass(frozen=True)
 class XAxisSettings:
-    """Session-only X-axis policy and manual date range."""
+    """Session-only X-axis policy, manual date range, and transient viewport state."""
 
     policy: str = "from_data"
     manual_start: Optional[datetime] = None
     manual_end: Optional[datetime] = None
+    custom_view: bool = False
 
 
 @dataclass(frozen=True)

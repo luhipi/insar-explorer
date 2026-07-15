@@ -87,6 +87,50 @@ class PlotTs():
         self.ref_coords = None
         self._y_data_ranges = {}
         self._last_replica_y_data = []
+        self._axis_view_update_depth = 0
+        self.axis_view_changed_callback = None
+        self.axis_state_sync_callback = None
+        self._last_axis_ranges = {}
+
+
+    @contextmanager
+    def axisViewUpdateGuard(self):
+        """Ignore ViewBox range signals caused by application-driven updates."""
+        self._axis_view_update_depth += 1
+        try:
+            yield
+        finally:
+            self._axis_view_update_depth -= 1
+
+    def _axisViewChangeAllowed(self):
+        """Return whether a range signal represents an interactive viewport change."""
+        return self._axis_view_update_depth == 0
+
+    @staticmethod
+    def rangesAreClose(first, second, *, rel_tol=1e-9, abs_tol=1e-7):
+        """Return whether two axis ranges differ only by floating-point noise."""
+        if first is None or second is None or len(first) != 2 or len(second) != 2:
+            return False
+        span = max(abs(first[1] - first[0]), abs(second[1] - second[0]), 1.0)
+        tolerance = max(abs_tol, span * rel_tol)
+        return all(abs(float(a) - float(b)) <= tolerance for a, b in zip(first, second))
+
+    def _handleAxisRangeChanged(self, axis_name, view_box, axis_index):
+        """Record one axis-specific range and report only material user changes."""
+        current = tuple(float(value) for value in view_box.viewRange()[axis_index])
+        previous = self._last_axis_ranges.get(axis_name)
+        self._last_axis_ranges[axis_name] = current
+        if previous is None or self.rangesAreClose(previous, current):
+            return
+        if not self._axisViewChangeAllowed() or self.axis_view_changed_callback is None:
+            return
+        self.axis_view_changed_callback(axis_name)
+
+    def _notifyAxisViewChanged(self, axis_name):
+        """Report one interactive axis viewport change without redrawing."""
+        if not self._axisViewChangeAllowed() or self.axis_view_changed_callback is None:
+            return
+        self.axis_view_changed_callback(axis_name)
 
 
     @property
@@ -289,6 +333,29 @@ class PlotTs():
                 self.ax_residuals = None
 
     def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, coords=None, ref_coords=None,
+               update=False):
+        """Render under the nested-safe axis guard and normalize first-plot state."""
+        initial_plot = self.ax is None
+        with self.axisViewUpdateGuard():
+            result = self._plotTsGuarded(
+                dates=dates, ts_values=ts_values, ref_values=ref_values,
+                plot_multiple=plot_multiple, coords=coords, ref_coords=ref_coords,
+                update=update,
+            )
+        if initial_plot and self.ax is not None:
+            x_state = replace(self.settings_model.x_axis, policy="from_data", custom_view=False)
+            y_state = replace(
+                self.settings_model.y_axis, policy="from_data",
+                series_custom_view=False, residual_custom_view=False,
+            )
+            with self.settings_model.batch_update():
+                self.settings_model.replace_domain("x_axis", x_state)
+                self.settings_model.replace_domain("y_axis", y_state)
+            if self.axis_state_sync_callback is not None:
+                self.axis_state_sync_callback()
+        return result
+
+    def _plotTsGuarded(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, coords=None, ref_coords=None,
                update=False):
         # update: flag indicating if the plot should be updated or a new one created
 
@@ -665,13 +732,15 @@ class PlotTs():
             else:
                 x_min = self._dateToX(datetime(min_date.year, 1, 1))
                 x_max = self._dateToX(datetime(max_date.year + 1, 1, 1))
-        ax.setXRange(x_min, x_max, padding=0)
+        with self.axisViewUpdateGuard():
+            ax.setXRange(x_min, x_max, padding=0)
 
     def applyXAxisViewport(self, start, end, *, draw=True):
         """Apply only the existing main X viewport with zero padding."""
         if self.ax is None:
             return False
-        self.ax.setXRange(self.datetimeToPlotX(start), self.datetimeToPlotX(end), padding=0)
+        with self.axisViewUpdateGuard():
+            self.ax.setXRange(self.datetimeToPlotX(start), self.datetimeToPlotX(end), padding=0)
         if draw:
             self._draw()
         return True
@@ -713,7 +782,8 @@ class PlotTs():
         if y_min == y_max:
             y_min -= 1
             y_max += 1
-        ax.setYRange(y_min, y_max, padding=0.05)
+        with self.axisViewUpdateGuard():
+            ax.setYRange(y_min, y_max, padding=0.05)
 
     def setYlims(self, ax=None, parms={}):
         if not ax:
@@ -755,7 +825,8 @@ class PlotTs():
         if ymin == ymax:
             ymin -= 1
             ymax += 1
-        ax.setYRange(ymin, ymax, padding=0 if mode == "manual" else 0.05)
+        with self.axisViewUpdateGuard():
+            ax.setYRange(ymin, ymax, padding=0 if mode == "manual" else 0.05)
 
     def setManualYRange(self, axis_name, lower=None, upper=None):
         """Store and preview manual bounds on exactly one plot axis."""
@@ -788,8 +859,9 @@ class PlotTs():
             ranges = viewport.get(name)
             if axis is None or ranges is None:
                 continue
-            axis.setXRange(ranges[0][0], ranges[0][1], padding=0)
-            axis.setYRange(ranges[1][0], ranges[1][1], padding=0)
+            with self.axisViewUpdateGuard():
+                axis.setXRange(ranges[0][0], ranges[0][1], padding=0)
+                axis.setYRange(ranges[1][0], ranges[1][1], padding=0)
 
     @contextmanager
     def preserveViewport(self):
@@ -818,10 +890,27 @@ class PlotTs():
         axis = FormattedDateAxisItem(orientation='bottom', date_format=self.parms['time series plot'].get('date format'))
         plot_item = self.ui.plot_widget.addPlot(row=row, col=0, axisItems={'bottom': axis})
         self._stylePlotFrame(plot_item)
+        self._connectAxisViewSignals(plot_item, row=row)
         self._connectAutoButton(plot_item)
         plot_item.showButtons()
         self.ui.plot_widget.plot_items.append(plot_item)
         return plot_item
+
+
+    def _connectAxisViewSignals(self, plot_item, *, row):
+        """Track interactive ViewBox changes while ignoring guarded updates."""
+        view_box = plot_item.getViewBox()
+        if row == 0:
+            view_box.sigXRangeChanged.connect(
+                lambda *args, vb=view_box: self._handleAxisRangeChanged("x", vb, 0)
+            )
+            view_box.sigYRangeChanged.connect(
+                lambda *args, vb=view_box: self._handleAxisRangeChanged("series_y", vb, 1)
+            )
+        else:
+            view_box.sigYRangeChanged.connect(
+                lambda *args, vb=view_box: self._handleAxisRangeChanged("residual_y", vb, 1)
+            )
 
     def _connectAutoButton(self, plot_item):
         auto_button = getattr(plot_item, 'autoBtn', None)
@@ -834,18 +923,22 @@ class PlotTs():
         auto_button.clicked.connect(lambda *args, plot_item=plot_item: self._resetPlotView(plot_item))
 
     def _resetPlotView(self, plot_item):
+        """Route pyqtgraph Auto through the controller-owned policy reset."""
         if self.dates is None:
             return
+        callback = getattr(self, "auto_view_requested_callback", None)
+        if callback is not None:
+            callback("combined" if plot_item is self.ax else "residual_y")
+            return
 
-        self.updateSettings()
-        if self.ax is not None:
-            self.setXlims(ax=self.ax)
-
-        if plot_item is self.ax_residuals:
-            self.setYlims(ax=self.ax_residuals, parms=self.parms['residual plot'])
-        else:
-            self.setYlims(ax=self.ax, parms=self.parms['time series plot'])
-
+        with self.axisViewUpdateGuard():
+            self.updateSettings()
+            if self.ax is not None:
+                self.setXlims(ax=self.ax)
+            if plot_item is self.ax_residuals:
+                self.setYlims(ax=self.ax_residuals, parms=self.parms['residual plot'])
+            else:
+                self.setYlims(ax=self.ax, parms=self.parms['time series plot'])
         auto_button = getattr(plot_item, 'autoBtn', None)
         if auto_button is not None:
             auto_button.hide()
