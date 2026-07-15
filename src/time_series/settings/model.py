@@ -4,7 +4,7 @@ from copy import deepcopy
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, ClassVar, Dict, List, Optional
 
 from ..style_schema import (
     FIT_LINE_STYLE_DEFAULT, FIT_LINE_WIDTH_DEFAULT, FIT_LINE_WIDTH_RANGE,
@@ -202,7 +202,7 @@ class XAxisSettings:
 
 
 @dataclass(frozen=True)
-class PlotAppearanceSettings:
+class AppearanceSettings:
     """Persistent plot-wide appearance defaults currently represented in config."""
 
     time_series_title: str = ""
@@ -212,10 +212,21 @@ class PlotAppearanceSettings:
     time_series_y_label: str = "Deformation"
     residual_y_label: str = "Residual"
     font_size: float = 10.0
-    grid: str = "both"
+    grid_mode: str = "both"
     plot_background: str = "#f5f5f5"
     figure_background: str = "white"
     date_format: Optional[str] = "%Y-%m-%d"
+
+    GRID_MODES: ClassVar[tuple] = ("both", "horizontal", "vertical", "none")
+
+    def __post_init__(self):
+        """Normalize the canonical grid mode without introducing a Boolean alias."""
+        object.__setattr__(self, "grid_mode", self.normalize_grid_mode(self.grid_mode))
+
+    @classmethod
+    def normalize_grid_mode(cls, value):
+        """Return one supported canonical grid mode, defaulting invalid values to both."""
+        return value if value in cls.GRID_MODES else "both"
 
 
 @dataclass(frozen=True)
@@ -254,7 +265,7 @@ class TimeSeriesSettingsModel:
     replica: ReplicaSettings = field(default_factory=ReplicaSettings)
     y_axis: YAxisSettings = field(default_factory=YAxisSettings)
     x_axis: XAxisSettings = field(default_factory=XAxisSettings)
-    appearance: PlotAppearanceSettings = field(default_factory=PlotAppearanceSettings)
+    appearance: AppearanceSettings = field(default_factory=AppearanceSettings)
     export: ExportSettings = field(default_factory=ExportSettings)
     _listeners: List[Callable[[SettingsChangeSet], None]] = field(default_factory=list, init=False, repr=False)
     _batch_depth: int = field(default=0, init=False, repr=False)

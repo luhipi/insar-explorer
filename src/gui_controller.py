@@ -20,6 +20,7 @@ from .ui.popups.time_series_style_popup import TimeSeriesStylePopup
 from .ui.popups.manual_y_axis_popup import ManualYAxisPopup
 from .ui.popups.manual_x_axis_popup import ManualXAxisPopup
 from .ui.popups.export_settings_popup import ExportSettingsPopup
+from .ui.popups.appearance_popup import AppearancePopup
 from .qt_compat import (
     RASTER_LAYER,
     VECTOR_LAYER,
@@ -33,7 +34,9 @@ from .time_series.residual_style_controller import ResidualStyleController
 from .time_series.style_availability import TimeSeriesStyleAvailability
 from .time_series.style_controller import TimeSeriesStyleController
 from .time_series.style_schema import percent_to_alpha, EDITABLE_STYLE_KEYS
-from .time_series.settings.model import AxisManualRange, ExportSettings, SeriesStyleSettings
+from .time_series.settings.model import (
+    AppearanceSettings, AxisManualRange, ExportSettings, SeriesStyleSettings,
+)
 from .time_series.settings.persistence import build_legacy_plot_params
 
 
@@ -151,6 +154,7 @@ class GuiController(QObject):
         self._manual_x_axis_session = None
         self.manual_y_axis_popup = ManualYAxisPopup(self.ui)
         self.export_settings_popup = ExportSettingsPopup(self.ui)
+        self.appearance_popup = AppearancePopup(self.ui)
         self._manual_y_axis_session = None
         self.time_series_style_controller = TimeSeriesStyleController()
         self.fit_style_controller = FitStyleController()
@@ -456,6 +460,7 @@ class GuiController(QObject):
         self.ui.cb_remove_last_plot.clicked.connect(self.removeLastPlotClicked)
         # TS save
         self.ui.time_series_toolbar.exportSettingsRequested.connect(self.showExportSettingsPopup)
+        self.ui.time_series_toolbar.appearanceRequested.connect(self.showAppearancePopup)
         self.ui.time_series_toolbar.plotExportRequested.connect(self.saveTsPlot)
         self.ui.time_series_toolbar.dataExportRequested.connect(self.exportTs)
 
@@ -463,6 +468,8 @@ class GuiController(QObject):
         self.ui.time_series_toolbar.settingsRequested.connect(self.settingsWidgetPopup)
         self.export_settings_popup.settingsChanged.connect(self.updateExportSettings)
         self.export_settings_popup.resetRequested.connect(self.resetExportSettings)
+        self.appearance_popup.settingsChanged.connect(self.updateAppearanceSettings)
+        self.appearance_popup.resetRequested.connect(self.resetAppearanceSettings)
 
     def connectMapSignals(self):
         self.ui.cb_select_field.currentTextChanged.connect(self.selectVectorFieldChanged)
@@ -541,6 +548,7 @@ class GuiController(QObject):
             "export": reloaded_model.export,
         })
         self.syncExportSettingsPopup()
+        self.syncAppearancePopup()
         self._syncTimeSeriesReplicaControls()
         previous = getattr(self, "_settings_style_before", plotter.style_config.load_style_values())
         previous_fit = getattr(self, "_settings_fit_style_before", plotter.style_config.load_fit_style_values())
@@ -931,6 +939,58 @@ class GuiController(QObject):
         else:
             popup.setMixedProperties(set())
 
+
+
+    def syncAppearancePopup(self):
+        """Refresh the Appearance popup from the authoritative runtime model."""
+        self.appearance_popup.setSettings(
+            self.choose_point_click_handler.plot_ts.settings_model.appearance
+        )
+
+    def updateAppearanceSettings(
+        self, time_series_title, residual_title, date_format, font_size,
+        plot_background, grid_mode,
+    ):
+        """Persist one complete appearance replacement after an immediate edit."""
+        plotter = self.choose_point_click_handler.plot_ts
+        current = plotter.settings_model.appearance
+        settings = replace(
+            current,
+            time_series_title=str(time_series_title),
+            residual_title=str(residual_title),
+            date_format=str(date_format),
+            font_size=float(font_size),
+            plot_background=str(plot_background),
+            grid_mode=AppearanceSettings.normalize_grid_mode(grid_mode),
+        )
+        plotter.settings_model.replace_domain("appearance", settings)
+        plotter.settings_persistence.save_appearance(settings)
+        self.syncAppearancePopup()
+
+    def resetAppearanceSettings(self):
+        """Restore schema defaults and commit them immediately."""
+        defaults = AppearanceSettings()
+        self.updateAppearanceSettings(
+            defaults.time_series_title, defaults.residual_title,
+            defaults.date_format, defaults.font_size, defaults.plot_background,
+            defaults.grid_mode,
+        )
+
+    def showAppearancePopup(self):
+        """Open the anchored Appearance editor initialized from runtime state."""
+        self.syncAppearancePopup()
+        toolbar = self.ui.time_series_toolbar
+        action_widget = toolbar.widgetForAction(toolbar.appearance_action)
+        anchor = action_widget or toolbar
+        self.appearance_popup.adjustSize()
+        anchor_top_left = anchor.mapToGlobal(QPoint(0, 0))
+        anchor_rect = QRect(anchor_top_left, anchor.size())
+        geometry = available_screen_geometry(anchor_rect.center(), anchor)
+        self.appearance_popup.move(screen_aware_popup_position(
+            anchor_rect, self.appearance_popup.sizeHint(), geometry
+        ))
+        self.appearance_popup.show()
+        self.appearance_popup.raise_()
 
     def syncExportSettingsPopup(self):
         """Refresh the export popup from the authoritative runtime model."""

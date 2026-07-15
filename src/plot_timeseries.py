@@ -214,6 +214,8 @@ class PlotTs():
         }
         if change_set.domains & compatibility_domains:
             self.refreshCompatibilityViews()
+        if "appearance" in change_set.domains:
+            self.applyAppearanceSettings(change_set.properties.get("appearance", frozenset()))
 
     def refreshCompatibilityViews(self):
         """Rebuild all temporary compatibility views from the runtime model.
@@ -894,12 +896,67 @@ class PlotTs():
         background_color = self._color(parms['background color'])
         self.ui.plot_widget.setBackground(background_color)
 
+    def applyAppearanceSettings(self, changed_properties=None):
+        """Apply runtime appearance changes without recreating plots or changing ranges."""
+        appearance = self.settings_model.appearance
+        axes = [axis for axis in (self.ax, self.ax_residuals) if axis is not None]
+        if not axes:
+            return
+        viewport = self.captureViewport()
+        try:
+            for axis in axes:
+                font = QFont()
+                font.setPointSize(int(appearance.font_size))
+                for axis_name in ("left", "bottom"):
+                    axis.getAxis(axis_name).setTickFont(font)
+                axis.showGrid(
+                    x=appearance.grid_mode in ("vertical", "both"),
+                    y=appearance.grid_mode in ("horizontal", "both"),
+                    alpha=0.25,
+                )
+                axis.getViewBox().setBackgroundColor(
+                    self._color(appearance.plot_background)
+                )
+                date_axis = axis.getAxis("bottom")
+                if isinstance(date_axis, FormattedDateAxisItem):
+                    date_axis.date_format = appearance.date_format
+                    date_axis.picture = None
+
+            font_size = f"{int(appearance.font_size)}pt"
+            self.ax.setTitle(appearance.time_series_title, size=font_size)
+            self.ax.setLabel(
+                "bottom", appearance.time_series_x_label,
+                **{"font-size": font_size}
+            )
+            self.ax.setLabel(
+                "left", appearance.time_series_y_label,
+                **{"font-size": font_size}
+            )
+            if self.ax_residuals is not None:
+                self.ax_residuals.setTitle(appearance.residual_title, size=font_size)
+                self.ax_residuals.setLabel(
+                    "bottom", appearance.residual_x_label,
+                    **{"font-size": font_size}
+                )
+                self.ax_residuals.setLabel(
+                    "left", appearance.residual_y_label,
+                    **{"font-size": font_size}
+                )
+            self.ui.plot_widget.setBackground(
+                self._color(appearance.figure_background)
+            )
+        finally:
+            self.restoreViewport(viewport)
+        self._draw()
+
     def savePlotAsImage(self, filename):
         """Export the current plot and return the export result."""
         return TimeSeriesPlotExporter(self).export(filename)
 
     def _addPlot(self, row=0):
-        axis = FormattedDateAxisItem(orientation='bottom', date_format=self.parms['time series plot'].get('date format'))
+        axis = FormattedDateAxisItem(
+            orientation='bottom', date_format=self.settings_model.appearance.date_format
+        )
         plot_item = self.ui.plot_widget.addPlot(row=row, col=0, axisItems={'bottom': axis})
         self._stylePlotFrame(plot_item)
         self._connectAxisViewSignals(plot_item, row=row)
