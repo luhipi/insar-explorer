@@ -178,6 +178,8 @@ class TimeSeriesStyleConfig:
         for key in RESIDUAL_STYLE_KEYS:
             entry = residual.get(key)
             if not isinstance(entry, dict):
+                if key == "marker edge color":
+                    continue
                 raise KeyError(f"Missing residual style setting: {key}")
             entry["value"] = self.normalize_residual_property(key, values.get(key))
         settings.save(self.BLOCK_KEY, block)
@@ -188,6 +190,7 @@ class TimeSeriesStyleConfig:
         if key == "line style": return normalize_residual_line_style(value, "")
         if key == "line width": return normalize_number(value, RESIDUAL_LINE_WIDTH_RANGE, 1.0)
         if key == "marker color": return normalize_color(value, "#d62728")
+        if key == "marker edge color": return normalize_color(value, "black")
         if key == "line color": return normalize_color(value, "#1f77b4")
         if key == "marker alpha": return normalize_number(value, (0.0, 1.0), 0.8)
         if key == "line alpha": return normalize_number(value, (0.0, 1.0), 0.8)

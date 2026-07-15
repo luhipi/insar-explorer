@@ -46,7 +46,7 @@ PERSISTED_STYLE_KEYS = tuple(STYLE_PROPERTIES.values())
 EDITABLE_STYLE_KEYS = tuple(EDITABLE_STYLE_PROPERTIES.values())
 
 RESIDUAL_STYLE_KEYS = (
-    "marker", "marker color", "marker size", "marker alpha",
+    "marker", "marker color", "marker edge color", "marker size", "marker alpha",
     "line style", "line color", "line width", "line alpha",
 )
 

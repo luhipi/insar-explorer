@@ -1,7 +1,8 @@
 import os
 from contextlib import contextmanager
 from copy import deepcopy
-from datetime import datetime, timedelta
+from dataclasses import replace
+from datetime import datetime, timedelta, time
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -9,12 +10,10 @@ from ..external import pyqtgraph as pg
 from qgis.PyQt.QtGui import QColor, QFont
 
 from .model_fitting import FittingModels
-from ..external.setting_manager_ui.json_settings import JsonSettings
 from .export_plot import TimeSeriesPlotExporter
-from .time_series.style_config import TimeSeriesStyleConfig
-from .time_series.ensemble_style import ENSEMBLE_MEMBER_WIDTH_DEFAULT
+from .time_series.settings.model import AxisManualRange, ResidualStyleSettings
+from .time_series.settings.persistence import TimeSeriesSettingsPersistence, build_legacy_plot_params
 from .time_series.fit_style_controller import FitStyle
-from .time_series.style_schema import normalize_fit_line_style
 from .models.time_series import (
     TimeSeriesData,
     TimeSeriesGraphics,
@@ -53,7 +52,7 @@ class FormattedDateAxisItem(pg.DateAxisItem):
 
 class PlotTs():
 
-    def __init__(self, ui):
+    def __init__(self, ui, settings_model=None):
         self.ui = ui
         self.ax = None
         self.dates = None
@@ -71,29 +70,129 @@ class PlotTs():
         self.default_style = None
         self.fit_models = []
         self.fit_seasonal_flag = False
-        self.replicate_flag = False
-        self.plot_y_axis = "from_data"
-        self.manual_y_lower = None
-        self.manual_y_upper = None
-        self.residual_y_axis_mode = "from_data"
-        self.residual_manual_y_lower = None
-        self.residual_manual_y_upper = None
-        self.replicate_value = 5.6 / 2
         self.ax_residuals = None
         self.plot_residuals_flag = False
         self.hold_on_flag = False
         self.random_marker_color_flag = False
         self.parms = {}
-        self.updateSettings()
-        self.style_config = TimeSeriesStyleConfig(self.config_file)
-        self.default_style = DefaultTimeSeriesStyle(
-            self.style_config.load_default_style(self.parms)
-        )
+        self.settings_persistence = TimeSeriesSettingsPersistence(self.config_file)
+        self.settings_model = settings_model or self.settings_persistence.load()
+        self.style_config = self.settings_persistence.style_config
+        self._settings_unsubscribe = self.settings_model.subscribe(self._onSettingsChanged)
+        self.refreshCompatibilityViews()
         self.coords = None
         self.ref_coords = None
         self._y_data_ranges = {}
         self._last_replica_y_data = []
+        self._axis_view_update_depth = 0
+        self.axis_view_changed_callback = None
+        self.axis_state_sync_callback = None
+        self._last_axis_ranges = {}
 
+
+    @contextmanager
+    def axisViewUpdateGuard(self):
+        """Ignore ViewBox range signals caused by application-driven updates."""
+        self._axis_view_update_depth += 1
+        try:
+            yield
+        finally:
+            self._axis_view_update_depth -= 1
+
+    def _axisViewChangeAllowed(self):
+        """Return whether a range signal represents an interactive viewport change."""
+        return self._axis_view_update_depth == 0
+
+    @staticmethod
+    def rangesAreClose(first, second, *, rel_tol=1e-9, abs_tol=1e-7):
+        """Return whether two axis ranges differ only by floating-point noise."""
+        if first is None or second is None or len(first) != 2 or len(second) != 2:
+            return False
+        span = max(abs(first[1] - first[0]), abs(second[1] - second[0]), 1.0)
+        tolerance = max(abs_tol, span * rel_tol)
+        return all(abs(float(a) - float(b)) <= tolerance for a, b in zip(first, second))
+
+    def _handleAxisRangeChanged(self, axis_name, view_box, axis_index):
+        """Record one axis-specific range and report only material user changes."""
+        current = tuple(float(value) for value in view_box.viewRange()[axis_index])
+        previous = self._last_axis_ranges.get(axis_name)
+        self._last_axis_ranges[axis_name] = current
+        if previous is None or self.rangesAreClose(previous, current):
+            return
+        if not self._axisViewChangeAllowed() or self.axis_view_changed_callback is None:
+            return
+        self.axis_view_changed_callback(axis_name)
+
+    def _notifyAxisViewChanged(self, axis_name):
+        """Report one interactive axis viewport change without redrawing."""
+        if not self._axisViewChangeAllowed() or self.axis_view_changed_callback is None:
+            return
+        self.axis_view_changed_callback(axis_name)
+
+
+    @property
+    def replicate_flag(self):
+        """Compatibility view backed by runtime Replica settings."""
+        return self.settings_model.replica.enabled
+
+    @replicate_flag.setter
+    def replicate_flag(self, value):
+        self.settings_model.update_property("replica", "enabled", bool(value))
+
+    @property
+    def replicate_value(self):
+        """Compatibility view backed by runtime Replica interval."""
+        return self.settings_model.replica.interval_mm
+
+    @replicate_value.setter
+    def replicate_value(self, value):
+        self.settings_model.update_property("replica", "interval_mm", float(value))
+
+    @property
+    def plot_y_axis(self):
+        return self.settings_model.y_axis.policy
+
+    @plot_y_axis.setter
+    def plot_y_axis(self, value):
+        self.settings_model.update_property("y_axis", "policy", value)
+
+    residual_y_axis_mode = plot_y_axis
+
+    @property
+    def manual_y_lower(self):
+        return self.settings_model.y_axis.series_manual.lower
+
+    @manual_y_lower.setter
+    def manual_y_lower(self, value):
+        axis = self.settings_model.y_axis
+        self.settings_model.replace_domain("y_axis", replace(axis, series_manual=replace(axis.series_manual, lower=value)))
+
+    @property
+    def manual_y_upper(self):
+        return self.settings_model.y_axis.series_manual.upper
+
+    @manual_y_upper.setter
+    def manual_y_upper(self, value):
+        axis = self.settings_model.y_axis
+        self.settings_model.replace_domain("y_axis", replace(axis, series_manual=replace(axis.series_manual, upper=value)))
+
+    @property
+    def residual_manual_y_lower(self):
+        return self.settings_model.y_axis.residual_manual.lower
+
+    @residual_manual_y_lower.setter
+    def residual_manual_y_lower(self, value):
+        axis = self.settings_model.y_axis
+        self.settings_model.replace_domain("y_axis", replace(axis, residual_manual=replace(axis.residual_manual, lower=value)))
+
+    @property
+    def residual_manual_y_upper(self):
+        return self.settings_model.y_axis.residual_manual.upper
+
+    @residual_manual_y_upper.setter
+    def residual_manual_y_upper(self, value):
+        axis = self.settings_model.y_axis
+        self.settings_model.replace_domain("y_axis", replace(axis, residual_manual=replace(axis.residual_manual, upper=value)))
 
     @staticmethod
     def _validateReplicaPairCount(value):
@@ -107,102 +206,34 @@ class PlotTs():
             return 1
         return max(1, min(10, value))
 
-    def modifySettings(self, block_key, value):
-        params = JsonSettings(self.config_file)
-        params.save(block_key, value)
+    def _onSettingsChanged(self, change_set):
+        """Refresh compatibility views once for domains represented by legacy objects."""
+        compatibility_domains = {
+            "series_defaults", "fit_defaults", "residual_defaults",
+            "ensemble_defaults", "replica", "appearance", "export",
+        }
+        if change_set.domains & compatibility_domains:
+            self.refreshCompatibilityViews()
+
+    def refreshCompatibilityViews(self):
+        """Rebuild all temporary compatibility views from the runtime model.
+
+        This method deliberately performs no redraw. Callers coordinate a single redraw
+        after model, snapshot, and UI synchronization is complete.
+
+        TODO(phase-appearance-export): Remove ``parms`` and ``default_style`` after all
+        consumers accept typed runtime settings directly.
+        """
+        self.parms = build_legacy_plot_params(self.settings_model)
+        self.default_style = DefaultTimeSeriesStyle.fromParams(self.parms)
+
+    def refreshLegacyPlotParams(self):
+        """Compatibility alias for the centralized compatibility refresh path."""
+        self.refreshCompatibilityViews()
 
     def updateSettings(self):
-        parms_ts = JsonSettings(self.config_file)
-        parms_ts.load("timeseries settings")
-
-        parms = {}
-        parms['title'] = parms_ts.get(["time series plot", "title"]) or ""
-        parms['xlabel'] = parms_ts.get(["time series plot", "xlabel"]) or ""
-        parms['ylabel'] = parms_ts.get(["time series plot", "ylabel"]) or ""
-        parms['font size'] = parms_ts.get(["time series plot", "font size"]) or 12
-        parms['marker'] = parms_ts.get(["time series plot", "marker"]) or "."
-        parms['marker color'] = parms_ts.get(["time series plot", "marker color"]) or None
-        parms['marker alpha'] = self._alphaOrDefault(parms_ts.get(["time series plot", "marker alpha"]), 1.0)
-        parms['marker edge color'] = parms_ts.get(["time series plot", "marker edge color"]) or None
-        parms['marker size'] = parms_ts.get(["time series plot", "marker size"])
-        parms['line style'] = parms_ts.get(["time series plot", "line style"]) or ''
-        parms['line color'] = parms_ts.get(["time series plot", "line color"]) or None
-        parms['line alpha'] = self._alphaOrDefault(parms_ts.get(["time series plot", "line alpha"]), 1.0)
-        line_width = parms_ts.get(["time series plot", "line width"])
-        parms['line width'] = 1.0 if line_width is None else line_width
-
-        parms['series fill color'] = parms_ts.get(["time series plot", "series fill color"]) or 'blue'
-        parms['series fill alpha'] = self._alphaOrDefault(parms_ts.get(["time series plot", "series fill alpha"]), 0.2)
-        parms['series line style'] = '-'
-        parms['series line color'] = parms_ts.get(["time series plot", "series line color"]) or None
-        parms['series line alpha'] = self._alphaOrDefault(parms_ts.get(["time series plot", "series line alpha"]), 1.0)
-        series_line_width = parms_ts.get(["time series plot", "series line width"])
-        parms['series line width'] = ENSEMBLE_MEMBER_WIDTH_DEFAULT if series_line_width is None else series_line_width
-
-        parms['grid'] = parms_ts.get(["time series plot", "grid"])
-        parms['background color'] = parms_ts.get(["time series plot", "background color"]) or 'white'
-        parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
-
-        # replica
-        parms['replica color 1'] = parms_ts.get(["time series plot", "replica color 1"]) or 'gray'
-        parms['replica color 2'] = parms_ts.get(["time series plot", "replica color 2"]) or 'gray'
-        parms['replica alpha'] = parms_ts.get(["time series plot", "replica alpha"]) or 1.0
-        parms['replica marker size'] = parms_ts.get(["time series plot", "replica marker size"]) or 5
-        parms['replica marker'] = parms_ts.get(["time series plot", "replica marker"]) or 'o'
-        parms['replica pair count'] = self._validateReplicaPairCount(
-            parms_ts.get(["time series plot", "replica pair count"])
-        )
-
-        self.parms['time series plot'] = parms
-
-        # figure settings
-        parms = {}
-        parms['background color'] = parms_ts.get(["figure", "background color"]) or 'white'
-
-        self.parms['figure'] = parms
-
-        # export settings
-        parms = {}
-        parms['dpi'] = parms_ts.get(["export", "dpi"]) or 300
-        parms['aspect ratio'] = parms_ts.get(["export", "aspect ratio"]) or 4.0
-
-        credit = parms_ts.get(["export", "credit"])
-        parms['credit'] = credit if credit is not None else "Powered by InSAR Explorer"
-
-        self.parms['export'] = parms
-
-        # residual plot
-        parms = {}
-        parms['title'] = parms_ts.get(["residual plot", "title"]) or ""
-        parms['xlabel'] = parms_ts.get(["residual plot", "xlabel"]) or ""
-        parms['ylabel'] = parms_ts.get(["residual plot", "ylabel"]) or ""
-        parms['marker'] = parms_ts.get(["residual plot", "marker"]) or "o"
-        parms['marker color'] = parms_ts.get(["residual plot", "marker color"]) or None
-        parms['marker alpha'] = self._alphaOrDefault(parms_ts.get(["residual plot", "marker alpha"]), 1.0)
-        parms['marker edge color'] = parms_ts.get(["residual plot", "marker edge color"]) or None
-        parms['marker size'] = parms_ts.get(["residual plot", "marker size"])
-        parms['line style'] = parms_ts.get(["residual plot", "line style"]) or ''
-        parms['line color'] = parms_ts.get(["residual plot", "line color"]) or None
-        parms['line alpha'] = self._alphaOrDefault(parms_ts.get(["residual plot", "line alpha"]), 1.0)
-        parms['line width'] = parms_ts.get(["residual plot", "line width"])
-
-        # other parameters from time series plot
-        parms['grid'] = parms_ts.get(["time series plot", "grid"])
-        parms['background color'] = parms_ts.get(["time series plot", "background color"]) or 'white'
-        parms['font size'] = parms_ts.get(["time series plot", "font size"]) or 12
-        parms['date format'] = parms_ts.get(["time series plot", "date format"]) or None
-        self.parms['residual plot'] = parms
-
-        # fit model
-        parms = {}
-        parms['line style'] = normalize_fit_line_style(
-            parms_ts.get(["model fit", "line style"])
-        )
-        parms['line color'] = parms_ts.get(["model fit", "line color"]) or 'black'
-        parms['line alpha'] = self._alphaOrDefault(parms_ts.get(["model fit", "line alpha"]), 1.0)
-        fit_line_width = parms_ts.get(["model fit", "line width"])
-        parms['line width'] = 2.0 if fit_line_width is None else fit_line_width
-        self.parms['model fit'] = parms
+        """Compatibility alias that never reads persistence from the renderer."""
+        self.refreshCompatibilityViews()
 
     def clear(self):
         if not self.hold_on_flag:
@@ -300,11 +331,32 @@ class PlotTs():
 
     def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, coords=None, ref_coords=None,
                update=False):
+        """Render under the nested-safe axis guard and normalize first-plot state."""
+        initial_plot = self.ax is None
+        with self.axisViewUpdateGuard():
+            result = self._plotTsGuarded(
+                dates=dates, ts_values=ts_values, ref_values=ref_values,
+                plot_multiple=plot_multiple, coords=coords, ref_coords=ref_coords,
+                update=update,
+            )
+        if initial_plot and self.ax is not None:
+            x_state = replace(self.settings_model.x_axis, policy="from_data", custom_view=False)
+            y_state = replace(
+                self.settings_model.y_axis, policy="from_data",
+                series_custom_view=False, residual_custom_view=False,
+            )
+            with self.settings_model.batch_update():
+                self.settings_model.replace_domain("x_axis", x_state)
+                self.settings_model.replace_domain("y_axis", y_state)
+            if self.axis_state_sync_callback is not None:
+                self.axis_state_sync_callback()
+        return result
+
+    def _plotTsGuarded(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, coords=None, ref_coords=None,
+               update=False):
         # update: flag indicating if the plot should be updated or a new one created
 
         self.updateSettings()
-        if self.default_style is None:
-            self.default_style = DefaultTimeSeriesStyle.fromParams(self.parms)
 
         if update:
             source_snapshot = self._remove_rendered_snapshot_for_update()
@@ -480,17 +532,19 @@ class PlotTs():
         return True
 
     def plotReplicas(self, series: TimeSeriesData, style: TimeSeriesStyle):
-        parms = style.params['time series plot']
+        """Render global Replica overlays from the authoritative runtime model.
+
+        ``style`` remains in the signature for compatibility with older callers, but
+        Replica appearance is intentionally not required in snapshot-owned payloads.
+        """
+        replica = self.settings_model.replica
         x = self._datesToX(series.dates)
-        marker_color_1 = parms['replica color 1']  # replica up
-        marker_color_2 = parms['replica color 2']  # replica down
-        marker_alpha = parms['replica alpha']
-        marker_size_replica = parms['replica marker size']
-        marker_replica = parms['replica marker']
-        runtime_plot_parms = self.parms.get("time series plot", {})
-        replica_pair_count = self._validateReplicaPairCount(
-            runtime_plot_parms.get("replica pair count")
-        )
+        marker_color_1 = replica.color_1  # replica up
+        marker_color_2 = replica.color_2  # replica down
+        marker_alpha = replica.opacity
+        marker_size_replica = replica.marker_size
+        marker_replica = replica.marker
+        replica_pair_count = self._validateReplicaPairCount(replica.pair_count)
         self._last_replica_y_data = []
 
         # Plot symmetric positive/negative replica pairs around the source series.
@@ -564,22 +618,33 @@ class PlotTs():
 
         return fit_plot, residuals_values
 
+    def _normalizedResidualStyle(self, style: TimeSeriesStyle):
+        """Return snapshot-owned residual appearance with runtime-default fallbacks."""
+        values = self.settings_model.residual_defaults.asParams()
+        snapshot_params = style.params if isinstance(style.params, dict) else {}
+        snapshot_residual = snapshot_params.get("residual plot", {})
+        if isinstance(snapshot_residual, dict):
+            values.update(snapshot_residual)
+        return ResidualStyleSettings.fromParams({"residual plot": values})
+
     def plotResiduals(self, series: TimeSeriesData, style: TimeSeriesStyle, items=None, residuals_values=None):
         if items is None:
             items = TimeSeriesGraphics()
         if residuals_values is None:
             residuals_values = series.residuals_values
         if self.plot_residuals_flag and self.ax_residuals is not None and residuals_values is not None:
-            parms = style.params['residual plot']
-            marker = parms['marker']
-            marker_size = parms['marker size']
-            marker_color = parms['marker color']
-            marker_alpha = parms['marker alpha']
-            edge_color = parms['marker edge color']
-            line_style = parms['line style']
-            line_color = parms['line color']
-            line_alpha = parms['line alpha']
-            line_width = parms['line width']
+            residual_style = self._normalizedResidualStyle(style)
+            marker = residual_style.marker
+            marker_size = residual_style.marker_size
+            marker_color = residual_style.marker_color
+            marker_alpha = residual_style.marker_alpha
+            edge_color = residual_style.marker_edge_color
+            line_style = residual_style.line_style
+            line_color = residual_style.line_color
+            line_alpha = residual_style.line_alpha
+            line_width = residual_style.line_width
+            parms = deepcopy(self.parms.get("residual plot", {}))
+            parms.update(residual_style.asParams())
 
             x = self._datesToX(series.dates)
             marker_size = marker_size or 0
@@ -665,16 +730,50 @@ class PlotTs():
         """
         if not ax:
             ax = self.ax
-        min_date = np.nanmin(self.dates)
-        max_date = np.nanmax(self.dates)
-
-        if use_data_xlim:
-            x_min = self._dateToX(min_date - timedelta(days=padding))
-            x_max = self._dateToX(max_date + timedelta(days=padding))
+        state = self.settings_model.x_axis
+        if state.policy == "manual" and state.manual_start is not None and state.manual_end is not None:
+            x_min = self._dateToX(state.manual_start)
+            x_max = self._dateToX(state.manual_end)
         else:
-            x_min = self._dateToX(datetime(min_date.year, 1, 1))
-            x_max = self._dateToX(datetime(max_date.year + 1, 1, 1))
-        ax.setXRange(x_min, x_max, padding=0)
+            min_date = np.nanmin(self.dates)
+            max_date = np.nanmax(self.dates)
+            if use_data_xlim:
+                x_min = self._dateToX(min_date - timedelta(days=padding))
+                x_max = self._dateToX(max_date + timedelta(days=padding))
+            else:
+                x_min = self._dateToX(datetime(min_date.year, 1, 1))
+                x_max = self._dateToX(datetime(max_date.year + 1, 1, 1))
+        with self.axisViewUpdateGuard():
+            ax.setXRange(x_min, x_max, padding=0)
+
+    def applyXAxisViewport(self, start, end, *, draw=True):
+        """Apply only the existing main X viewport with zero padding."""
+        if self.ax is None:
+            return False
+        with self.axisViewUpdateGuard():
+            self.ax.setXRange(self.datetimeToPlotX(start), self.datetimeToPlotX(end), padding=0)
+        if draw:
+            self._draw()
+        return True
+
+    def availableDateRange(self):
+        """Return the nearest Python datetime endpoints available in current data."""
+        dates = [self._asDatetime(value) for value in self.dates]
+        return min(dates), max(dates)
+
+    def currentVisibleDateRange(self):
+        """Return date bounds covering the complete visible X viewport."""
+        if self.ax is None:
+            raise ValueError("A plotted time series is required")
+        visible_start, visible_end = self.ax.viewRange()[0]
+        start_datetime = self.plotXToDatetime(visible_start)
+        end_datetime = self.plotXToDatetime(visible_end)
+        start = datetime.combine(start_datetime.date(), time.min)
+        end_date = end_datetime.date()
+        if end_datetime.time() != time.min:
+            end_date += timedelta(days=1)
+        end = datetime.combine(end_date, time.min)
+        return start, end
 
     def updateYlim(self, *, ax=None, y_data):
         if not ax:
@@ -694,7 +793,8 @@ class PlotTs():
         if y_min == y_max:
             y_min -= 1
             y_max += 1
-        ax.setYRange(y_min, y_max, padding=0.05)
+        with self.axisViewUpdateGuard():
+            ax.setYRange(y_min, y_max, padding=0.05)
 
     def setYlims(self, ax=None, parms={}):
         if not ax:
@@ -702,10 +802,12 @@ class PlotTs():
 
         # get min/max from axis
         y_min, y_max = self._y_data_ranges.get(id(ax), ax.viewRange()[1])
-        mode = self.plot_y_axis if ax is self.ax else self.residual_y_axis_mode
+        mode = self.settings_model.y_axis.policy
         if mode == "manual":
-            lower = self.manual_y_lower if ax is self.ax else self.residual_manual_y_lower
-            upper = self.manual_y_upper if ax is self.ax else self.residual_manual_y_upper
+            manual = (self.settings_model.y_axis.series_manual if ax is self.ax
+                      else self.settings_model.y_axis.residual_manual)
+            lower = manual.lower
+            upper = manual.upper
             data_span = y_max - y_min
             from_data_lower = y_min - data_span * 0.05
             from_data_upper = y_max + data_span * 0.05
@@ -734,22 +836,21 @@ class PlotTs():
         if ymin == ymax:
             ymin -= 1
             ymax += 1
-        ax.setYRange(ymin, ymax, padding=0 if mode == "manual" else 0.05)
+        with self.axisViewUpdateGuard():
+            ax.setYRange(ymin, ymax, padding=0 if mode == "manual" else 0.05)
 
     def setManualYRange(self, axis_name, lower=None, upper=None):
         """Store and preview manual bounds on exactly one plot axis."""
+        state = self.settings_model.y_axis
         if axis_name == "residual":
-            self.residual_y_axis_mode = "manual"
-            self.residual_manual_y_lower = lower
-            self.residual_manual_y_upper = upper
+            state = replace(state, policy="manual", residual_manual=AxisManualRange(lower, upper))
             axis = self.ax_residuals
             parms = self.parms["residual plot"]
         else:
-            self.plot_y_axis = "manual"
-            self.manual_y_lower = lower
-            self.manual_y_upper = upper
+            state = replace(state, policy="manual", series_manual=AxisManualRange(lower, upper))
             axis = self.ax
             parms = self.parms["time series plot"]
+        self.settings_model.replace_domain("y_axis", state)
         if axis is not None:
             self.setYlims(ax=axis, parms=parms)
             self._draw()
@@ -769,8 +870,9 @@ class PlotTs():
             ranges = viewport.get(name)
             if axis is None or ranges is None:
                 continue
-            axis.setXRange(ranges[0][0], ranges[0][1], padding=0)
-            axis.setYRange(ranges[1][0], ranges[1][1], padding=0)
+            with self.axisViewUpdateGuard():
+                axis.setXRange(ranges[0][0], ranges[0][1], padding=0)
+                axis.setYRange(ranges[1][0], ranges[1][1], padding=0)
 
     @contextmanager
     def preserveViewport(self):
@@ -799,10 +901,27 @@ class PlotTs():
         axis = FormattedDateAxisItem(orientation='bottom', date_format=self.parms['time series plot'].get('date format'))
         plot_item = self.ui.plot_widget.addPlot(row=row, col=0, axisItems={'bottom': axis})
         self._stylePlotFrame(plot_item)
+        self._connectAxisViewSignals(plot_item, row=row)
         self._connectAutoButton(plot_item)
         plot_item.showButtons()
         self.ui.plot_widget.plot_items.append(plot_item)
         return plot_item
+
+
+    def _connectAxisViewSignals(self, plot_item, *, row):
+        """Track interactive ViewBox changes while ignoring guarded updates."""
+        view_box = plot_item.getViewBox()
+        if row == 0:
+            view_box.sigXRangeChanged.connect(
+                lambda *args, vb=view_box: self._handleAxisRangeChanged("x", vb, 0)
+            )
+            view_box.sigYRangeChanged.connect(
+                lambda *args, vb=view_box: self._handleAxisRangeChanged("series_y", vb, 1)
+            )
+        else:
+            view_box.sigYRangeChanged.connect(
+                lambda *args, vb=view_box: self._handleAxisRangeChanged("residual_y", vb, 1)
+            )
 
     def _connectAutoButton(self, plot_item):
         auto_button = getattr(plot_item, 'autoBtn', None)
@@ -815,18 +934,22 @@ class PlotTs():
         auto_button.clicked.connect(lambda *args, plot_item=plot_item: self._resetPlotView(plot_item))
 
     def _resetPlotView(self, plot_item):
+        """Route pyqtgraph Auto through the controller-owned policy reset."""
         if self.dates is None:
             return
+        callback = getattr(self, "auto_view_requested_callback", None)
+        if callback is not None:
+            callback("combined" if plot_item is self.ax else "residual_y")
+            return
 
-        self.updateSettings()
-        if self.ax is not None:
-            self.setXlims(ax=self.ax)
-
-        if plot_item is self.ax_residuals:
-            self.setYlims(ax=self.ax_residuals, parms=self.parms['residual plot'])
-        else:
-            self.setYlims(ax=self.ax, parms=self.parms['time series plot'])
-
+        with self.axisViewUpdateGuard():
+            self.updateSettings()
+            if self.ax is not None:
+                self.setXlims(ax=self.ax)
+            if plot_item is self.ax_residuals:
+                self.setYlims(ax=self.ax_residuals, parms=self.parms['residual plot'])
+            else:
+                self.setYlims(ax=self.ax, parms=self.parms['time series plot'])
         auto_button = getattr(plot_item, 'autoBtn', None)
         if auto_button is not None:
             auto_button.hide()
@@ -925,10 +1048,28 @@ class PlotTs():
         if isinstance(axis, FormattedDateAxisItem):
             axis.date_format = parms.get('date format')
 
-    def _dateToX(self, value):
+    @staticmethod
+    def _asDatetime(value):
+        """Normalize supported date-like values to Python datetime."""
         if isinstance(value, np.datetime64):
-            value = value.astype('datetime64[ms]').astype(datetime)
-        return value.timestamp()
+            return value.astype('datetime64[ms]').astype(datetime)
+        if isinstance(value, datetime):
+            return value
+        return datetime(value.year, value.month, value.day)
+
+    @staticmethod
+    def plotXToDatetime(value):
+        """Convert a pyqtgraph date-axis coordinate to a Python datetime."""
+        return datetime.fromtimestamp(float(value))
+
+    @classmethod
+    def datetimeToPlotX(cls, value):
+        """Convert a supported date-like value to a pyqtgraph date-axis coordinate."""
+        return cls._asDatetime(value).timestamp()
+
+    def _dateToX(self, value):
+        """Compatibility wrapper for :meth:`datetimeToPlotX`."""
+        return self.datetimeToPlotX(value)
 
     def _datesToX(self, values):
         return np.array([self._dateToX(value) for value in values], dtype=float)
@@ -968,8 +1109,15 @@ class PlotTs():
     def _brush(self, color=None, alpha=1.0):
         return pg.mkBrush(self._color(color, alpha))
 
-    def rerenderTimeSeriesSnapshots(self, snapshots: List[TimeSeriesSnapshot]) -> None:
-        """Re-render selected snapshots while preserving the user's viewport."""
+    def rerenderTimeSeriesSnapshots(
+        self, snapshots: List[TimeSeriesSnapshot], *, draw: bool = True
+    ) -> None:
+        """Re-render selected snapshots while preserving the user's viewport.
+
+        TODO(runtime-settings): remove this compatibility redraw path after plot
+        layers support scoped in-place updates. ``draw=False`` allows callers to
+        compose graphics and axis-policy changes into one visual transaction.
+        """
         with self.preserveViewport():
             selected_ids = {id(snapshot) for snapshot in snapshots}
             for snapshot in self.series_history:
@@ -981,6 +1129,7 @@ class PlotTs():
                 if residuals is not None:
                     snapshot.data = snapshot.data.withResiduals(residuals)
             self._rebuildYDataRanges()
+        if draw:
             self._draw()
 
     def selectedTimeSeriesSnapshots(self) -> List[TimeSeriesSnapshot]:
@@ -1010,7 +1159,7 @@ class PlotTs():
     def defaultTimeSeriesStyle(self) -> TimeSeriesStyle:
         """Return a defensive copy of the style used for future series."""
         if self.default_style is None:
-            self.default_style = DefaultTimeSeriesStyle.fromParams(self.parms)
+            self.refreshCompatibilityViews()
         return self.default_style.snapshotStyle()
 
     def add_series(self, snapshot: TimeSeriesSnapshot) -> None:

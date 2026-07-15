@@ -12,7 +12,7 @@ from .style_schema import (
 )
 
 RESIDUAL_STYLE_KEYS = (
-    "marker", "marker color", "marker size", "marker alpha",
+    "marker", "marker color", "marker edge color", "marker size", "marker alpha",
     "line style", "line color", "line width", "line alpha",
 )
 
@@ -21,6 +21,7 @@ class ResidualStyle:
     """Normalized appearance values for one residual data series."""
     marker: str = "o"
     marker_color: str = "#d62728"
+    marker_edge_color: str = "black"
     marker_size: float = 5.0
     marker_alpha: float = 0.8
     line_style: str = ""
@@ -34,6 +35,7 @@ class ResidualStyle:
         return cls(
             marker=normalize_residual_marker(values.get("marker"), "o"),
             marker_color=normalize_color(values.get("marker color"), "#d62728"),
+            marker_edge_color=normalize_color(values.get("marker edge color"), "black"),
             marker_size=normalize_number(values.get("marker size"), RESIDUAL_MARKER_SIZE_RANGE, 5.0),
             marker_alpha=normalize_alpha(values.get("marker alpha"), 0.8),
             line_style=normalize_residual_line_style(values.get("line style"), ""),
@@ -45,7 +47,7 @@ class ResidualStyle:
     def asParams(self):
         return {
             "marker": self.marker, "marker color": self.marker_color,
-            "marker size": self.marker_size, "marker alpha": self.marker_alpha,
+            "marker edge color": self.marker_edge_color, "marker size": self.marker_size, "marker alpha": self.marker_alpha,
             "line style": self.line_style, "line color": self.line_color,
             "line width": self.line_width, "line alpha": self.line_alpha,
         }
@@ -54,7 +56,7 @@ class ResidualStyleController:
     """Apply residual-only style changes without touching series or fit styling."""
     STYLE_KEYS = {
         "marker_type": "marker", "marker_color": "marker color",
-        "marker_size": "marker size", "marker_opacity": "marker alpha",
+        "marker_edge_color": "marker edge color", "marker_size": "marker size", "marker_opacity": "marker alpha",
         "line_type": "line style",
         "line_color": "line color", "line_width": "line width",
         "line_opacity": "line alpha",
@@ -93,6 +95,7 @@ class ResidualStyleController:
         if key == "line style": return normalize_residual_line_style(value, "")
         if key == "line width": return normalize_number(value, RESIDUAL_LINE_WIDTH_RANGE, 1.0)
         if key == "marker color": return normalize_color(value, "#d62728")
+        if key == "marker edge color": return normalize_color(value, "black")
         if key == "line color": return normalize_color(value, "#1f77b4")
         if key == "marker alpha": return normalize_alpha(value, 0.8)
         if key == "line alpha": return normalize_alpha(value, 0.8)
