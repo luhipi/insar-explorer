@@ -183,11 +183,11 @@ class YAxisSettings:
 
 @dataclass(frozen=True)
 class XAxisSettings:
-    """Neutral session-state placeholder for the future X-axis feature."""
+    """Session-only X-axis policy and manual date range."""
 
     policy: str = "from_data"
-    start: Optional[datetime] = None
-    end: Optional[datetime] = None
+    manual_start: Optional[datetime] = None
+    manual_end: Optional[datetime] = None
 
 
 @dataclass(frozen=True)

@@ -1,5 +1,6 @@
 import os
 from dataclasses import replace
+from datetime import datetime
 
 from qgis.gui import QgsMapToolEmitPoint
 from qgis.PyQt.QtWidgets import QFileDialog, QMenu, QComboBox, QLabel
@@ -17,6 +18,7 @@ from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 from .ui_windows.color_picker import ColorPicker
 from .ui.popups.time_series_style_popup import TimeSeriesStylePopup
 from .ui.popups.manual_y_axis_popup import ManualYAxisPopup
+from .ui.popups.manual_x_axis_popup import ManualXAxisPopup
 from .qt_compat import (
     RASTER_LAYER,
     VECTOR_LAYER,
@@ -140,6 +142,8 @@ class GuiController(QObject):
         self.time_series_replica_interval_mm = self._loadReplicaInterval()
         self.time_series_replica_pair_count = self._loadReplicaPairCount()
         self.time_series_style_popup = TimeSeriesStylePopup(self.ui)
+        self.manual_x_axis_popup = ManualXAxisPopup(self.ui)
+        self._manual_x_axis_session = None
         self.manual_y_axis_popup = ManualYAxisPopup(self.ui)
         self._manual_y_axis_session = None
         self.time_series_style_controller = TimeSeriesStyleController()
@@ -383,6 +387,12 @@ class GuiController(QObject):
         self.ui.time_series_toolbar.fitModelChanged.connect(self.setTimeSeriesFitModel)
         self.ui.time_series_toolbar.seasonalEnabledChanged.connect(self.setTimeSeriesSeasonalEnabled)
         self.ui.time_series_toolbar.residualEnabledChanged.connect(self.setTimeSeriesResidualEnabled)
+        self.ui.time_series_toolbar.xAxisModeChanged.connect(self.setTimeSeriesXAxisMode)
+        self.ui.time_series_toolbar.manualXAxisEditRequested.connect(self.showManualXAxisPopup)
+        self.manual_x_axis_popup.applyRequested.connect(self.applyManualXAxisRange)
+        self.manual_x_axis_popup.cancelRequested.connect(self.cancelManualXAxisRange)
+        self.manual_x_axis_popup.currentViewRequested.connect(self.captureCurrentManualXAxisView)
+        self.manual_x_axis_popup.previewRequested.connect(self.previewManualXAxisRange)
         self.ui.time_series_toolbar.yAxisModeChanged.connect(self.setTimeSeriesYAxisMode)
         self.ui.time_series_toolbar.manualYAxisEditRequested.connect(self.showManualYAxisPopup)
         self.manual_y_axis_popup.previewChanged.connect(self.previewManualYAxisRange)
@@ -433,6 +443,7 @@ class GuiController(QObject):
         popup.ensembleSetAsDefaultRequested.connect(self.setCurrentEnsembleStyleAsDefault)
         self._restoreTimeSeriesFitState()
         # Plot setting
+        self._restoreTimeSeriesXAxisMode()
         self._restoreTimeSeriesYAxisMode()
         self._restoreTimeSeriesReplicaState()
         self.ui.cb_hold_on_plot.toggled.connect(self.holdOnPlot)
@@ -967,6 +978,129 @@ class GuiController(QObject):
 
         parms.save(block_key, settings_block)
         return new_value
+
+    def _restoreTimeSeriesXAxisMode(self):
+        """Reset the session-only X-axis state and synchronize the toolbar."""
+        current = self.time_series_settings.x_axis
+        self.time_series_settings.replace_domain(
+            "x_axis", replace(current, policy="from_data", manual_start=None, manual_end=None)
+        )
+        self._syncTimeSeriesXAxisControls()
+
+    def _syncTimeSeriesXAxisControls(self):
+        """Synchronize the toolbar from authoritative X-axis runtime state."""
+        state = self.time_series_settings.x_axis
+        self.ui.time_series_toolbar.setSelectedXAxisMode(
+            state.policy, state.manual_start, state.manual_end
+        )
+
+    def _applyXAxisLimitsToExistingPlot(self):
+        """Apply runtime X limits to existing graphics and redraw exactly once."""
+        plotter = self.choose_point_click_handler.plot_ts
+        if plotter.ax is None:
+            return False
+        plotter.setXlims(ax=plotter.ax)
+        plotter._draw()
+        return True
+
+    def _applyTimeSeriesXAxisMode(self, mode, refresh=True):
+        """Apply one session-local X-axis policy without rebuilding plot graphics."""
+        state = self.time_series_settings.x_axis
+        if mode == "manual" and (state.manual_start is None or state.manual_end is None):
+            self._syncTimeSeriesXAxisControls()
+            if refresh:
+                self.showManualXAxisPopup()
+            return False
+        if mode not in {"from_data", "manual"}:
+            mode = "from_data"
+        self.time_series_settings.replace_domain("x_axis", replace(state, policy=mode))
+        self._syncTimeSeriesXAxisControls()
+        if refresh:
+            self._applyXAxisLimitsToExistingPlot()
+        return True
+
+    def setTimeSeriesXAxisMode(self, mode):
+        """Apply a toolbar-selected X-axis policy immediately."""
+        if not self._applyTimeSeriesXAxisMode(mode):
+            return
+        message = "X-axis range set from data." if mode == "from_data" else "Stored manual time range applied."
+        self.msg_signal.emit(message, "i", 0)
+
+    def showManualXAxisPopup(self):
+        """Open the transactional session-local time-range editor."""
+        plotter = self.choose_point_click_handler.plot_ts
+        if plotter.dates is None or len(plotter.dates) == 0:
+            return
+        state = self.time_series_settings.x_axis
+        viewport = plotter.captureViewport()
+        self._manual_x_axis_session = {"x_axis": state, "viewport": viewport}
+        data_start, data_end = plotter.availableDateRange()
+        start = state.manual_start or data_start
+        end = state.manual_end or data_end
+        self.manual_x_axis_popup.openForRange(start, end)
+        self.manual_x_axis_popup.adjustSize()
+        button = self.ui.time_series_toolbar.x_axis_button
+        top_left = button.mapToGlobal(QPoint(0, 0))
+        anchor_rect = QRect(top_left, button.size())
+        geometry = available_screen_geometry(top_left, self.manual_x_axis_popup)
+        self.manual_x_axis_popup.move(
+            screen_aware_popup_position(anchor_rect, self.manual_x_axis_popup.sizeHint(), geometry)
+        )
+        self.manual_x_axis_popup.show(); self.manual_x_axis_popup.raise_(); self.manual_x_axis_popup.activateWindow()
+
+    def previewManualXAxisRange(self, start, end):
+        """Preview a valid draft range on existing graphics without committing it."""
+        if self._manual_x_axis_session is None or start >= end:
+            return
+        plotter = self.choose_point_click_handler.plot_ts
+        if plotter.ax is None:
+            return
+        plotter.applyXAxisViewport(start, end, draw=True)
+        self._manual_x_axis_session["preview_range"] = (start, end)
+
+    def applyManualXAxisRange(self, start, end):
+        """Commit the previewed dates and activate Manual without rerendering graphics."""
+        if start >= end:
+            return
+        session = self._manual_x_axis_session
+        plotter = self.choose_point_click_handler.plot_ts
+        if session is None or session.get("preview_range") != (start, end):
+            if plotter.ax is not None:
+                plotter.applyXAxisViewport(start, end, draw=True)
+        state = self.time_series_settings.x_axis
+        self.time_series_settings.replace_domain(
+            "x_axis", replace(state, policy="manual", manual_start=start, manual_end=end)
+        )
+        self._manual_x_axis_session = None
+        self._syncTimeSeriesXAxisControls()
+
+    def captureCurrentManualXAxisView(self):
+        """Commit the complete visible viewport without snapping or changing it."""
+        if self._manual_x_axis_session is None:
+            return
+        plotter = self.choose_point_click_handler.plot_ts
+        start, end = plotter.currentVisibleDateRange()
+        state = self.time_series_settings.x_axis
+        self.time_series_settings.replace_domain(
+            "x_axis", replace(state, policy="manual", manual_start=start, manual_end=end)
+        )
+        self._manual_x_axis_session = None
+        self.manual_x_axis_popup.closeAfterCommit()
+        self._syncTimeSeriesXAxisControls()
+        plotter._draw()
+
+    def cancelManualXAxisRange(self):
+        """Restore original committed state and the exact pre-preview viewport."""
+        session = self._manual_x_axis_session
+        if session is None:
+            return
+        self._manual_x_axis_session = None
+        plotter = self.choose_point_click_handler.plot_ts
+        self.time_series_settings.replace_domain("x_axis", session["x_axis"])
+        self._syncTimeSeriesXAxisControls()
+        if session.get("preview_range") is not None:
+            plotter.restoreViewport(session["viewport"])
+            plotter._draw()
 
     def _clearPersistedYAxisModes(self):
         """Remove obsolete persisted Y-axis state; all policy state is session-local."""

@@ -11,6 +11,8 @@
   <qresource prefix="icons">
     <file>icons/polygon_selection.png</file>
     <file>icons/polygon_reference_selection.png</file>
+    <file>icons/x_axis_from_data.svg</file>
+    <file>icons/x_axis_manual.svg</file>
     <file>icons/x.svg</file>
     <file>icons/residual.svg</file>
     <file>icons/setting.svg</file>

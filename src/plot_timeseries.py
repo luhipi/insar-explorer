@@ -2,7 +2,7 @@ import os
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import replace
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -652,16 +652,48 @@ class PlotTs():
         """
         if not ax:
             ax = self.ax
-        min_date = np.nanmin(self.dates)
-        max_date = np.nanmax(self.dates)
-
-        if use_data_xlim:
-            x_min = self._dateToX(min_date - timedelta(days=padding))
-            x_max = self._dateToX(max_date + timedelta(days=padding))
+        state = self.settings_model.x_axis
+        if state.policy == "manual" and state.manual_start is not None and state.manual_end is not None:
+            x_min = self._dateToX(state.manual_start)
+            x_max = self._dateToX(state.manual_end)
         else:
-            x_min = self._dateToX(datetime(min_date.year, 1, 1))
-            x_max = self._dateToX(datetime(max_date.year + 1, 1, 1))
+            min_date = np.nanmin(self.dates)
+            max_date = np.nanmax(self.dates)
+            if use_data_xlim:
+                x_min = self._dateToX(min_date - timedelta(days=padding))
+                x_max = self._dateToX(max_date + timedelta(days=padding))
+            else:
+                x_min = self._dateToX(datetime(min_date.year, 1, 1))
+                x_max = self._dateToX(datetime(max_date.year + 1, 1, 1))
         ax.setXRange(x_min, x_max, padding=0)
+
+    def applyXAxisViewport(self, start, end, *, draw=True):
+        """Apply only the existing main X viewport with zero padding."""
+        if self.ax is None:
+            return False
+        self.ax.setXRange(self.datetimeToPlotX(start), self.datetimeToPlotX(end), padding=0)
+        if draw:
+            self._draw()
+        return True
+
+    def availableDateRange(self):
+        """Return the nearest Python datetime endpoints available in current data."""
+        dates = [self._asDatetime(value) for value in self.dates]
+        return min(dates), max(dates)
+
+    def currentVisibleDateRange(self):
+        """Return date bounds covering the complete visible X viewport."""
+        if self.ax is None:
+            raise ValueError("A plotted time series is required")
+        visible_start, visible_end = self.ax.viewRange()[0]
+        start_datetime = self.plotXToDatetime(visible_start)
+        end_datetime = self.plotXToDatetime(visible_end)
+        start = datetime.combine(start_datetime.date(), time.min)
+        end_date = end_datetime.date()
+        if end_datetime.time() != time.min:
+            end_date += timedelta(days=1)
+        end = datetime.combine(end_date, time.min)
+        return start, end
 
     def updateYlim(self, *, ax=None, y_data):
         if not ax:
@@ -912,10 +944,28 @@ class PlotTs():
         if isinstance(axis, FormattedDateAxisItem):
             axis.date_format = parms.get('date format')
 
-    def _dateToX(self, value):
+    @staticmethod
+    def _asDatetime(value):
+        """Normalize supported date-like values to Python datetime."""
         if isinstance(value, np.datetime64):
-            value = value.astype('datetime64[ms]').astype(datetime)
-        return value.timestamp()
+            return value.astype('datetime64[ms]').astype(datetime)
+        if isinstance(value, datetime):
+            return value
+        return datetime(value.year, value.month, value.day)
+
+    @staticmethod
+    def plotXToDatetime(value):
+        """Convert a pyqtgraph date-axis coordinate to a Python datetime."""
+        return datetime.fromtimestamp(float(value))
+
+    @classmethod
+    def datetimeToPlotX(cls, value):
+        """Convert a supported date-like value to a pyqtgraph date-axis coordinate."""
+        return cls._asDatetime(value).timestamp()
+
+    def _dateToX(self, value):
+        """Compatibility wrapper for :meth:`datetimeToPlotX`."""
+        return self.datetimeToPlotX(value)
 
     def _datesToX(self, values):
         return np.array([self._dateToX(value) for value in values], dtype=float)
