@@ -11,12 +11,9 @@ from qgis.PyQt.QtGui import QColor, QFont
 
 from .model_fitting import FittingModels
 from .export_plot import TimeSeriesPlotExporter
-from .time_series.style_config import TimeSeriesStyleConfig
-from .time_series.settings.model import AxisManualRange
+from .time_series.settings.model import AxisManualRange, ResidualStyleSettings
 from .time_series.settings.persistence import TimeSeriesSettingsPersistence, build_legacy_plot_params
-from .time_series.ensemble_style import ENSEMBLE_MEMBER_WIDTH_DEFAULT
 from .time_series.fit_style_controller import FitStyle
-from .time_series.style_schema import normalize_fit_line_style
 from .models.time_series import (
     TimeSeriesData,
     TimeSeriesGraphics,
@@ -535,16 +532,19 @@ class PlotTs():
         return True
 
     def plotReplicas(self, series: TimeSeriesData, style: TimeSeriesStyle):
-        parms = style.params['time series plot']
+        """Render global Replica overlays from the authoritative runtime model.
+
+        ``style`` remains in the signature for compatibility with older callers, but
+        Replica appearance is intentionally not required in snapshot-owned payloads.
+        """
+        replica = self.settings_model.replica
         x = self._datesToX(series.dates)
-        marker_color_1 = parms['replica color 1']  # replica up
-        marker_color_2 = parms['replica color 2']  # replica down
-        marker_alpha = parms['replica alpha']
-        marker_size_replica = parms['replica marker size']
-        marker_replica = parms['replica marker']
-        replica_pair_count = self._validateReplicaPairCount(
-            self.settings_model.replica.pair_count
-        )
+        marker_color_1 = replica.color_1  # replica up
+        marker_color_2 = replica.color_2  # replica down
+        marker_alpha = replica.opacity
+        marker_size_replica = replica.marker_size
+        marker_replica = replica.marker
+        replica_pair_count = self._validateReplicaPairCount(replica.pair_count)
         self._last_replica_y_data = []
 
         # Plot symmetric positive/negative replica pairs around the source series.
@@ -618,22 +618,33 @@ class PlotTs():
 
         return fit_plot, residuals_values
 
+    def _normalizedResidualStyle(self, style: TimeSeriesStyle):
+        """Return snapshot-owned residual appearance with runtime-default fallbacks."""
+        values = self.settings_model.residual_defaults.asParams()
+        snapshot_params = style.params if isinstance(style.params, dict) else {}
+        snapshot_residual = snapshot_params.get("residual plot", {})
+        if isinstance(snapshot_residual, dict):
+            values.update(snapshot_residual)
+        return ResidualStyleSettings.fromParams({"residual plot": values})
+
     def plotResiduals(self, series: TimeSeriesData, style: TimeSeriesStyle, items=None, residuals_values=None):
         if items is None:
             items = TimeSeriesGraphics()
         if residuals_values is None:
             residuals_values = series.residuals_values
         if self.plot_residuals_flag and self.ax_residuals is not None and residuals_values is not None:
-            parms = style.params['residual plot']
-            marker = parms['marker']
-            marker_size = parms['marker size']
-            marker_color = parms['marker color']
-            marker_alpha = parms['marker alpha']
-            edge_color = parms['marker edge color']
-            line_style = parms['line style']
-            line_color = parms['line color']
-            line_alpha = parms['line alpha']
-            line_width = parms['line width']
+            residual_style = self._normalizedResidualStyle(style)
+            marker = residual_style.marker
+            marker_size = residual_style.marker_size
+            marker_color = residual_style.marker_color
+            marker_alpha = residual_style.marker_alpha
+            edge_color = residual_style.marker_edge_color
+            line_style = residual_style.line_style
+            line_color = residual_style.line_color
+            line_alpha = residual_style.line_alpha
+            line_width = residual_style.line_width
+            parms = deepcopy(self.parms.get("residual plot", {}))
+            parms.update(residual_style.asParams())
 
             x = self._datesToX(series.dates)
             marker_size = marker_size or 0

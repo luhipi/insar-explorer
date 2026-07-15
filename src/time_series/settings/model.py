@@ -94,6 +94,7 @@ class ResidualStyleSettings:
 
     marker: str = "o"
     marker_color: str = "#d62728"
+    marker_edge_color: str = "black"
     marker_size: float = 5.0
     marker_alpha: float = 0.8
     line_style: str = ""
@@ -108,6 +109,7 @@ class ResidualStyleSettings:
         return cls(
             marker=normalize_residual_marker(values.get("marker"), "o"),
             marker_color=normalize_color(values.get("marker color"), "#d62728"),
+            marker_edge_color=normalize_color(values.get("marker edge color"), "black"),
             marker_size=normalize_number(values.get("marker size"), RESIDUAL_MARKER_SIZE_RANGE, 5.0),
             marker_alpha=normalize_alpha(values.get("marker alpha"), 0.8),
             line_style=normalize_residual_line_style(values.get("line style"), ""),
@@ -119,6 +121,7 @@ class ResidualStyleSettings:
     def asParams(self):
         """Return values using legacy residual-plot keys."""
         return {"marker": self.marker, "marker color": self.marker_color,
+                "marker edge color": self.marker_edge_color,
                 "marker size": self.marker_size, "marker alpha": self.marker_alpha,
                 "line style": self.line_style, "line color": self.line_color,
                 "line width": self.line_width, "line alpha": self.line_alpha}
@@ -162,6 +165,11 @@ class ReplicaSettings:
     enabled: bool = False
     interval_mm: float = 2.8
     pair_count: int = 1
+    color_1: str = "#ff7f0e"
+    color_2: str = "#2ca02c"
+    opacity: float = 0.8
+    marker: str = "o"
+    marker_size: float = 5.0
 
 
 @dataclass(frozen=True)

@@ -4,6 +4,7 @@ from copy import deepcopy
 
 from ....external.setting_manager_ui.json_settings import JsonSettings
 from ..style_config import TimeSeriesStyleConfig
+from ..style_schema import MARKER_SIZE_RANGE, normalize_alpha, normalize_color, normalize_marker, normalize_number
 from .model import (
     EnsembleStyleSettings, ExportSettings, FitStyleSettings,
     PlotAppearanceSettings, ReplicaSettings, ResidualStyleSettings,
@@ -113,6 +114,13 @@ class TimeSeriesSettingsPersistence:
                 enabled=False,
                 interval_mm=2.8,
                 pair_count=self._normalize_pair_count(self._value(plot, "replica pair count", 1)),
+                color_1=normalize_color(self._value(plot, "replica color 1", "#ff7f0e"), "#ff7f0e"),
+                color_2=normalize_color(self._value(plot, "replica color 2", "#2ca02c"), "#2ca02c"),
+                opacity=normalize_alpha(self._value(plot, "replica alpha", 0.8), 0.8),
+                marker=normalize_marker(self._value(plot, "replica marker", "o"), "o"),
+                marker_size=normalize_number(
+                    self._value(plot, "replica marker size", 5.0), MARKER_SIZE_RANGE, 5.0
+                ),
             ),
             appearance=PlotAppearanceSettings(
                 time_series_title=self._safe_text(self._value(plot, "title", "")),
@@ -166,8 +174,17 @@ class TimeSeriesSettingsPersistence:
         self.style_config.save_default_ensemble_style(settings)
 
     def save_replica_defaults(self, settings):
-        """Persist pair count while retaining session activation and interval semantics."""
-        self._save_value("time series plot", "replica pair count", self._normalize_pair_count(settings.pair_count))
+        """Persist Replica defaults while retaining session activation/interval."""
+        values = {
+            "replica pair count": self._normalize_pair_count(settings.pair_count),
+            "replica color 1": normalize_color(settings.color_1, "#ff7f0e"),
+            "replica color 2": normalize_color(settings.color_2, "#2ca02c"),
+            "replica alpha": normalize_alpha(settings.opacity, 0.8),
+            "replica marker": normalize_marker(settings.marker, "o"),
+            "replica marker size": normalize_number(settings.marker_size, MARKER_SIZE_RANGE, 5.0),
+        }
+        for key, value in values.items():
+            self._save_value("time series plot", key, value)
 
     def save_appearance(self, settings):
         """Persist typed appearance values through scoped metadata writes."""
@@ -211,6 +228,11 @@ def build_legacy_plot_params(model, existing=None):
         "background color": model.appearance.plot_background,
         "date format": model.appearance.date_format,
         "replica pair count": model.replica.pair_count,
+        "replica color 1": model.replica.color_1,
+        "replica color 2": model.replica.color_2,
+        "replica alpha": model.replica.opacity,
+        "replica marker": model.replica.marker,
+        "replica marker size": model.replica.marker_size,
     })
     params.setdefault("model fit", {}).update(model.fit_defaults.asParams())
     residual = params.setdefault("residual plot", {})
