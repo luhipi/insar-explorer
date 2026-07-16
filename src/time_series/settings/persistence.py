@@ -7,7 +7,7 @@ from ..style_config import TimeSeriesStyleConfig
 from ..style_schema import MARKER_SIZE_RANGE, normalize_alpha, normalize_color, normalize_marker, normalize_number
 from .model import (
     EnsembleStyleSettings, ExportSettings, FitStyleSettings,
-    PlotAppearanceSettings, ReplicaSettings, ResidualStyleSettings,
+    AppearanceSettings, ReplicaSettings, ResidualStyleSettings,
     SeriesStyleSettings, TimeSeriesSettingsModel,
 )
 
@@ -55,7 +55,7 @@ class TimeSeriesSettingsPersistence:
     @staticmethod
     def _safe_grid(value):
         """Normalize the constrained grid mode."""
-        return value if value in {"both", "horizontal", "vertical", "none"} else "both"
+        return AppearanceSettings.normalize_grid_mode(value)
 
     @staticmethod
     def _normalize_pair_count(value):
@@ -122,7 +122,7 @@ class TimeSeriesSettingsPersistence:
                     self._value(plot, "replica marker size", 5.0), MARKER_SIZE_RANGE, 5.0
                 ),
             ),
-            appearance=PlotAppearanceSettings(
+            appearance=AppearanceSettings(
                 time_series_title=self._safe_text(self._value(plot, "title", "")),
                 residual_title=self._safe_text(self._value(residual, "title", "")),
                 time_series_x_label=self._safe_text(self._value(plot, "xlabel", "Date"), "Date"),
@@ -130,9 +130,9 @@ class TimeSeriesSettingsPersistence:
                 time_series_y_label=self._safe_text(self._value(plot, "ylabel", "Deformation"), "Deformation"),
                 residual_y_label=self._safe_text(self._value(residual, "ylabel", "Residual"), "Residual"),
                 font_size=self._safe_float(self._value(plot, "font size", 10.0), 10.0, 1.0, 200.0),
-                grid=self._safe_grid(self._value(plot, "grid", "both")),
-                plot_background=self._safe_text(self._value(plot, "background color", "#f5f5f5"), "#f5f5f5"),
-                figure_background=self._safe_text(self._value(figure, "background color", "white"), "white"),
+                grid_mode=self._safe_grid(self._value(plot, "grid", "both")),
+                plot_background=normalize_color(self._value(plot, "background color", "white"), "white"),
+                canvas_background=normalize_color(self._value(figure, "background color", "white"), "white"),
                 date_format=self._safe_text(self._value(plot, "date format", "%Y-%m-%d"), "%Y-%m-%d"),
             ),
             export=ExportSettings.normalized(
@@ -193,13 +193,14 @@ class TimeSeriesSettingsPersistence:
             ("time series plot", "xlabel"): settings.time_series_x_label,
             ("time series plot", "ylabel"): settings.time_series_y_label,
             ("time series plot", "font size"): settings.font_size,
-            ("time series plot", "grid"): self._safe_grid(settings.grid),
+            ("time series plot", "grid"): settings.grid_mode,
             ("time series plot", "background color"): settings.plot_background,
             ("time series plot", "date format"): settings.date_format,
             ("residual plot", "title"): settings.residual_title,
+            ("residual plot", "grid"): settings.grid_mode,
             ("residual plot", "xlabel"): settings.residual_x_label,
             ("residual plot", "ylabel"): settings.residual_y_label,
-            ("figure", "background color"): settings.figure_background,
+            ("figure", "background color"): settings.canvas_background,
         }
         for (section, key), value in values.items():
             self._save_value(section, key, value)
@@ -224,7 +225,7 @@ def build_legacy_plot_params(model, existing=None):
         "xlabel": model.appearance.time_series_x_label,
         "ylabel": model.appearance.time_series_y_label,
         "font size": model.appearance.font_size,
-        "grid": model.appearance.grid,
+        "grid": model.appearance.grid_mode,
         "background color": model.appearance.plot_background,
         "date format": model.appearance.date_format,
         "replica pair count": model.replica.pair_count,
@@ -242,11 +243,11 @@ def build_legacy_plot_params(model, existing=None):
         "xlabel": model.appearance.residual_x_label,
         "ylabel": model.appearance.residual_y_label,
         "font size": model.appearance.font_size,
-        "grid": model.appearance.grid,
+        "grid": model.appearance.grid_mode,
         "background color": model.appearance.plot_background,
         "date format": model.appearance.date_format,
     })
-    params.setdefault("figure", {})["background color"] = model.appearance.figure_background
+    params.setdefault("figure", {})["background color"] = model.appearance.canvas_background
     params["export"] = {
         "dpi": model.export.dpi,
         "aspect ratio": model.export.aspect_ratio,

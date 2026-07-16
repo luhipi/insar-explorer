@@ -23,7 +23,7 @@ from ..styles import apply_command_toolbar_style, set_toolbar_control_role
 class TimeSeriesToolbar(QToolBar):
     """Code-defined toolbar exposing semantic time-series action signals."""
 
-    settingsRequested = pyqtSignal()
+    appearanceRequested = pyqtSignal()
     exportSettingsRequested = pyqtSignal()
     plotExportRequested = pyqtSignal()
     dataExportRequested = pyqtSignal()
@@ -279,11 +279,11 @@ class TimeSeriesToolbar(QToolBar):
         )
         self.addWidget(spacer)
 
-        self.settings_action = self._createAction(
+        self.appearance_action = self._createAction(
             ":/icons/icons/setting.svg",
-            "Time-series settings",
-            "Configure time-series plot settings",
-            "action_ts_settings",
+            "Appearance",
+            "Appearance",
+            "action_ts_appearance",
         )
         self.export_settings_action = self._createAction(
             ":/icons/icons/screenshot_settings.svg",
@@ -304,7 +304,7 @@ class TimeSeriesToolbar(QToolBar):
             "action_ts_export_data",
         )
 
-        self.addAction(self.settings_action)
+        self.addAction(self.appearance_action)
         self.addSeparator()
         self.addAction(self.export_settings_action)
         self.addAction(self.plot_export_action)
@@ -318,7 +318,7 @@ class TimeSeriesToolbar(QToolBar):
         ):
             self._setActionControlRole(action, "toggle")
         for action in (
-            self.settings_action,
+            self.appearance_action,
             self.export_settings_action,
             self.plot_export_action,
             self.data_export_action,
@@ -327,7 +327,7 @@ class TimeSeriesToolbar(QToolBar):
             self._setActionControlRole(action, "command")
 
         self.plot_style_action.triggered.connect(self.plotStyleRequested.emit)
-        self.settings_action.triggered.connect(self.settingsRequested.emit)
+        self.appearance_action.triggered.connect(self.appearanceRequested.emit)
         self.export_settings_action.triggered.connect(self.exportSettingsRequested.emit)
         self.plot_export_action.triggered.connect(self.plotExportRequested.emit)
         self.data_export_action.triggered.connect(self.dataExportRequested.emit)
