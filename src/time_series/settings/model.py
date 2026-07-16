@@ -220,11 +220,27 @@ class PlotAppearanceSettings:
 
 @dataclass(frozen=True)
 class ExportSettings:
-    """Persistent export defaults placeholder; export behavior is unchanged in phase 1."""
+    """Persistent normalized defaults for plot export."""
 
     dpi: str = "300"
     aspect_ratio: float = 4.0
     credit: str = "Powered by InSAR Explorer"
+
+    DPI_OPTIONS = ("72", "150", "300", "600", "1200")
+
+    @classmethod
+    def normalized(cls, dpi=None, aspect_ratio=None, credit=None):
+        """Build settings with schema-compatible normalization."""
+        dpi = str(dpi) if dpi is not None else cls().dpi
+        if dpi not in cls.DPI_OPTIONS:
+            dpi = cls().dpi
+        try:
+            aspect_ratio = float(aspect_ratio)
+        except (TypeError, ValueError, OverflowError):
+            aspect_ratio = cls().aspect_ratio
+        aspect_ratio = max(1.0, min(10.0, aspect_ratio))
+        credit = cls().credit if credit is None else str(credit)
+        return cls(dpi=dpi, aspect_ratio=aspect_ratio, credit=credit)
 
 
 @dataclass

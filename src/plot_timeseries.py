@@ -894,8 +894,9 @@ class PlotTs():
         background_color = self._color(parms['background color'])
         self.ui.plot_widget.setBackground(background_color)
 
-    def savePlotAsImage(self, filename=None):
-        TimeSeriesPlotExporter(self).export(filename)
+    def savePlotAsImage(self, filename):
+        """Export the current plot and return the export result."""
+        return TimeSeriesPlotExporter(self).export(filename)
 
     def _addPlot(self, row=0):
         axis = FormattedDateAxisItem(orientation='bottom', date_format=self.parms['time series plot'].get('date format'))
