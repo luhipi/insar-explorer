@@ -1,8 +1,9 @@
+import calendar
 import os
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import replace
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time, timezone
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -31,11 +32,28 @@ except ImportError:
 
 
 class FormattedDateAxisItem(pg.DateAxisItem):
-    """Date axis that honors the user-configured strftime label format."""
+    """Date axis that honors the configured label format and calendar granularity."""
+
+    YEAR_ONLY_FORMAT = "%Y"
+    YEAR_INTERVALS = (1, 2, 5, 10, 20, 25, 50, 100)
+    YEAR_LABEL_WIDTH = 52
 
     def __init__(self, *args, date_format=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.date_format = date_format
+
+    def setDateFormat(self, date_format):
+        """Set the display format and invalidate cached axis rendering."""
+        if self.date_format == date_format:
+            return
+        self.date_format = date_format
+        self.picture = None
+        self.update()
+
+    def tickValues(self, minVal, maxVal, size):
+        if self.date_format == self.YEAR_ONLY_FORMAT:
+            return self._calendarYearTickValues(minVal, maxVal, size)
+        return super().tickValues(minVal, maxVal, size)
 
     def tickStrings(self, values, scale, spacing):
         if not self.date_format:
@@ -44,10 +62,55 @@ class FormattedDateAxisItem(pg.DateAxisItem):
         labels = []
         for value in values:
             try:
-                labels.append(datetime.fromtimestamp(value).strftime(self.date_format))
+                display_datetime = self._axisValueToCalendarDatetime(value)
+                labels.append(display_datetime.strftime(self.date_format))
             except (OverflowError, OSError, ValueError, TypeError):
                 labels.append("")
         return labels
+
+    def _axisValueToCalendarDatetime(self, value):
+        """Convert an axis coordinate to its displayed calendar datetime."""
+        return datetime.fromtimestamp(
+            float(value) - float(self.utcOffset), timezone.utc
+        ).replace(tzinfo=None)
+
+    def _calendarDatetimeToAxisValue(self, value):
+        """Convert a displayed calendar datetime to a date-axis coordinate."""
+        timestamp = calendar.timegm(value.utctimetuple()) + value.microsecond / 1e6
+        return timestamp + float(self.utcOffset)
+
+    def _calendarYearTickValues(self, min_value, max_value, pixel_size):
+        """Return calendar-year ticks aligned to January 1."""
+        try:
+            lower = float(min(min_value, max_value))
+            upper = float(max(min_value, max_value))
+            start = self._axisValueToCalendarDatetime(lower)
+            end = self._axisValueToCalendarDatetime(upper)
+        except (OverflowError, OSError, ValueError, TypeError):
+            return []
+
+        visible_years = max(1, end.year - start.year + 1)
+        available_labels = max(1, int(max(float(pixel_size), 1.0) // self.YEAR_LABEL_WIDTH))
+        interval = self.YEAR_INTERVALS[-1]
+        for candidate in self.YEAR_INTERVALS:
+            if (visible_years + candidate - 1) // candidate <= available_labels:
+                interval = candidate
+                break
+
+        first_year = ((start.year + interval - 1) // interval) * interval
+        ticks = []
+        for year in range(first_year, end.year + 1, interval):
+            try:
+                tick = self._calendarDatetimeToAxisValue(datetime(year, 1, 1))
+            except (OverflowError, OSError, ValueError, TypeError):
+                continue
+            if lower <= tick <= upper:
+                ticks.append(tick)
+
+        if not ticks:
+            return []
+        nominal_spacing = interval * 365.2425 * 24 * 60 * 60
+        return [(nominal_spacing, ticks)]
 
 
 class PlotTs():
@@ -919,8 +982,7 @@ class PlotTs():
                 )
                 date_axis = axis.getAxis("bottom")
                 if isinstance(date_axis, FormattedDateAxisItem):
-                    date_axis.date_format = appearance.date_format
-                    date_axis.picture = None
+                    date_axis.setDateFormat(appearance.date_format)
 
             font_size = f"{int(appearance.font_size)}pt"
             self.ax.setTitle(appearance.time_series_title, size=font_size)
@@ -1104,7 +1166,7 @@ class PlotTs():
             ax = self.ax
         axis = ax.getAxis('bottom')
         if isinstance(axis, FormattedDateAxisItem):
-            axis.date_format = parms.get('date format')
+            axis.setDateFormat(parms.get('date format'))
 
     @staticmethod
     def _asDatetime(value):
