@@ -160,16 +160,27 @@ class EnsembleStyleSettings:
 
 @dataclass(frozen=True)
 class ReplicaSettings:
-    """Replica defaults plus current session activation."""
+    """Runtime and persistent settings for global Replica rendering."""
 
     enabled: bool = False
-    interval_mm: float = 2.8
+    interval_mm: float = 27.8
     pair_count: int = 1
     color_1: str = "#ff7f0e"
     color_2: str = "#2ca02c"
     opacity: float = 0.8
     marker: str = "o"
     marker_size: float = 5.0
+
+    def __post_init__(self):
+        """Normalize every Replica field at the immutable domain boundary."""
+        object.__setattr__(self, "enabled", bool(self.enabled))
+        object.__setattr__(self, "interval_mm", max(0.1, min(10000.0, float(self.interval_mm))))
+        object.__setattr__(self, "pair_count", max(1, min(10, int(self.pair_count))))
+        object.__setattr__(self, "color_1", normalize_color(self.color_1, "#ff7f0e"))
+        object.__setattr__(self, "color_2", normalize_color(self.color_2, "#2ca02c"))
+        object.__setattr__(self, "opacity", normalize_alpha(self.opacity, 0.8))
+        object.__setattr__(self, "marker", normalize_marker(self.marker, "o"))
+        object.__setattr__(self, "marker_size", normalize_number(self.marker_size, MARKER_SIZE_RANGE, 5.0))
 
 
 @dataclass(frozen=True)
