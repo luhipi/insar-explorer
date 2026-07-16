@@ -223,8 +223,8 @@ class PlotTs():
         This method deliberately performs no redraw. Callers coordinate a single redraw
         after model, snapshot, and UI synchronization is complete.
 
-        TODO(phase-appearance-export): Remove ``parms`` and ``default_style`` after all
-        consumers accept typed runtime settings directly.
+        ``parms`` and ``default_style`` are derived compatibility views only; persistence
+        is loaded once by ``TimeSeriesSettingsPersistence`` during model initialization.
         """
         self.parms = build_legacy_plot_params(self.settings_model)
         self.default_style = DefaultTimeSeriesStyle.fromParams(self.parms)
@@ -943,7 +943,7 @@ class PlotTs():
                     **{"font-size": font_size}
                 )
             self.ui.plot_widget.setBackground(
-                self._color(appearance.figure_background)
+                self._color(appearance.canvas_background)
             )
         finally:
             self.restoreViewport(viewport)

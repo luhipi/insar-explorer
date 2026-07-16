@@ -2,17 +2,20 @@
 
 from qgis.PyQt.QtCore import pyqtSignal
 from qgis.PyQt.QtWidgets import (
-    QComboBox, QFormLayout, QGroupBox, QHBoxLayout,
+    QComboBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QWidget,
 )
 
+from ...qt_compat import POPUP_WINDOW_FLAG, SIZE_POLICY_FIXED
 from .time_series_style_popup import CompactColorButton
 
 
 class AppearancePopup(QWidget):
-    """Edit plot appearance with immediate commit semantics."""
+    """Edit all persistent plot presentation settings without Apply or Cancel."""
 
-    settingsChanged = pyqtSignal(str, str, str, int, str, str)
+    settingsChanged = pyqtSignal(
+        str, str, str, str, str, str, str, int, str, str, str
+    )
     resetRequested = pyqtSignal()
 
     GRID_MODES = (
@@ -32,47 +35,67 @@ class AppearancePopup(QWidget):
     )
 
     def __init__(self, parent=None):
-        """Build the popup without Apply or Cancel controls."""
-        super().__init__(parent)
+        """Build one compact page with immediate commit semantics."""
+        super().__init__(parent, POPUP_WINDOW_FLAG)
         self.setObjectName("appearancePopup")
         self.setWindowTitle("Appearance")
-        qt = __import__('qgis.PyQt.QtCore', fromlist=['Qt']).Qt
-        self.setWindowFlags(getattr(qt, 'WindowType', qt).Popup)
 
         layout = QVBoxLayout(self)
-        self.time_series_title_edit = QLineEdit(self)
-        self.residual_title_edit = QLineEdit(self)
-        titles = QGroupBox("Titles", self)
-        title_form = QFormLayout(titles)
-        title_form.addRow("Time series title", self.time_series_title_edit)
-        title_form.addRow("Residual title", self.residual_title_edit)
-        layout.addWidget(titles)
+        text_group = QGroupBox("Text", self)
+        text_layout = QGridLayout(text_group)
+        text_layout.setHorizontalSpacing(6)
+        text_layout.addWidget(QLabel("", text_group), 0, 0)
+        text_layout.addWidget(QLabel("Time series", text_group), 0, 1)
+        text_layout.addWidget(QLabel("Residual", text_group), 0, 2)
+
+        self.time_series_title_edit = self._compactLineEdit()
+        self.residual_title_edit = self._compactLineEdit()
+        self.time_series_x_label_edit = self._compactLineEdit()
+        self.residual_x_label_edit = self._compactLineEdit()
+        self.time_series_y_label_edit = self._compactLineEdit()
+        self.residual_y_label_edit = self._compactLineEdit()
+        rows = (
+            ("Title", self.time_series_title_edit, self.residual_title_edit),
+            ("X label", self.time_series_x_label_edit, self.residual_x_label_edit),
+            ("Y label", self.time_series_y_label_edit, self.residual_y_label_edit),
+        )
+        for row, (label, series_edit, residual_edit) in enumerate(rows, start=1):
+            text_layout.addWidget(QLabel(label, text_group), row, 0)
+            text_layout.addWidget(series_edit, row, 1)
+            text_layout.addWidget(residual_edit, row, 2)
+        layout.addWidget(text_group)
 
         self.date_format_combo = QComboBox(self)
         for label, value in self.DATE_FORMATS:
             self.date_format_combo.addItem(label, value)
         self.date_format_combo.setEditable(True)
+        self.date_format_combo.setMinimumWidth(150)
         self.font_size_spin = QSpinBox(self)
         self.font_size_spin.setRange(1, 200)
-        axes = QGroupBox("Axes", self)
-        axes_form = QFormLayout(axes)
-        axes_form.addRow("Date format", self.date_format_combo)
-        axes_form.addRow("Font size", self.font_size_spin)
-        layout.addWidget(axes)
-
-        self.background_color_button = CompactColorButton(
-            "■", "Select plot background color", self
-        )
+        self.font_size_spin.setMaximumWidth(80)
         self.grid_mode_combo = QComboBox(self)
         self.grid_mode_combo.setEditable(False)
         self.grid_mode_combo.setMaximumWidth(140)
         for label, value in self.GRID_MODES:
             self.grid_mode_combo.addItem(label, value)
-        background = QGroupBox("Background", self)
-        background_form = QFormLayout(background)
-        background_form.addRow("Background color", self.background_color_button)
-        background_form.addRow("Grid", self.grid_mode_combo)
-        layout.addWidget(background)
+        formatting = QGroupBox("Formatting", self)
+        formatting_form = QFormLayout(formatting)
+        formatting_form.addRow("Date format", self.date_format_combo)
+        formatting_form.addRow("Font size", self.font_size_spin)
+        formatting_form.addRow("Grid", self.grid_mode_combo)
+        layout.addWidget(formatting)
+
+        self.plot_background_button = CompactColorButton(
+            "■", "Select plot area background", self
+        )
+        self.canvas_background_button = CompactColorButton(
+            "■", "Select canvas background", self
+        )
+        colors = QGroupBox("Colors", self)
+        colors_form = QFormLayout(colors)
+        colors_form.addRow("Plot area background", self.plot_background_button)
+        colors_form.addRow("Canvas background", self.canvas_background_button)
+        layout.addWidget(colors)
 
         actions = QHBoxLayout()
         self.reset_button = QPushButton("Reset defaults", self)
@@ -80,48 +103,77 @@ class AppearancePopup(QWidget):
         actions.addStretch(1)
         layout.addLayout(actions)
 
-        self.time_series_title_edit.textChanged.connect(self._emitSettings)
-        self.residual_title_edit.textChanged.connect(self._emitSettings)
+        for editor in self._textEditors():
+            editor.editingFinished.connect(self._emitSettings)
         self.date_format_combo.currentTextChanged.connect(self._emitSettings)
         self.font_size_spin.valueChanged.connect(self._emitSettings)
-        self.background_color_button.colorChanged.connect(self._emitSettings)
         self.grid_mode_combo.currentIndexChanged.connect(self._emitSettings)
+        self.plot_background_button.colorChanged.connect(self._emitSettings)
+        self.canvas_background_button.colorChanged.connect(self._emitSettings)
         self.reset_button.clicked.connect(self.resetRequested.emit)
+
+    def _compactLineEdit(self):
+        """Return a width-bounded single-line editor suitable for two columns."""
+        editor = QLineEdit(self)
+        editor.setFixedWidth(118)
+        editor.setSizePolicy(SIZE_POLICY_FIXED, SIZE_POLICY_FIXED)
+        return editor
+
+    def _textEditors(self):
+        """Return text controls in canonical runtime field order."""
+        return (
+            self.time_series_title_edit, self.residual_title_edit,
+            self.time_series_x_label_edit, self.time_series_y_label_edit,
+            self.residual_x_label_edit, self.residual_y_label_edit,
+        )
 
     def settings(self):
         """Return the complete appearance value currently displayed."""
         date_format = self.date_format_combo.currentData()
-        if self.date_format_combo.isEditable() and self.date_format_combo.currentText() not in [
-            self.date_format_combo.itemText(i) for i in range(self.date_format_combo.count())
-        ]:
+        known_labels = [
+            self.date_format_combo.itemText(i)
+            for i in range(self.date_format_combo.count())
+        ]
+        if self.date_format_combo.isEditable() and self.date_format_combo.currentText() not in known_labels:
             date_format = self.date_format_combo.currentText()
         return (
             self.time_series_title_edit.text(),
             self.residual_title_edit.text(),
+            self.time_series_x_label_edit.text(),
+            self.time_series_y_label_edit.text(),
+            self.residual_x_label_edit.text(),
+            self.residual_y_label_edit.text(),
             str(date_format or "%Y-%m-%d"),
             int(self.font_size_spin.value()),
-            self.background_color_button.color(),
             str(self.grid_mode_combo.currentData() or "both"),
+            self.plot_background_button.color(),
+            self.canvas_background_button.color(),
         )
 
     def setSettings(self, settings):
-        """Refresh all controls without emitting persistence writes."""
-        widgets = (self.time_series_title_edit, self.residual_title_edit,
-                   self.date_format_combo, self.font_size_spin,
-                   self.background_color_button, self.grid_mode_combo)
+        """Refresh every control without emitting persistence writes."""
+        widgets = self._textEditors() + (
+            self.date_format_combo, self.font_size_spin, self.grid_mode_combo,
+            self.plot_background_button, self.canvas_background_button,
+        )
         previous = [widget.blockSignals(True) for widget in widgets]
         try:
             self.time_series_title_edit.setText(settings.time_series_title)
             self.residual_title_edit.setText(settings.residual_title)
+            self.time_series_x_label_edit.setText(settings.time_series_x_label)
+            self.time_series_y_label_edit.setText(settings.time_series_y_label)
+            self.residual_x_label_edit.setText(settings.residual_x_label)
+            self.residual_y_label_edit.setText(settings.residual_y_label)
             index = self.date_format_combo.findData(settings.date_format)
             if index >= 0:
                 self.date_format_combo.setCurrentIndex(index)
             else:
                 self.date_format_combo.setEditText(settings.date_format or "%Y-%m-%d")
             self.font_size_spin.setValue(int(settings.font_size))
-            self.background_color_button.setColor(settings.plot_background)
             grid_index = self.grid_mode_combo.findData(settings.grid_mode)
             self.grid_mode_combo.setCurrentIndex(grid_index if grid_index >= 0 else 0)
+            self.plot_background_button.setColor(settings.plot_background)
+            self.canvas_background_button.setColor(settings.canvas_background)
         finally:
             for widget, blocked in zip(widgets, previous):
                 widget.blockSignals(blocked)

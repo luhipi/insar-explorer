@@ -131,8 +131,8 @@ class TimeSeriesSettingsPersistence:
                 residual_y_label=self._safe_text(self._value(residual, "ylabel", "Residual"), "Residual"),
                 font_size=self._safe_float(self._value(plot, "font size", 10.0), 10.0, 1.0, 200.0),
                 grid_mode=self._safe_grid(self._value(plot, "grid", "both")),
-                plot_background=self._safe_text(self._value(plot, "background color", "#f5f5f5"), "#f5f5f5"),
-                figure_background=self._safe_text(self._value(figure, "background color", "white"), "white"),
+                plot_background=normalize_color(self._value(plot, "background color", "white"), "white"),
+                canvas_background=normalize_color(self._value(figure, "background color", "white"), "white"),
                 date_format=self._safe_text(self._value(plot, "date format", "%Y-%m-%d"), "%Y-%m-%d"),
             ),
             export=ExportSettings.normalized(
@@ -200,7 +200,7 @@ class TimeSeriesSettingsPersistence:
             ("residual plot", "grid"): settings.grid_mode,
             ("residual plot", "xlabel"): settings.residual_x_label,
             ("residual plot", "ylabel"): settings.residual_y_label,
-            ("figure", "background color"): settings.figure_background,
+            ("figure", "background color"): settings.canvas_background,
         }
         for (section, key), value in values.items():
             self._save_value(section, key, value)
@@ -247,7 +247,7 @@ def build_legacy_plot_params(model, existing=None):
         "background color": model.appearance.plot_background,
         "date format": model.appearance.date_format,
     })
-    params.setdefault("figure", {})["background color"] = model.appearance.figure_background
+    params.setdefault("figure", {})["background color"] = model.appearance.canvas_background
     params["export"] = {
         "dpi": model.export.dpi,
         "aspect ratio": model.export.aspect_ratio,

@@ -213,8 +213,8 @@ class AppearanceSettings:
     residual_y_label: str = "Residual"
     font_size: float = 10.0
     grid_mode: str = "both"
-    plot_background: str = "#f5f5f5"
-    figure_background: str = "white"
+    plot_background: str = "white"
+    canvas_background: str = "white"
     date_format: Optional[str] = "%Y-%m-%d"
 
     GRID_MODES: ClassVar[tuple] = ("both", "horizontal", "vertical", "none")
@@ -222,6 +222,8 @@ class AppearanceSettings:
     def __post_init__(self):
         """Normalize the canonical grid mode without introducing a Boolean alias."""
         object.__setattr__(self, "grid_mode", self.normalize_grid_mode(self.grid_mode))
+        object.__setattr__(self, "plot_background", normalize_color(self.plot_background, "white"))
+        object.__setattr__(self, "canvas_background", normalize_color(self.canvas_background, "white"))
 
     @classmethod
     def normalize_grid_mode(cls, value):

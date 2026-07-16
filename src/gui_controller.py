@@ -12,9 +12,7 @@ from . import setup_frames
 from .map_setting import InsarMap
 from .layer_utils import vector_layer as vector_layer_utils
 from .about import about as insar_explorer_about
-from ..external.setting_manager_ui.json_settings import JsonSettings
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
-from .ui_windows.color_picker import ColorPicker
 from .ui.popups.time_series_style_popup import TimeSeriesStylePopup
 from .ui.popups.manual_y_axis_popup import ManualYAxisPopup
 from .ui.popups.manual_x_axis_popup import ManualXAxisPopup
@@ -833,8 +831,9 @@ class GuiController(QObject):
         )
 
     def updateAppearanceSettings(
-        self, time_series_title, residual_title, date_format, font_size,
-        plot_background, grid_mode,
+        self, time_series_title, residual_title, time_series_x_label,
+        time_series_y_label, residual_x_label, residual_y_label, date_format,
+        font_size, grid_mode, plot_background, canvas_background,
     ):
         """Persist one complete appearance replacement after an immediate edit."""
         plotter = self.choose_point_click_handler.plot_ts
@@ -843,22 +842,29 @@ class GuiController(QObject):
             current,
             time_series_title=str(time_series_title),
             residual_title=str(residual_title),
+            time_series_x_label=str(time_series_x_label),
+            time_series_y_label=str(time_series_y_label),
+            residual_x_label=str(residual_x_label),
+            residual_y_label=str(residual_y_label),
             date_format=str(date_format),
             font_size=float(font_size),
-            plot_background=str(plot_background),
             grid_mode=AppearanceSettings.normalize_grid_mode(grid_mode),
+            plot_background=str(plot_background),
+            canvas_background=str(canvas_background),
         )
         plotter.settings_model.replace_domain("appearance", settings)
         plotter.settings_persistence.save_appearance(settings)
         self.syncAppearancePopup()
 
     def resetAppearanceSettings(self):
-        """Restore schema defaults and commit them immediately."""
+        """Restore the complete schema-default Appearance domain in one commit."""
         defaults = AppearanceSettings()
         self.updateAppearanceSettings(
             defaults.time_series_title, defaults.residual_title,
-            defaults.date_format, defaults.font_size, defaults.plot_background,
-            defaults.grid_mode,
+            defaults.time_series_x_label, defaults.time_series_y_label,
+            defaults.residual_x_label, defaults.residual_y_label,
+            defaults.date_format, defaults.font_size, defaults.grid_mode,
+            defaults.plot_background, defaults.canvas_background,
         )
 
     def showAppearancePopup(self):
@@ -947,30 +953,6 @@ class GuiController(QObject):
         # TODO: move polygon drawing methods to PolygonDrawingTool class
         self.removePolygonDrawingTool(reference=False)
         self.removePolygonDrawingTool(reference=True)
-
-    def updateConfigFile(self, key_list, value_type, new_value=None):
-        block_key = "timeseries settings"
-        parms = JsonSettings(self.choose_point_click_handler.plot_ts.config_file)
-        settings_block = parms.load(block_key=block_key)
-
-        if value_type == "string":
-            new_value = str(new_value)
-
-        if value_type == "float":
-            new_value = float(new_value)
-
-        if value_type == "color":
-            initial_value = parms.get(key_list) or "#000000"
-            color_picker = ColorPicker(parent=self.ui, initial_color=initial_value, use_native_flag=False)
-            new_value = color_picker.pickColor()
-
-        settings_ref = settings_block
-        for key in key_list:
-            settings_ref = settings_ref[key]
-        settings_ref["value"] = new_value
-
-        parms.save(block_key, settings_block)
-        return new_value
 
     def _syncAxisToolbarControls(self):
         """Refresh both axis selectors from authoritative runtime state without drawing."""

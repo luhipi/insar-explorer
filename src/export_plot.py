@@ -328,7 +328,7 @@ class TimeSeriesPlotExporter:
         return svg_text[:match.start()] + root + svg_text[match.end():]
 
     def _figureBackgroundColor(self):
-        color = self.plotter.parms.get('figure', {}).get('background color') or 'white'
+        color = self.plotter.settings_model.appearance.canvas_background
         return QColor(color)
 
     def _escapeSvgText(self, text):
