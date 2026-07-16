@@ -1,6 +1,7 @@
 ### History
 
 v2.6.0dev
+- Fix time series plot to align year labels to calendar boundaries.
 - Move plot settings to time series toolbar.
 - Move replica to time series toolbar.
 - Move fit curve to time series toolbar.
