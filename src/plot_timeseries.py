@@ -10,7 +10,7 @@ import numpy as np
 from ..external import pyqtgraph as pg
 from qgis.PyQt.QtGui import QColor, QFont
 
-from .model_fitting import FittingModels
+from .model_fitting import FittingModels, ModelFitError
 from .export_plot import TimeSeriesPlotExporter
 from .time_series.settings.model import AxisManualRange, ResidualStyleSettings
 from .time_series.settings.persistence import TimeSeriesSettingsPersistence, build_legacy_plot_params
@@ -150,6 +150,7 @@ class PlotTs():
         self._axis_view_update_depth = 0
         self.axis_view_changed_callback = None
         self.axis_state_sync_callback = None
+        self.fit_failure_callback = None
         self._last_axis_ranges = {}
 
 
@@ -669,8 +670,16 @@ class PlotTs():
             return None, None
         else:
             fit_model = self.fit_models[0]
-            model_values, model_x, model_y = (
-                FittingModels(series.dates, series.plot_values, model=fit_model).fit(seasonal=fit_seasonal))
+            try:
+                model_values, model_x, model_y = (
+                    FittingModels(series.dates, series.plot_values, model=fit_model).fit(
+                        seasonal=fit_seasonal
+                    )
+                )
+            except ModelFitError as error:
+                if self.fit_failure_callback is not None:
+                    self.fit_failure_callback(error, seasonal=fit_seasonal)
+                return None, None
             fit_plot = None
             if fit_line_type and fit_line_width > 0 and fit_line_alpha > 0:
                 fit_plot = self.ax.plot(

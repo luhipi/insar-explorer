@@ -3,6 +3,15 @@ from scipy.optimize import curve_fit
 from datetime import datetime
 
 
+class ModelFitError(RuntimeError):
+    """Raised when a selected fitting model cannot produce a valid fit."""
+
+    def __init__(self, model_id, message, *, finite_observation_count=None):
+        super().__init__(message)
+        self.model_id = model_id
+        self.finite_observation_count = finite_observation_count
+
+
 def modelPoly1(x, a, b):
     return a + b * x
 
@@ -23,16 +32,104 @@ def modelExponential(x, a, b, c):
     return a + b * np.exp(c * x)
 
 
-def fitExponential(x, y):
-    """Try fitting exponential model, if it fails, fit polynomial model. Return the best fit model."""
+_MODEL_LABELS = {
+    "exp": "Exponential",
+}
+
+
+def _modelFitLabel(model_id):
+    """Return the stable display label used in numerical fit errors."""
+    return _MODEL_LABELS.get(model_id, model_id)
+
+
+def _prepareNonlinearFitInputs(x, y, *, model_id, parameter_count):
+    """Return finite one-dimensional float arrays suitable for nonlinear fitting."""
+    label = _modelFitLabel(model_id)
+    x = np.asarray(x, dtype=np.float64)
+    y = np.asarray(y, dtype=np.float64)
+
+    if x.ndim != 1 or y.ndim != 1:
+        raise ModelFitError(
+            model_id, f"{label} fit requires one-dimensional inputs."
+        )
+    if len(x) != len(y):
+        raise ModelFitError(
+            model_id, f"{label} fit requires matching input lengths."
+        )
+
+    finite_mask = np.isfinite(x) & np.isfinite(y)
+    finite_count = int(np.count_nonzero(finite_mask))
+    minimum_count = parameter_count + 1
+    if finite_count < minimum_count:
+        raise ModelFitError(
+            model_id,
+            f"{label} fit requires at least {minimum_count} finite observations.",
+            finite_observation_count=finite_count,
+        )
+
+    x_fit = x[finite_mask]
+    y_fit = y[finite_mask]
+    if np.ptp(x_fit) == 0:
+        raise ModelFitError(
+            model_id,
+            f"{label} fit requires a non-zero time span.",
+            finite_observation_count=finite_count,
+        )
+
+    return x_fit, y_fit
+
+
+def _validateNonlinearFitResult(
+    *, model_id, parameters, model_values, finite_observation_count=None
+):
+    """Raise ``ModelFitError`` when a nonlinear solution is numerically invalid."""
+    label = _modelFitLabel(model_id)
+    if not np.all(np.isfinite(parameters)):
+        raise ModelFitError(
+            model_id,
+            f"{label} fit returned non-finite parameters.",
+            finite_observation_count=finite_observation_count,
+        )
+    if not np.all(np.isfinite(model_values)):
+        raise ModelFitError(
+            model_id,
+            f"{label} fit returned non-finite values.",
+            finite_observation_count=finite_observation_count,
+        )
+
+
+def _fitExponentialPrepared(x_fit, y_fit):
+    """Fit already prepared exponential inputs."""
+    finite_count = len(x_fit)
+    initial_params = [1.0, 1.0, 0.01]
     try:
-        initial_params = [1, 1, 0.01]
-        popt, pcov = curve_fit(modelExponential, x, y, p0=initial_params, maxfev=2000)
-        model = modelExponential
-    except RuntimeError:
-        popt, pcov = curve_fit(modelPoly1, x, y)
-        model = modelPoly1
-    return popt, pcov, model
+        with np.errstate(over="raise", invalid="raise", divide="raise"):
+            popt, pcov = curve_fit(
+                modelExponential, x_fit, y_fit, p0=initial_params, maxfev=2000
+            )
+            fitted = modelExponential(x_fit, *popt)
+    except (RuntimeError, ValueError, FloatingPointError) as exc:
+        raise ModelFitError(
+            "exp",
+            "Exponential fit failed.",
+            finite_observation_count=finite_count,
+        ) from exc
+
+    _validateNonlinearFitResult(
+        model_id="exp",
+        parameters=popt,
+        model_values=fitted,
+        finite_observation_count=finite_count,
+    )
+    return popt, pcov
+
+
+def fitExponential(x, y):
+    """Fit the exponential model or raise ``ModelFitError`` on expected failure."""
+    x_fit, y_fit = _prepareNonlinearFitInputs(
+        x, y, model_id="exp", parameter_count=3
+    )
+    return _fitExponentialPrepared(x_fit, y_fit)
 
 
 def normalize(x, ref=None):
@@ -64,22 +161,36 @@ class FittingModels:
         # Caution: seasonal signal should not be normalized
         mask = self.mask
         x = self.ordinal_dates
-        x_norm = normalize(x, ref=x[mask])
-        y = self.y
+        y = np.asarray(self.y, dtype=np.float64)
 
         if model is None:
             model = self.model
+
+        if model != "exp" and len(x) != len(y):
+            raise ValueError("Fitting inputs must have matching lengths.")
         fit_models_dict = {"poly-1": modelPoly1, "poly-2": modelPoly2,
                            "poly-3": modelPoly3, "exp": modelExponential}
         fit_model = fit_models_dict[model]
         if fit_model == modelExponential:
-            popt, pcov, fit_model = fitExponential(x_norm[mask], y[mask])
+            x_fit, y_fit = _prepareNonlinearFitInputs(
+                x, y, model_id="exp", parameter_count=3
+            )
+            x_min = x_fit.min()
+            x_span = x_fit.max() - x_min
+            x_fit_norm = (x_fit - x_min) / x_span
+            popt, pcov = _fitExponentialPrepared(x_fit_norm, y_fit)
+            x_norm = (x - x_min) / x_span
+            fit_model = modelExponential
         else:
+            x_norm = normalize(x, ref=x[mask])
             popt, pcov = curve_fit(fit_model, x_norm[mask], y[mask])
 
         model_x_linspace = np.linspace(min(x), max(x), 100)
         model_x = ordinalTodates(model_x_linspace)
-        model_x_linspace_norm = normalize(model_x_linspace, ref=x[mask])
+        if fit_model == modelExponential:
+            model_x_linspace_norm = (model_x_linspace - x_min) / x_span
+        else:
+            model_x_linspace_norm = normalize(model_x_linspace, ref=x[mask])
         model_y = fit_model(model_x_linspace_norm, *popt)
         fit_y = fit_model(x_norm, *popt)
 

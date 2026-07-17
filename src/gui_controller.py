@@ -122,6 +122,7 @@ class GuiController(QObject):
         plotter.axis_view_changed_callback = self._axisViewportChanged
         plotter.auto_view_requested_callback = self._handlePlotAutoRequest
         plotter.axis_state_sync_callback = self._syncAxisToolbarControls
+        plotter.fit_failure_callback = self._handleTimeSeriesFitFailure
         self.click_tool = None  # plugin.click_tool
         self.drawing_tool = None  # for polygon drawing
         self.drawing_tool_reference = None  # for reference polygon drawing
@@ -596,6 +597,12 @@ class GuiController(QObject):
                 transform = QTransform().scale(-1, 1)  # fip horizontally
                 flipped_pixmap = pixmap.transformed(transform)
                 combo_box.setItemIcon(index, QIcon(flipped_pixmap))
+
+    def _handleTimeSeriesFitFailure(self, error, *, seasonal=False):
+        """Show a non-modal fitting failure message."""
+        self.msg_signal.emit(
+            "Exponential fit failed for the current series.", "e", 6000
+        )
 
     def _restoreTimeSeriesFitState(self):
         """Restore session fit state after UI, plotter, or layer lifecycle changes."""
