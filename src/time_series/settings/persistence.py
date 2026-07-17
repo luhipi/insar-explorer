@@ -4,7 +4,10 @@ from copy import deepcopy
 
 from ....external.setting_manager_ui.json_settings import JsonSettings
 from ..style_config import TimeSeriesStyleConfig
-from ..style_schema import MARKER_SIZE_RANGE, normalize_alpha, normalize_color, normalize_marker, normalize_number
+from ..style_schema import (
+    MARKER_SIZE_RANGE, normalize_alpha, normalize_color, normalize_marker,
+    normalize_number,
+)
 from .model import (
     EnsembleStyleSettings, ExportSettings, FitStyleSettings,
     AppearanceSettings, ReplicaSettings, ResidualStyleSettings,
@@ -112,7 +115,7 @@ class TimeSeriesSettingsPersistence:
             ensemble_defaults=ensemble,
             replica=ReplicaSettings(
                 enabled=False,
-                interval_mm=2.8,
+                interval_mm=27.8,
                 pair_count=self._normalize_pair_count(self._value(plot, "replica pair count", 1)),
                 color_1=normalize_color(self._value(plot, "replica color 1", "#ff7f0e"), "#ff7f0e"),
                 color_2=normalize_color(self._value(plot, "replica color 2", "#2ca02c"), "#2ca02c"),
@@ -172,6 +175,10 @@ class TimeSeriesSettingsPersistence:
     def save_ensemble_defaults(self, settings):
         """Persist ensemble defaults through the existing adapter."""
         self.style_config.save_default_ensemble_style(settings)
+
+    def load_replica_defaults(self):
+        """Return canonical Replica defaults independent of persisted values."""
+        return ReplicaSettings()
 
     def save_replica_defaults(self, settings):
         """Persist Replica defaults while retaining session activation/interval."""

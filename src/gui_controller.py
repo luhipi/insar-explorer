@@ -14,10 +14,12 @@ from .layer_utils import vector_layer as vector_layer_utils
 from .about import about as insar_explorer_about
 from .drawing_tools.polygon_drawing_tool import PolygonDrawingTool
 from .ui.popups.time_series_style_popup import TimeSeriesStylePopup
+from .ui.popups.fit_popup import FitPopup
 from .ui.popups.manual_y_axis_popup import ManualYAxisPopup
 from .ui.popups.manual_x_axis_popup import ManualXAxisPopup
 from .ui.popups.export_settings_popup import ExportSettingsPopup
 from .ui.popups.appearance_popup import AppearancePopup
+from .ui.popups.replica_popup import ReplicaPopup
 from .qt_compat import (
     RASTER_LAYER,
     VECTOR_LAYER,
@@ -147,11 +149,13 @@ class GuiController(QObject):
         self.time_series_replica_interval_mm = self._loadReplicaInterval()
         self.time_series_replica_pair_count = self._loadReplicaPairCount()
         self.time_series_style_popup = TimeSeriesStylePopup(self.ui)
+        self.fit_popup = FitPopup(self.ui)
         self.manual_x_axis_popup = ManualXAxisPopup(self.ui)
         self._manual_x_axis_session = None
         self.manual_y_axis_popup = ManualYAxisPopup(self.ui)
         self.export_settings_popup = ExportSettingsPopup(self.ui)
         self.appearance_popup = AppearancePopup(self.ui)
+        self.replica_popup = ReplicaPopup(self.ui)
         self._manual_y_axis_session = None
         self.time_series_style_controller = TimeSeriesStyleController()
         self.fit_style_controller = FitStyleController()
@@ -392,6 +396,7 @@ class GuiController(QObject):
         # TS fit handler
         self.ui.time_series_toolbar.fitEnabledChanged.connect(self.setTimeSeriesFitEnabled)
         self.ui.time_series_toolbar.fitModelChanged.connect(self.setTimeSeriesFitModel)
+        self.ui.time_series_toolbar.fitSettingsRequested.connect(self.showFitPopup)
         self.ui.time_series_toolbar.seasonalEnabledChanged.connect(self.setTimeSeriesSeasonalEnabled)
         self.ui.time_series_toolbar.residualEnabledChanged.connect(self.setTimeSeriesResidualEnabled)
         self.ui.time_series_toolbar.xAxisModeChanged.connect(self.setTimeSeriesXAxisMode)
@@ -409,13 +414,28 @@ class GuiController(QObject):
         self.ui.time_series_toolbar.replicaEnabledChanged.connect(
             self.setTimeSeriesReplicaEnabled
         )
-        self.ui.time_series_toolbar.replicaIntervalChanged.connect(
-            self.setTimeSeriesReplicaInterval
-        )
-        self.ui.time_series_toolbar.replicaPairCountChanged.connect(
-            self.setTimeSeriesReplicaPairCount
-        )
+        self.ui.time_series_toolbar.replicaSettingsRequested.connect(self.showReplicaPopup)
         self.ui.time_series_toolbar.plotStyleRequested.connect(self.showTimeSeriesStylePopup)
+        fit_popup = self.fit_popup
+        toolbar = self.ui.time_series_toolbar
+        fit_popup.modelChanged.connect(toolbar.selectFitModel)
+        fit_popup.seasonalEnabledChanged.connect(toolbar.seasonalEnabledChanged.emit)
+        fit_popup.residualEnabledChanged.connect(toolbar.residualEnabledChanged.emit)
+        fit_popup.fitLineTypeChanged.connect(lambda value: self._applySelectedFitStyle("line_type", value))
+        fit_popup.fitLineColorChanged.connect(lambda value: self._applySelectedFitStyle("line_color", value))
+        fit_popup.fitLineWidthChanged.connect(lambda value: self._applySelectedFitStyle("line_width", value))
+        fit_popup.fitOpacityChanged.connect(lambda value: self._applySelectedFitStyle("line_opacity", percent_to_alpha(value)))
+        fit_popup.residualMarkerTypeChanged.connect(lambda value: self._applySelectedResidualStyle("marker_type", value))
+        fit_popup.residualMarkerColorChanged.connect(lambda value: self._applySelectedResidualStyle("marker_color", value))
+        fit_popup.residualMarkerSizeChanged.connect(lambda value: self._applySelectedResidualStyle("marker_size", value))
+        fit_popup.residualMarkerOpacityChanged.connect(lambda value: self._applySelectedResidualStyle("marker_opacity", percent_to_alpha(value)))
+        fit_popup.residualLineTypeChanged.connect(lambda value: self._applySelectedResidualStyle("line_type", value))
+        fit_popup.residualLineColorChanged.connect(lambda value: self._applySelectedResidualStyle("line_color", value))
+        fit_popup.residualLineWidthChanged.connect(lambda value: self._applySelectedResidualStyle("line_width", value))
+        fit_popup.residualLineOpacityChanged.connect(lambda value: self._applySelectedResidualStyle("line_opacity", percent_to_alpha(value)))
+        fit_popup.randomizeResidualColorRequested.connect(self.randomizeSelectedResidualColor)
+        fit_popup.setCurrentFitStyleAsDefaultRequested.connect(self.setCurrentFitStyleAsDefault)
+        fit_popup.setCurrentResidualStyleAsDefaultRequested.connect(self.setCurrentResidualStyleAsDefault)
         popup = self.time_series_style_popup
         popup.markerTypeChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_type", value))
         popup.markerColorChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_color", value))
@@ -425,23 +445,8 @@ class GuiController(QObject):
         popup.lineColorChanged.connect(lambda value: self._applySelectedSeriesStyle("line_color", value))
         popup.lineWidthChanged.connect(lambda value: self._applySelectedSeriesStyle("line_width", value))
         popup.lineOpacityChanged.connect(lambda value: self._applySelectedSeriesStyle("line_opacity", percent_to_alpha(value)))
-        popup.fitLineTypeChanged.connect(lambda value: self._applySelectedFitStyle("line_type", value))
-        popup.fitLineColorChanged.connect(lambda value: self._applySelectedFitStyle("line_color", value))
-        popup.fitLineWidthChanged.connect(lambda value: self._applySelectedFitStyle("line_width", value))
-        popup.fitOpacityChanged.connect(lambda value: self._applySelectedFitStyle("line_opacity", percent_to_alpha(value)))
         popup.randomizeColorRequested.connect(self.randomizeSelectedTimeSeriesColor)
         popup.setCurrentStyleAsDefaultRequested.connect(self.setCurrentSeriesStyleAsDefault)
-        popup.setCurrentFitStyleAsDefaultRequested.connect(self.setCurrentFitStyleAsDefault)
-        popup.residualMarkerTypeChanged.connect(lambda value: self._applySelectedResidualStyle("marker_type", value))
-        popup.residualMarkerColorChanged.connect(lambda value: self._applySelectedResidualStyle("marker_color", value))
-        popup.residualMarkerSizeChanged.connect(lambda value: self._applySelectedResidualStyle("marker_size", value))
-        popup.residualMarkerOpacityChanged.connect(lambda value: self._applySelectedResidualStyle("marker_opacity", percent_to_alpha(value)))
-        popup.residualLineTypeChanged.connect(lambda value: self._applySelectedResidualStyle("line_type", value))
-        popup.residualLineColorChanged.connect(lambda value: self._applySelectedResidualStyle("line_color", value))
-        popup.residualLineWidthChanged.connect(lambda value: self._applySelectedResidualStyle("line_width", value))
-        popup.residualLineOpacityChanged.connect(lambda value: self._applySelectedResidualStyle("line_opacity", percent_to_alpha(value)))
-        popup.randomizeResidualColorRequested.connect(self.randomizeSelectedResidualColor)
-        popup.setCurrentResidualStyleAsDefaultRequested.connect(self.setCurrentResidualStyleAsDefault)
         popup.ensembleMemberColorChanged.connect(lambda value: self._applySelectedEnsembleStyle("member_color", value))
         popup.ensembleMemberWidthChanged.connect(lambda value: self._applySelectedEnsembleStyle("member_width", value))
         popup.ensembleMemberOpacityChanged.connect(lambda value: self._applySelectedEnsembleStyle("member_opacity", percent_to_alpha(value)))
@@ -465,6 +470,8 @@ class GuiController(QObject):
         self.export_settings_popup.resetRequested.connect(self.resetExportSettings)
         self.appearance_popup.settingsChanged.connect(self.updateAppearanceSettings)
         self.appearance_popup.resetRequested.connect(self.resetAppearanceSettings)
+        self.replica_popup.settingsChanged.connect(self.updateReplicaCoreSettings)
+        self.replica_popup.resetRequested.connect(self.resetReplicaSettings)
 
     def connectMapSignals(self):
         self.ui.cb_select_field.currentTextChanged.connect(self.selectVectorFieldChanged)
@@ -610,6 +617,8 @@ class GuiController(QObject):
         toolbar.setSelectedFitModel(state.selected_fit_model)
         toolbar.setSeasonalEnabled(state.seasonal_enabled)
         toolbar.setResidualEnabled(state.residual_enabled)
+        if hasattr(self, "fit_popup"):
+            self.fit_popup.setSettings(state.selected_fit_model, state.seasonal_enabled, state.residual_enabled)
 
     def _applyTimeSeriesFitState(self, refresh=True):
         """Apply fit state to the plotter and both temporary UI surfaces."""
@@ -715,8 +724,12 @@ class GuiController(QObject):
         snapshots = self._selectedTimeSeriesSnapshots()
         if not snapshots:
             return
-        changed = self.residual_style_controller.applyProperty(snapshots, property_name, value)
-        self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+        changed = self.residual_style_controller.applyProperty(
+            snapshots, property_name, value
+        )
+        # only mutate/render live residual artists when that layer is available.
+        if self.timeSeriesStyleAvailability(snapshots).residual_available:
+            self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
         self._refreshTimeSeriesStylePopup()
 
     def randomizeSelectedResidualColor(self):
@@ -725,7 +738,8 @@ class GuiController(QObject):
         if not snapshots:
             return
         changed = self.residual_style_controller.randomizeColor(snapshots)
-        self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+        if self.timeSeriesStyleAvailability(snapshots).residual_available:
+            self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
         self._refreshTimeSeriesStylePopup()
 
 
@@ -789,14 +803,14 @@ class GuiController(QObject):
         plotter.settings_model.replace_domain("fit_defaults", fit_style)
         plotter.settings_persistence.save_fit_defaults(fit_style)
         self._settings_fit_style_before = plotter.style_config.load_fit_style_values()
-        self.time_series_style_popup.setFitStyle(fit_style)
+        self.fit_popup.setFitStyle(fit_style)
         self.msg_signal.emit("Current fit style set as default for new time series.", "done", 3000)
 
     def _refreshFitStyleTab(self):
         """Refresh only Fit controls from the current selected snapshot."""
         snapshots = self.selectedTimeSeriesSnapshots()
         if snapshots:
-            self.time_series_style_popup.setFitStyle(
+            self.fit_popup.setFitStyle(
                 self.fit_style_controller.fitStyle(snapshots[0])
             )
 
@@ -810,9 +824,11 @@ class GuiController(QObject):
             styles = self.time_series_style_controller.selectedSeriesStyles(snapshots)
             popup.setStyle(styles[0])
             if availability.fit_available:
-                popup.setFitStyle(self.fit_style_controller.fitStyle(snapshots[0]))
-            if availability.residual_available:
-                popup.setResidualStyle(self.residual_style_controller.residualStyle(snapshots[0]))
+                self.fit_popup.setFitStyle(self.fit_style_controller.fitStyle(snapshots[0]))
+            # residual style remains editable and synchronized while hidden.
+            self.fit_popup.setResidualStyle(
+                self.residual_style_controller.residualStyle(snapshots[0])
+            )
             ensemble_snapshots = self.ensemble_style_controller.applicableSnapshots(snapshots)
             if ensemble_snapshots:
                 popup.setEnsembleStyle(self.ensemble_style_controller.ensembleStyle(ensemble_snapshots[0]))
@@ -907,8 +923,7 @@ class GuiController(QObject):
         """Open export defaults anchored to the Export Settings action."""
         self.syncExportSettingsPopup()
         toolbar = self.ui.time_series_toolbar
-        action_widget = toolbar.widgetForAction(toolbar.export_settings_action)
-        anchor = action_widget or toolbar
+        anchor = toolbar.plot_export_button.secondary_button
         self.export_settings_popup.adjustSize()
         anchor_top_left = anchor.mapToGlobal(QPoint(0, 0))
         anchor_rect = QRect(anchor_top_left, anchor.size())
@@ -918,6 +933,21 @@ class GuiController(QObject):
         ))
         self.export_settings_popup.show()
         self.export_settings_popup.raise_()
+
+    def showFitPopup(self):
+        """Open the synchronized Fit popup below the split-button arrow."""
+        self._syncTimeSeriesFitControls()
+        self._refreshTimeSeriesStylePopup()
+        anchor = self.ui.time_series_toolbar.fit_button.secondary_button
+        self.fit_popup.adjustSize()
+        anchor_top_left = anchor.mapToGlobal(QPoint(0, 0))
+        anchor_rect = QRect(anchor_top_left, anchor.size())
+        geometry = available_screen_geometry(anchor_rect.center(), anchor)
+        self.fit_popup.move(screen_aware_popup_position(
+            anchor_rect, self.fit_popup.sizeHint(), geometry
+        ))
+        self.fit_popup.show()
+        self.fit_popup.raise_()
 
     def showTimeSeriesStylePopup(self):
         """Open the style popup anchored below the Plot style toolbar action."""
@@ -1327,6 +1357,93 @@ class GuiController(QObject):
         """Load the symmetric Replica pair count from the canonical JSON config."""
         return self.choose_point_click_handler.plot_ts.settings_model.replica.pair_count
 
+
+    def syncReplicaPopup(self):
+        """Refresh the Replica popup from authoritative runtime settings."""
+        if hasattr(self, "replica_popup"):
+            self.replica_popup.setSettings(self.time_series_settings.replica)
+
+    def showReplicaPopup(self):
+        """Open the Replica popup without changing activation state."""
+        self.syncReplicaPopup()
+        self.replica_popup.adjustSize()
+        toolbar = self.ui.time_series_toolbar
+        anchor = toolbar.replica_button
+
+        if anchor is not None:
+            local_rect = anchor.rect()
+            anchor_rect = QRect(
+                anchor.mapToGlobal(local_rect.topLeft()),
+                local_rect.size(),
+            )
+            fallback_widget = anchor
+        else:
+            local_rect = toolbar.rect()
+            anchor_rect = QRect(
+                toolbar.mapToGlobal(local_rect.topLeft()),
+                local_rect.size(),
+            )
+            fallback_widget = toolbar
+
+        geometry = available_screen_geometry(
+            anchor_rect.center(),
+            fallback_widget,
+        )
+        self.replica_popup.move(
+            screen_aware_popup_position(
+                anchor_rect,
+                self.replica_popup.sizeHint(),
+                geometry,
+            )
+        )
+        self.replica_popup.show()
+        self.replica_popup.raise_()
+
+    def updateReplicaCoreSettings(
+        self, interval_mm, pair_count, color_1, color_2, opacity, marker, marker_size
+    ):
+        """Apply the complete consolidated Replica runtime state once."""
+        previous = self.time_series_settings.replica
+        replica = type(previous)(
+            enabled=previous.enabled, interval_mm=interval_mm, pair_count=pair_count,
+            color_1=color_1, color_2=color_2, opacity=opacity,
+            marker=marker, marker_size=marker_size,
+        )
+        extent_changed = (
+            previous.enabled != replica.enabled
+            or previous.interval_mm != replica.interval_mm
+            or previous.pair_count != replica.pair_count
+        )
+        self.time_series_settings.replace_domain("replica", replica)
+        self.time_series_replica_enabled = replica.enabled
+        self.time_series_replica_interval_mm = replica.interval_mm
+        self.time_series_replica_pair_count = replica.pair_count
+        plot = self.choose_point_click_handler.plot_ts
+        plot.settings_persistence.save_replica_defaults(replica)
+        self.settings.setValue("insar_explorer/replica_enabled", replica.enabled)
+        self.settings.setValue("insar_explorer/replica_interval_mm", replica.interval_mm)
+        plot.replicate_flag = replica.enabled
+        plot.replicate_value = replica.interval_mm
+        plot.refreshCompatibilityViews()
+        self._syncTimeSeriesReplicaControls()
+        if plot.ax is not None and plot.series_history:
+            plot.rerenderTimeSeriesSnapshots(list(plot.series_history), draw=False)
+            if extent_changed and self._shouldReapplyAutomaticYAxisAfterReplicaChange():
+                with plot.axisViewUpdateGuard():
+                    plot.setYlims(ax=plot.ax, parms=plot.parms["time series plot"])
+            plot._draw()
+
+    def resetReplicaSettings(self):
+        """Reset Replica settings while preserving the current activation state."""
+        current = self.time_series_settings.replica
+        defaults = self.choose_point_click_handler.plot_ts.settings_persistence.load_replica_defaults()
+        reset_value = replace(defaults, enabled=current.enabled)
+        self.updateReplicaCoreSettings(
+            reset_value.interval_mm, reset_value.pair_count,
+            reset_value.color_1, reset_value.color_2, reset_value.opacity,
+            reset_value.marker, reset_value.marker_size,
+        )
+
     def _reloadReplicaPairCountFromConfig(self):
         """Reload the canonical Replica pair count and synchronize its toolbar view."""
         reloaded = self.choose_point_click_handler.plot_ts.settings_persistence.load()
@@ -1346,9 +1463,12 @@ class GuiController(QObject):
     def _syncTimeSeriesReplicaControls(self):
         """Synchronize toolbar and temporary Settings controls without recursion."""
         toolbar = self.ui.time_series_toolbar
-        toolbar.setReplicaEnabled(self.time_series_replica_enabled)
-        toolbar.setReplicaInterval(self.time_series_replica_interval_mm)
-        toolbar.setReplicaPairCount(self.time_series_replica_pair_count)
+        toolbar.setReplicaPresentation(
+            self.time_series_replica_enabled,
+            self.time_series_replica_interval_mm,
+            self.time_series_replica_pair_count,
+        )
+        self.syncReplicaPopup()
 
     def _shouldReapplyAutomaticYAxisAfterReplicaChange(self):
         """Return whether Replica extent changes should reapply the main Y policy."""

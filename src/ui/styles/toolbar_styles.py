@@ -14,6 +14,11 @@ QToolBar {
 QToolButton[controlRole="toggle"]:hover:enabled {
     border: 1px solid palette(mid);
 }
+QToolButton[controlRole="command"]:hover:enabled {
+    background-color: palette(alternate-base);
+    border: 2px solid palette(mid);
+    border-radius: 3px;
+}
 QToolButton[controlRole="selector"] {
     margin: 0;
     padding: 1px 1px;

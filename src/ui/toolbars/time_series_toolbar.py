@@ -1,6 +1,6 @@
 """Toolbar actions for the time-series plot panel."""
 
-from qgis.PyQt.QtCore import QSize, Qt, pyqtSignal
+from qgis.PyQt.QtCore import QSize, pyqtSignal
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import (
     QInputDialog,
@@ -17,7 +17,11 @@ from ...qt_compat import (
     SIZE_POLICY_PREFERRED,
     TOOL_BUTTON_INSTANT_POPUP,
 )
-from ..styles import apply_command_toolbar_style, set_toolbar_control_role
+from ..styles import (
+    apply_command_toolbar_style,
+    set_toolbar_control_role,
+)
+from ..widgets import SplitToolButton
 
 
 class TimeSeriesToolbar(QToolBar):
@@ -28,6 +32,7 @@ class TimeSeriesToolbar(QToolBar):
     plotExportRequested = pyqtSignal()
     dataExportRequested = pyqtSignal()
     fitEnabledChanged = pyqtSignal(bool)
+    fitSettingsRequested = pyqtSignal()
     fitModelChanged = pyqtSignal(str)
     seasonalEnabledChanged = pyqtSignal(bool)
     residualEnabledChanged = pyqtSignal(bool)
@@ -36,8 +41,7 @@ class TimeSeriesToolbar(QToolBar):
     yAxisModeChanged = pyqtSignal(str)
     manualYAxisEditRequested = pyqtSignal()
     replicaEnabledChanged = pyqtSignal(bool)
-    replicaIntervalChanged = pyqtSignal(float)
-    replicaPairCountChanged = pyqtSignal(int)
+    replicaSettingsRequested = pyqtSignal()
     plotStyleRequested = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -50,59 +54,35 @@ class TimeSeriesToolbar(QToolBar):
         self.setContentsMargins(0, 0, 0, 0)
         apply_command_toolbar_style(self)
 
-        self.fit_enabled_action = self._createToggleAction(
-            ":/icons/icons/fit_curve.svg",
-            "Fit",
-            "Toggle time-series fitting",
-            "action_ts_fit_enabled",
+        self._fit_models = {
+            "poly-1": ("Linear", ":/icons/icons/fit_poly1.svg"),
+            "poly-2": ("Quadratic", ":/icons/icons/fit_poly2.svg"),
+            "poly-3": ("Cubic", ":/icons/icons/fit_poly3.svg"),
+            "exp": ("Exponential", ":/icons/icons/fit_exponential.svg"),
+        }
+        self._selected_fit_model = "poly-1"
+        self._seasonal_enabled = False
+        self._residual_enabled = False
+        self.fit_button = SplitToolButton(
+            icon=QIcon(self._fit_models[self._selected_fit_model][1]),
+            primary_checkable=True,
+            parent=self,
+            object_name="tool_ts_fit",
+            arrow_side=SplitToolButton.Right,
         )
-        self.addAction(self.fit_enabled_action)
-
-        self.fit_model_button = QToolButton(self)
-        self.fit_model_button.setObjectName("tool_ts_fit_model")
-        set_toolbar_control_role(self.fit_model_button, "selector")
-        self.fit_model_button.setPopupMode(TOOL_BUTTON_INSTANT_POPUP)
-        self.fit_model_menu = QMenu(self.fit_model_button)
-        self.fit_model_menu.setObjectName("menu_ts_fit_model")
-        self.fit_model_group = QActionGroup(self.fit_model_menu)
-        self.fit_model_group.setExclusive(True)
-        self.fit_model_actions = {}
-        for model, text, icon_path, object_name in (
-            ("poly-1", "Linear", ":/icons/icons/fit_poly1.svg", "action_ts_fit_linear"),
-            ("poly-2", "Second order", ":/icons/icons/fit_poly2.svg", "action_ts_fit_second_order"),
-            ("poly-3", "Third order", ":/icons/icons/fit_poly3.svg", "action_ts_fit_third_order"),
-            ("exp", "Exponential", ":/icons/icons/fit_exponential.svg", "action_ts_fit_exponential"),
-        ):
-            action = QAction(QIcon(icon_path), text, self.fit_model_group)
-            action.setObjectName(object_name)
-            action.setCheckable(True)
-            action.setData(model)
-            self.fit_model_group.addAction(action)
-            self.fit_model_menu.addAction(action)
-            self.fit_model_actions[model] = action
-        self.fit_model_actions["poly-1"].setChecked(True)
-        self.fit_model_button.setMenu(self.fit_model_menu)
-        self.fit_model_button.setCheckable(False)
-        self._updateFitModelSelector(self.fit_model_actions["poly-1"])
-        self.addWidget(self.fit_model_button)
-        self._updateFitToggleMetadata()
-
-        self.seasonal_action = self._createToggleAction(
-            ":/icons/icons/fit__add_seasonal.svg",
-            "Seasonal",
-            "Include a seasonal component in the fitted model",
-            "action_ts_fit_seasonal",
+        self.fit_button.setIconSize(self.iconSize())
+        self.fit_button.setPrimaryAccessibleName("Fit time series")
+        self.fit_button.setPrimaryAccessibleDescription(
+            "Enable or disable fitting using the selected model."
         )
-        self.addAction(self.seasonal_action)
+        self.fit_button.setSecondaryToolTip("Fit settings")
+        self.fit_button.setSecondaryAccessibleName("Fit settings")
+        self.fit_button.setSecondaryAccessibleDescription(
+            "Choose the fitting model and configure fit appearance."
+        )
+        self.addWidget(self.fit_button)
         self.addSeparator()
-        self.residual_action = self._createToggleAction(
-            ":/icons/icons/residual.svg",
-            "Residual",
-            "Show residual values for the fitted model",
-            "action_ts_show_residual",
-        )
-        self.addAction(self.residual_action)
-        self.addSeparator()
+        self._updateFitMetadata()
 
         self.x_axis_button = QToolButton(self)
         self.x_axis_button.setObjectName("tool_ts_x_axis")
@@ -209,58 +189,24 @@ class TimeSeriesToolbar(QToolBar):
         self.addWidget(self.y_axis_button)
 
         self.addSeparator()
-        self.replica_enabled_action = self._createToggleAction(
-            ":/icons/icons/replica.svg",
-            "Replica",
-            "Toggle time-series replicas",
-            "action_ts_replica_enabled",
+        self.replica_button = SplitToolButton(
+            icon=QIcon(":/icons/icons/replica.svg"),
+            primary_checkable=True,
+            parent=self,
+            object_name="tool_ts_replica",
+            arrow_side=SplitToolButton.Right,
         )
-        self.addAction(self.replica_enabled_action)
-
-        self.replica_interval_button = QToolButton(self)
-        self.replica_interval_button.setObjectName("tool_ts_replica_interval")
-        set_toolbar_control_role(self.replica_interval_button, "selector")
-        self.replica_interval_button.setPopupMode(TOOL_BUTTON_INSTANT_POPUP)
-        tool_button_style = getattr(Qt, "ToolButtonStyle", Qt)
-        self.replica_interval_button.setToolButtonStyle(
-            tool_button_style.ToolButtonTextOnly
+        self.replica_button.setIconSize(self.iconSize())
+        self.replica_button.setPrimaryAccessibleName("Replica")
+        self.replica_button.setPrimaryAccessibleDescription(
+            "Toggle Replica. Use the arrow for settings."
         )
-        self.replica_interval_menu = QMenu(self.replica_interval_button)
-        self.replica_interval_menu.setObjectName("menu_ts_replica_interval")
-        self.replica_interval_group = QActionGroup(self.replica_interval_menu)
-        self.replica_interval_group.setExclusive(True)
-        self.replica_interval_actions = {}
-        for preset_id, text, interval_mm, object_name in (
-            ("s1", "Sentinel-1 (C-band) — 27.8 mm", 27.8, "action_replica_s1"),
-            ("tsx", "TerraSAR-X (X-band) — 15.5 mm", 15.5, "action_replica_tsx"),
-            ("alos", "ALOS (L-band) — 118.0 mm", 118.0, "action_replica_alos"),
-            ("nisar_l", "NISAR (L-band) — 120.0 mm", 120.0, "action_replica_nisar_l"),
-        ):
-            action = QAction(text, self.replica_interval_group)
-            action.setObjectName(object_name)
-            action.setCheckable(True)
-            action.setData(interval_mm)
-            action.setProperty("presetId", preset_id)
-            self.replica_interval_group.addAction(action)
-            self.replica_interval_menu.addAction(action)
-            self.replica_interval_actions[preset_id] = action
-        self.replica_custom_action = QAction("Custom interval…", self.replica_interval_group)
-        self.replica_custom_action.setObjectName("action_replica_custom")
-        self.replica_custom_action.setCheckable(True)
-        self.replica_custom_action.setData(None)
-        self.replica_interval_group.addAction(self.replica_custom_action)
-        self.replica_interval_menu.addAction(self.replica_custom_action)
-        self.replica_interval_actions["custom"] = self.replica_custom_action
-        self.replica_interval_menu.addSeparator()
-        self.replica_pairs_action = QAction("Replica pairs…", self.replica_interval_menu)
-        self.replica_pairs_action.setObjectName("action_replica_pairs")
-        self.replica_interval_menu.addAction(self.replica_pairs_action)
-        self.replica_interval_button.setMenu(self.replica_interval_menu)
-        self.replica_interval_button.setCheckable(False)
-        self._replica_interval_mm = 27.8
-        self._replica_pair_count = 1
-        self.setReplicaInterval(27.8)
-        self.addWidget(self.replica_interval_button)
+        self.replica_button.setSecondaryToolTip("Replica settings")
+        self.replica_button.setSecondaryAccessibleName("Replica settings")
+        self.replica_button.setSecondaryAccessibleDescription(
+            "Open Replica settings."
+        )
+        self.addWidget(self.replica_button)
 
         self.addSeparator()
         self.plot_style_action = self._createAction(
@@ -285,17 +231,29 @@ class TimeSeriesToolbar(QToolBar):
             "Appearance",
             "action_ts_appearance",
         )
-        self.export_settings_action = self._createAction(
-            ":/icons/icons/screenshot_settings.svg",
-            "Export settings",
-            "Export settings",
-            "action_ts_export_settings",
+        self.plot_export_button = SplitToolButton(
+            icon=QIcon(":/icons/icons/screenshot.svg"),
+            primary_checkable=False,
+            parent=self,
+            object_name="tool_ts_plot_export",
+            arrow_side=SplitToolButton.Left,
         )
-        self.plot_export_action = self._createAction(
-            ":/icons/icons/screenshot.svg",
-            "Export plot",
-            "Export the current time-series plot",
-            "action_ts_export_plot",
+        self.plot_export_button.setIconSize(self.iconSize())
+        self.plot_export_button.setPrimaryToolTip("Export plot")
+        self.plot_export_button.setPrimaryStatusTip(
+            "Export the current time-series plot"
+        )
+        self.plot_export_button.setPrimaryAccessibleName("Export plot")
+        self.plot_export_button.setPrimaryAccessibleDescription(
+            "Export the current time-series plot using the current export settings."
+        )
+        self.plot_export_button.setSecondaryToolTip("Export settings")
+        self.plot_export_button.setSecondaryAccessibleName("Export settings")
+        self.plot_export_button.setSecondaryAccessibleDescription(
+            "Open plot export settings."
+        )
+        self.plot_export_button.setStatusTip(
+            "Export plot; use the arrow for export settings."
         )
         self.data_export_action = self._createAction(
             ":/icons/icons/export.svg",
@@ -306,21 +264,11 @@ class TimeSeriesToolbar(QToolBar):
 
         self.addAction(self.appearance_action)
         self.addSeparator()
-        self.addAction(self.export_settings_action)
-        self.addAction(self.plot_export_action)
+        self.addWidget(self.plot_export_button)
         self.addAction(self.data_export_action)
 
         for action in (
-            self.fit_enabled_action,
-            self.seasonal_action,
-            self.residual_action,
-            self.replica_enabled_action,
-        ):
-            self._setActionControlRole(action, "toggle")
-        for action in (
             self.appearance_action,
-            self.export_settings_action,
-            self.plot_export_action,
             self.data_export_action,
             self.plot_style_action,
         ):
@@ -328,60 +276,61 @@ class TimeSeriesToolbar(QToolBar):
 
         self.plot_style_action.triggered.connect(self.plotStyleRequested.emit)
         self.appearance_action.triggered.connect(self.appearanceRequested.emit)
-        self.export_settings_action.triggered.connect(self.exportSettingsRequested.emit)
-        self.plot_export_action.triggered.connect(self.plotExportRequested.emit)
+        self.plot_export_button.primaryTriggered.connect(
+            self.plotExportRequested.emit
+        )
+        self.plot_export_button.secondaryTriggered.connect(
+            self.exportSettingsRequested.emit
+        )
         self.data_export_action.triggered.connect(self.dataExportRequested.emit)
-        self.fit_enabled_action.toggled.connect(self.fitEnabledChanged.emit)
-        self.fit_model_group.triggered.connect(self._fitModelActionTriggered)
-        self.seasonal_action.toggled.connect(self.seasonalEnabledChanged.emit)
-        self.residual_action.toggled.connect(self.residualEnabledChanged.emit)
+        self.fit_button.primaryToggled.connect(self.fitEnabledChanged.emit)
+        self.fit_button.secondaryTriggered.connect(self.fitSettingsRequested.emit)
         self.x_axis_group.triggered.connect(self._xAxisActionTriggered)
         self.edit_manual_x_axis_action.triggered.connect(self.manualXAxisEditRequested.emit)
         self.y_axis_group.triggered.connect(self._yAxisActionTriggered)
         self.edit_manual_y_axis_action.triggered.connect(self.manualYAxisEditRequested.emit)
-        self.replica_enabled_action.toggled.connect(self.replicaEnabledChanged.emit)
-        self.replica_interval_group.triggered.connect(self._replicaIntervalActionTriggered)
-        self.replica_pairs_action.triggered.connect(self._configureReplicaPairs)
+        self.replica_button.primaryToggled.connect(self.replicaEnabledChanged.emit)
+        self.replica_button.secondaryTriggered.connect(self.replicaSettingsRequested.emit)
 
     def setFitEnabled(self, enabled):
-        """Update the fit toggle without emitting a user-change signal."""
-        previous = self.fit_enabled_action.blockSignals(True)
-        self.fit_enabled_action.setChecked(bool(enabled))
-        self.fit_enabled_action.blockSignals(previous)
+        """Update the Fit primary state without emitting a user-change signal."""
+        self.fit_button.setChecked(bool(enabled))
+        self._updateFitMetadata()
 
     def setSelectedFitModel(self, model):
-        """Update the selected menu model without emitting a user-change signal."""
-        action = self.fit_model_actions[model]
-        previous = self.fit_model_group.blockSignals(True)
-        action.setChecked(True)
-        self.fit_model_group.blockSignals(previous)
-        self._updateFitModelSelector(action)
-        self._updateFitToggleMetadata()
+        """Update the selected model icon without emitting a user-change signal."""
+        if model not in self._fit_models:
+            raise KeyError(f"Unknown fit model: {model}")
+        self._selected_fit_model = model
+        self.fit_button.setPrimaryIcon(QIcon(self._fit_models[model][1]))
+        self._updateFitMetadata()
 
-    def _fitModelActionTriggered(self, action):
-        """Update selector presentation and emit the selected model identifier."""
-        self._updateFitModelSelector(action)
-        self._updateFitToggleMetadata()
-        self.fitModelChanged.emit(action.data())
+    def selectFitModel(self, model):
+        """Apply a user-selected model immediately, then emit one semantic change."""
+        self.setSelectedFitModel(model)
+        self.fitModelChanged.emit(model)
 
-    def _updateFitModelSelector(self, action):
-        """Render the selected model without inheriting its checked action state."""
-        self.fit_model_button.setIcon(action.icon())
-        self.fit_model_button.setText(action.text())
-        self.fit_model_button.setToolTip(action.text())
-        self.fit_model_button.setStatusTip(action.statusTip())
-        self.fit_model_button.setWhatsThis(action.whatsThis())
+    def setSeasonalEnabled(self, enabled):
+        """Update Seasonal metadata without emitting a user-change signal."""
+        self._seasonal_enabled = bool(enabled)
+        self._updateFitMetadata()
 
-    def _updateFitToggleMetadata(self):
-        """Update Fit metadata for the currently selected model."""
-        selected_action = next(
-            action for action in self.fit_model_actions.values() if action.isChecked()
-        )
-        model_name = selected_action.text()
-        self.fit_enabled_action.setToolTip(f"Toggle fit using {model_name}")
-        self.fit_enabled_action.setStatusTip(f"Fit using {model_name} model")
-        self.fit_enabled_action.setWhatsThis(f"Fit using {model_name} model")
-        self.fit_model_button.setAccessibleName(f"Selected fit model: {model_name}")
+    def setResidualEnabled(self, enabled):
+        """Update Residual metadata without emitting a user-change signal."""
+        self._residual_enabled = bool(enabled)
+        self._updateFitMetadata()
+
+    def _updateFitMetadata(self):
+        """Describe the selected model and current Fit configuration."""
+        label = self._fit_models[self._selected_fit_model][0]
+        detail = label + (" + seasonal" if self._seasonal_enabled else "")
+        if self._residual_enabled:
+            detail += "; residual shown"
+        state = "enabled" if self.fit_button.isChecked() else "disabled"
+        tooltip = f"Fit: {detail} — {state}"
+        self.fit_button.setPrimaryToolTip(tooltip)
+        self.fit_button.setPrimaryStatusTip(tooltip)
+        self.fit_button.setStatusTip(tooltip)
 
     def setSelectedXAxisMode(self, mode, start=None, end=None, custom_view=False):
         """Update the selected X-axis mode without emitting a user-change signal."""
@@ -494,98 +443,23 @@ class TimeSeriesToolbar(QToolBar):
         self.y_axis_button.setWhatsThis(tooltip)
         self.y_axis_button.setAccessibleName(f"Selected Y-axis mode: {action.text()}")
 
-    def setSeasonalEnabled(self, enabled):
-        """Update the seasonal toggle without emitting a user-change signal."""
-        previous = self.seasonal_action.blockSignals(True)
-        self.seasonal_action.setChecked(bool(enabled))
-        self.seasonal_action.blockSignals(previous)
-
-    def setResidualEnabled(self, enabled):
-        """Update the residual toggle without emitting a user-change signal."""
-        previous = self.residual_action.blockSignals(True)
-        self.residual_action.setChecked(bool(enabled))
-        self.residual_action.blockSignals(previous)
-
-    def setReplicaEnabled(self, enabled):
-        """Update the Replica toggle without emitting a user-change signal."""
-        previous = self.replica_enabled_action.blockSignals(True)
-        self.replica_enabled_action.setChecked(bool(enabled))
-        self.replica_enabled_action.blockSignals(previous)
-
-    def setReplicaInterval(self, interval_mm):
-        """Render a preset or custom replica interval without emitting a signal."""
-        interval_mm = float(interval_mm)
-        self._replica_interval_mm = interval_mm
-        matched_action = None
-        for preset_id, action in self.replica_interval_actions.items():
-            if preset_id != "custom" and abs(float(action.data()) - interval_mm) < 0.05:
-                matched_action = action
-                break
-        action = matched_action or self.replica_custom_action
-        previous = self.replica_interval_group.blockSignals(True)
-        action.setChecked(True)
-        self.replica_interval_group.blockSignals(previous)
-        self._updateReplicaIntervalSelector(action, interval_mm)
-
-    def _replicaIntervalActionTriggered(self, action):
-        """Resolve preset/custom selection and emit the numeric interval in mm."""
-        if action is self.replica_custom_action:
-            value, accepted = QInputDialog.getDouble(
-                self,
-                "Custom replica interval",
-                "Half-wavelength interval (mm):",
-                self._replica_interval_mm,
-                0.1,
-                10000.0,
-                1,
-            )
-            if not accepted:
-                self.setReplicaInterval(self._replica_interval_mm)
-                return
-            interval_mm = float(value)
-        else:
-            interval_mm = float(action.data())
-        self.setReplicaInterval(interval_mm)
-        self.replicaIntervalChanged.emit(interval_mm)
-
-    def setReplicaPairCount(self, pair_count):
-        """Update the stored Replica pair count without emitting a signal."""
-        self._replica_pair_count = max(1, min(10, int(pair_count)))
-        self.replica_pairs_action.setToolTip(
-            f"Current Replica pairs: {self._replica_pair_count}"
+    def setReplicaPresentation(self, enabled, interval_mm, pair_count):
+        """Refresh the Replica split button without changing runtime state."""
+        enabled = bool(enabled)
+        toggle_tooltip = "Disable Replica" if enabled else "Enable Replica"
+        description = (
+            f"Replica enabled; interval {float(interval_mm):.1f} mm; "
+            f"{int(pair_count)} pair(s)."
+            if enabled else "Replica disabled."
         )
 
-    def _configureReplicaPairs(self):
-        """Prompt for a symmetric Replica pair count and emit accepted changes."""
-        value, accepted = QInputDialog.getInt(
-            self,
-            "Replica pairs",
-            "Number of symmetric replica pairs:",
-            self._replica_pair_count,
-            1,
-            10,
-            1,
+        self.replica_button.setChecked(enabled)
+        self.replica_button.setPrimaryToolTip(toggle_tooltip)
+        self.replica_button.setPrimaryStatusTip(description)
+        self.replica_button.setPrimaryAccessibleDescription(
+            "Toggle Replica. Use the arrow for settings. " + description
         )
-        if not accepted:
-            return
-        self.setReplicaPairCount(value)
-        self.replicaPairCountChanged.emit(self._replica_pair_count)
-
-    def _updateReplicaIntervalSelector(self, action, interval_mm):
-        """Update Replica interval presentation without a checked tool button."""
-        if action is self.replica_custom_action:
-            label = f"{interval_mm:.1f} mm"
-            description = f"Custom interval — {interval_mm:.1f} mm"
-        else:
-            label = f"{interval_mm:.1f} mm"
-            description = action.text()
-        tooltip = f"Replica interval: {description}"
-        self.replica_interval_button.setIcon(QIcon())
-        self.replica_interval_button.setText(label)
-        self.replica_interval_button.setToolTip(tooltip)
-        self.replica_interval_button.setStatusTip(tooltip)
-        self.replica_interval_button.setWhatsThis(tooltip)
-        self.replica_interval_button.setAccessibleName(tooltip)
+        self.replica_button.setStatusTip(description)
 
     def _setActionControlRole(self, action, role):
         """Assign a semantic role to the tool button generated for an action."""
