@@ -253,17 +253,28 @@ class TimeSeriesToolbar(QToolBar):
             "Appearance",
             "action_ts_appearance",
         )
-        self.export_settings_action = self._createAction(
-            ":/icons/icons/screenshot_settings.svg",
-            "Export settings",
-            "Export settings",
-            "action_ts_export_settings",
+        self.plot_export_button = SplitToolButton(
+            icon=QIcon(":/icons/icons/screenshot.svg"),
+            primary_checkable=False,
+            parent=self,
+            object_name="tool_ts_plot_export",
         )
-        self.plot_export_action = self._createAction(
-            ":/icons/icons/screenshot.svg",
-            "Export plot",
-            "Export the current time-series plot",
-            "action_ts_export_plot",
+        self.plot_export_button.setIconSize(self.iconSize())
+        self.plot_export_button.setPrimaryToolTip("Export plot")
+        self.plot_export_button.setPrimaryStatusTip(
+            "Export the current time-series plot"
+        )
+        self.plot_export_button.setPrimaryAccessibleName("Export plot")
+        self.plot_export_button.setPrimaryAccessibleDescription(
+            "Export the current time-series plot using the current export settings."
+        )
+        self.plot_export_button.setSecondaryToolTip("Export settings")
+        self.plot_export_button.setSecondaryAccessibleName("Export settings")
+        self.plot_export_button.setSecondaryAccessibleDescription(
+            "Open plot export settings."
+        )
+        self.plot_export_button.setStatusTip(
+            "Export plot; use the arrow for export settings."
         )
         self.data_export_action = self._createAction(
             ":/icons/icons/export.svg",
@@ -274,8 +285,8 @@ class TimeSeriesToolbar(QToolBar):
 
         self.addAction(self.appearance_action)
         self.addSeparator()
-        self.addAction(self.export_settings_action)
-        self.addAction(self.plot_export_action)
+        self.addWidget(self.plot_export_button)
+        self.addSeparator()
         self.addAction(self.data_export_action)
 
         for action in (
@@ -286,8 +297,6 @@ class TimeSeriesToolbar(QToolBar):
             self._setActionControlRole(action, "toggle")
         for action in (
             self.appearance_action,
-            self.export_settings_action,
-            self.plot_export_action,
             self.data_export_action,
             self.plot_style_action,
         ):
@@ -295,8 +304,12 @@ class TimeSeriesToolbar(QToolBar):
 
         self.plot_style_action.triggered.connect(self.plotStyleRequested.emit)
         self.appearance_action.triggered.connect(self.appearanceRequested.emit)
-        self.export_settings_action.triggered.connect(self.exportSettingsRequested.emit)
-        self.plot_export_action.triggered.connect(self.plotExportRequested.emit)
+        self.plot_export_button.primaryTriggered.connect(
+            self.plotExportRequested.emit
+        )
+        self.plot_export_button.secondaryTriggered.connect(
+            self.exportSettingsRequested.emit
+        )
         self.data_export_action.triggered.connect(self.dataExportRequested.emit)
         self.fit_enabled_action.toggled.connect(self.fitEnabledChanged.emit)
         self.fit_model_group.triggered.connect(self._fitModelActionTriggered)

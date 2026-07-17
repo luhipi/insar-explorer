@@ -906,8 +906,7 @@ class GuiController(QObject):
         """Open export defaults anchored to the Export Settings action."""
         self.syncExportSettingsPopup()
         toolbar = self.ui.time_series_toolbar
-        action_widget = toolbar.widgetForAction(toolbar.export_settings_action)
-        anchor = action_widget or toolbar
+        anchor = toolbar.plot_export_button.secondary_button
         self.export_settings_popup.adjustSize()
         anchor_top_left = anchor.mapToGlobal(QPoint(0, 0))
         anchor_rect = QRect(anchor_top_left, anchor.size())
