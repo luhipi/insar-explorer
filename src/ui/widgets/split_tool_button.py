@@ -238,6 +238,10 @@ class SplitToolButton(QWidget):
         """Set the secondary action accessible description."""
         self.secondary_button.setAccessibleDescription(text)
 
+    def setPrimaryIcon(self, icon):
+        """Set the primary action icon without exposing the child button."""
+        self.primary_button.setIcon(icon)
+
     def setIconSize(self, size):
         """Set the primary action icon size."""
         self.primary_button.setIconSize(size if isinstance(size, QSize) else QSize(size, size))

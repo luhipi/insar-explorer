@@ -155,7 +155,9 @@ def screen_aware_popup_position(anchor_rect, popup_size, available_geometry):
 def configure_compact_command_button(button, size=24, icon_size=16):
     """Apply the shared compact appearance for momentary command buttons."""
     button.setCheckable(False)
-    button.setFlat(False)
+    set_flat = getattr(button, "setFlat", None)
+    if callable(set_flat):
+        set_flat(False)
     button.setFixedSize(size, size)
     button.setIconSize(QSize(icon_size, icon_size))
     button.setSizePolicy(SIZE_POLICY_FIXED, SIZE_POLICY_FIXED)
