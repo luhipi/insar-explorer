@@ -600,8 +600,12 @@ class GuiController(QObject):
 
     def _handleTimeSeriesFitFailure(self, error, *, seasonal=False):
         """Show a non-modal fitting failure message."""
+        label = {
+            "exp": "Exponential",
+            "log": "Logarithmic",
+        }.get(error.model_id, "Model")
         self.msg_signal.emit(
-            "Exponential fit failed for the current series.", "e", 6000
+            f"{label} fit failed for the current series.", "e", 6000
         )
 
     def _restoreTimeSeriesFitState(self):

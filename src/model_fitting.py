@@ -32,8 +32,14 @@ def modelExponential(x, a, b, c):
     return a + b * np.exp(c * x)
 
 
+def modelLogarithmic(x, a, b, tau):
+    """Evaluate a logarithmic trend with a strictly positive time scale."""
+    return a + b * np.log1p(x / tau)
+
+
 _MODEL_LABELS = {
     "exp": "Exponential",
+    "log": "Logarithmic",
 }
 
 
@@ -132,6 +138,52 @@ def fitExponential(x, y):
     return _fitExponentialPrepared(x_fit, y_fit)
 
 
+
+def _fitLogarithmicPrepared(x_fit, y_fit):
+    """Fit already prepared, normalized logarithmic inputs."""
+    finite_count = len(x_fit)
+    tau0 = 1.0
+    scale = np.log1p(1.0 / tau0)
+    a0 = float(y_fit[0])
+    b0 = float((y_fit[-1] - y_fit[0]) / scale) if scale != 0 else 0.0
+    initial_params = [a0, b0, tau0]
+    bounds = ([-np.inf, -np.inf, 1e-6], [np.inf, np.inf, 1e3])
+    try:
+        with np.errstate(over="raise", invalid="raise", divide="raise"):
+            popt, pcov = curve_fit(
+                modelLogarithmic,
+                x_fit,
+                y_fit,
+                p0=initial_params,
+                bounds=bounds,
+                maxfev=4000,
+            )
+            fitted = modelLogarithmic(x_fit, *popt)
+    except (RuntimeError, ValueError, FloatingPointError) as exc:
+        raise ModelFitError(
+            "log",
+            "Logarithmic fit failed.",
+            finite_observation_count=finite_count,
+        ) from exc
+
+    _validateNonlinearFitResult(
+        model_id="log",
+        parameters=popt,
+        model_values=fitted,
+        finite_observation_count=finite_count,
+    )
+    return popt, pcov
+
+
+def fitLogarithmic(x, y):
+    """Fit the logarithmic model to validated time-series observations."""
+    x_fit, y_fit = _prepareNonlinearFitInputs(
+        x, y, model_id="log", parameter_count=3
+    )
+    x_fit = (x_fit - x_fit.min()) / np.ptp(x_fit)
+    return _fitLogarithmicPrepared(x_fit, y_fit)
+
+
 def normalize(x, ref=None):
     if ref is None:
         return (x - x.min()) / (x.max() - x.min())
@@ -166,28 +218,37 @@ class FittingModels:
         if model is None:
             model = self.model
 
-        if model != "exp" and len(x) != len(y):
+        nonlinear_models = {
+            "exp": (modelExponential, _fitExponentialPrepared),
+            "log": (modelLogarithmic, _fitLogarithmicPrepared),
+        }
+        if model not in nonlinear_models and len(x) != len(y):
             raise ValueError("Fitting inputs must have matching lengths.")
-        fit_models_dict = {"poly-1": modelPoly1, "poly-2": modelPoly2,
-                           "poly-3": modelPoly3, "exp": modelExponential}
+        fit_models_dict = {
+            "poly-1": modelPoly1,
+            "poly-2": modelPoly2,
+            "poly-3": modelPoly3,
+            "exp": modelExponential,
+            "log": modelLogarithmic,
+        }
         fit_model = fit_models_dict[model]
-        if fit_model == modelExponential:
+        if model in nonlinear_models:
             x_fit, y_fit = _prepareNonlinearFitInputs(
-                x, y, model_id="exp", parameter_count=3
+                x, y, model_id=model, parameter_count=3
             )
             x_min = x_fit.min()
             x_span = x_fit.max() - x_min
             x_fit_norm = (x_fit - x_min) / x_span
-            popt, pcov = _fitExponentialPrepared(x_fit_norm, y_fit)
+            fit_model, prepared_fitter = nonlinear_models[model]
+            popt, pcov = prepared_fitter(x_fit_norm, y_fit)
             x_norm = (x - x_min) / x_span
-            fit_model = modelExponential
         else:
             x_norm = normalize(x, ref=x[mask])
             popt, pcov = curve_fit(fit_model, x_norm[mask], y[mask])
 
         model_x_linspace = np.linspace(min(x), max(x), 100)
         model_x = ordinalTodates(model_x_linspace)
-        if fit_model == modelExponential:
+        if model in nonlinear_models:
             model_x_linspace_norm = (model_x_linspace - x_min) / x_span
         else:
             model_x_linspace_norm = normalize(model_x_linspace, ref=x[mask])

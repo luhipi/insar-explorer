@@ -28,6 +28,7 @@ FIT_MODELS = (
     ("poly-2", "Quadratic", ":/icons/icons/fit_poly2.svg", "choice_ts_fit_poly_2"),
     ("poly-3", "Cubic", ":/icons/icons/fit_poly3.svg", "choice_ts_fit_poly_3"),
     ("exp", "Exponential", ":/icons/icons/fit_exponential.svg", "choice_ts_fit_exp"),
+    ("log", "Logarithmic", ":/icons/icons/fit_log.svg", "choice_ts_fit_log"),
 )
 
 
@@ -113,7 +114,7 @@ class FitPopup(QWidget):
         self.seasonal_checkbox.setAccessibleDescription(
             "Add a seasonal component to the selected fitting model."
         )
-        models_layout.addWidget(self.seasonal_checkbox, 2, 0, 1, 2)
+        models_layout.addWidget(self.seasonal_checkbox, 3, 0, 1, 2)
         layout.addWidget(models)
 
         options = QGroupBox("Options", tab)
