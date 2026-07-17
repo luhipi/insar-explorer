@@ -1,6 +1,6 @@
 """Toolbar actions for the time-series plot panel."""
 
-from qgis.PyQt.QtCore import QSize, Qt, pyqtSignal
+from qgis.PyQt.QtCore import QSize, pyqtSignal
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import (
     QInputDialog,
@@ -17,7 +17,11 @@ from ...qt_compat import (
     SIZE_POLICY_PREFERRED,
     TOOL_BUTTON_INSTANT_POPUP,
 )
-from ..styles import apply_command_toolbar_style, set_toolbar_control_role
+from ..styles import (
+    apply_command_toolbar_style,
+    set_toolbar_control_role,
+)
+from ..widgets import SplitToolButton
 
 
 class TimeSeriesToolbar(QToolBar):
@@ -35,7 +39,8 @@ class TimeSeriesToolbar(QToolBar):
     manualXAxisEditRequested = pyqtSignal()
     yAxisModeChanged = pyqtSignal(str)
     manualYAxisEditRequested = pyqtSignal()
-    replicaRequested = pyqtSignal()
+    replicaEnabledChanged = pyqtSignal(bool)
+    replicaSettingsRequested = pyqtSignal()
     plotStyleRequested = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -207,13 +212,23 @@ class TimeSeriesToolbar(QToolBar):
         self.addWidget(self.y_axis_button)
 
         self.addSeparator()
-        self.replica_action = self._createAction(
-            ":/icons/icons/replica.svg",
-            "Replica",
-            "Replica disabled",
-            "action_ts_replica",
+        self.replica_button = SplitToolButton(
+            icon=QIcon(":/icons/icons/replica.svg"),
+            primary_checkable=True,
+            parent=self,
+            object_name="tool_ts_replica",
         )
-        self.addAction(self.replica_action)
+        self.replica_button.setIconSize(self.iconSize())
+        self.replica_button.setPrimaryAccessibleName("Replica")
+        self.replica_button.setPrimaryAccessibleDescription(
+            "Toggle Replica. Use the arrow for settings."
+        )
+        self.replica_button.setSecondaryToolTip("Replica settings")
+        self.replica_button.setSecondaryAccessibleName("Replica settings")
+        self.replica_button.setSecondaryAccessibleDescription(
+            "Open Replica settings."
+        )
+        self.addWidget(self.replica_button)
 
         self.addSeparator()
         self.plot_style_action = self._createAction(
@@ -275,7 +290,6 @@ class TimeSeriesToolbar(QToolBar):
             self.plot_export_action,
             self.data_export_action,
             self.plot_style_action,
-            self.replica_action,
         ):
             self._setActionControlRole(action, "command")
 
@@ -292,7 +306,8 @@ class TimeSeriesToolbar(QToolBar):
         self.edit_manual_x_axis_action.triggered.connect(self.manualXAxisEditRequested.emit)
         self.y_axis_group.triggered.connect(self._yAxisActionTriggered)
         self.edit_manual_y_axis_action.triggered.connect(self.manualYAxisEditRequested.emit)
-        self.replica_action.triggered.connect(self.replicaRequested.emit)
+        self.replica_button.primaryToggled.connect(self.replicaEnabledChanged.emit)
+        self.replica_button.secondaryTriggered.connect(self.replicaSettingsRequested.emit)
 
     def setFitEnabled(self, enabled):
         """Update the fit toggle without emitting a user-change signal."""
@@ -458,29 +473,22 @@ class TimeSeriesToolbar(QToolBar):
         self.residual_action.blockSignals(previous)
 
     def setReplicaPresentation(self, enabled, interval_mm, pair_count):
-        """Refresh the single Replica action without changing runtime state."""
+        """Refresh the Replica split button without changing runtime state."""
         enabled = bool(enabled)
-        if enabled:
-            tooltip = (
-                "Replica enabled\n"
-                f"Interval: {float(interval_mm):.1f} mm\n"
-                f"Pairs: {int(pair_count)}"
-            )
-        else:
-            tooltip = "Replica disabled"
+        toggle_tooltip = "Disable Replica" if enabled else "Enable Replica"
+        description = (
+            f"Replica enabled; interval {float(interval_mm):.1f} mm; "
+            f"{int(pair_count)} pair(s)."
+            if enabled else "Replica disabled."
+        )
 
-        self.replica_action.setToolTip(tooltip)
-        self.replica_action.setStatusTip(tooltip)
-
-        button = self.widgetForAction(self.replica_action)
-        if button is not None:
-            button.setProperty("active", enabled)
-            button.setToolTip(tooltip)
-            button.setStatusTip(tooltip)
-            button.setAccessibleDescription(tooltip)
-            button.style().unpolish(button)
-            button.style().polish(button)
-            button.update()
+        self.replica_button.setChecked(enabled)
+        self.replica_button.setPrimaryToolTip(toggle_tooltip)
+        self.replica_button.setPrimaryStatusTip(description)
+        self.replica_button.setPrimaryAccessibleDescription(
+            "Toggle Replica. Use the arrow for settings. " + description
+        )
+        self.replica_button.setStatusTip(description)
 
     def _setActionControlRole(self, action, role):
         """Assign a semantic role to the tool button generated for an action."""

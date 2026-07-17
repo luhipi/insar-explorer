@@ -408,7 +408,10 @@ class GuiController(QObject):
         self.manual_y_axis_popup.applyRequested.connect(self.applyManualYAxisRange)
         self.manual_y_axis_popup.cancelRequested.connect(self.cancelManualYAxisRange)
         self.manual_y_axis_popup.currentViewRequested.connect(self.captureCurrentManualYAxisView)
-        self.ui.time_series_toolbar.replicaRequested.connect(self.showReplicaPopup)
+        self.ui.time_series_toolbar.replicaEnabledChanged.connect(
+            self.setTimeSeriesReplicaEnabled
+        )
+        self.ui.time_series_toolbar.replicaSettingsRequested.connect(self.showReplicaPopup)
         self.ui.time_series_toolbar.plotStyleRequested.connect(self.showTimeSeriesStylePopup)
         popup = self.time_series_style_popup
         popup.markerTypeChanged.connect(lambda value: self._applySelectedSeriesStyle("marker_type", value))
@@ -1334,7 +1337,7 @@ class GuiController(QObject):
         self.syncReplicaPopup()
         self.replica_popup.adjustSize()
         toolbar = self.ui.time_series_toolbar
-        anchor = toolbar.widgetForAction(toolbar.replica_action)
+        anchor = toolbar.replica_button
 
         if anchor is not None:
             local_rect = anchor.rect()
@@ -1366,12 +1369,12 @@ class GuiController(QObject):
         self.replica_popup.raise_()
 
     def updateReplicaCoreSettings(
-        self, enabled, interval_mm, pair_count, color_1, color_2, opacity, marker, marker_size
+        self, interval_mm, pair_count, color_1, color_2, opacity, marker, marker_size
     ):
         """Apply the complete consolidated Replica runtime state once."""
         previous = self.time_series_settings.replica
         replica = type(previous)(
-            enabled=enabled, interval_mm=interval_mm, pair_count=pair_count,
+            enabled=previous.enabled, interval_mm=interval_mm, pair_count=pair_count,
             color_1=color_1, color_2=color_2, opacity=opacity,
             marker=marker, marker_size=marker_size,
         )
@@ -1405,7 +1408,7 @@ class GuiController(QObject):
         defaults = self.choose_point_click_handler.plot_ts.settings_persistence.load_replica_defaults()
         reset_value = replace(defaults, enabled=current.enabled)
         self.updateReplicaCoreSettings(
-            reset_value.enabled, reset_value.interval_mm, reset_value.pair_count,
+            reset_value.interval_mm, reset_value.pair_count,
             reset_value.color_1, reset_value.color_2, reset_value.opacity,
             reset_value.marker, reset_value.marker_size,
         )

@@ -19,14 +19,6 @@ QToolButton[controlRole="command"]:hover:enabled {
     border: 2px solid palette(mid);
     border-radius: 3px;
 }
-QToolButton[controlRole="command"][active="true"] {
-    background-color: palette(alternate-base);
-    border: 2px solid palette(highlight);
-    border-radius: 3px;
-}
-QToolButton[controlRole="command"][active="true"]:hover:enabled {
-    border-color: palette(highlight);
-}
 QToolButton[controlRole="selector"] {
     margin: 0;
     padding: 1px 1px;

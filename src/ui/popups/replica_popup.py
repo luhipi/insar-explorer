@@ -2,7 +2,7 @@
 
 from qgis.PyQt.QtCore import pyqtSignal
 from qgis.PyQt.QtWidgets import (
-    QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, QGridLayout, QGroupBox,
+    QComboBox, QDoubleSpinBox, QFormLayout, QGridLayout, QGroupBox,
     QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget,
 )
 
@@ -19,7 +19,7 @@ from .time_series_style_popup import CompactColorButton
 class ReplicaPopup(QWidget):
     """Edit all global Replica settings without Apply or Cancel controls."""
 
-    settingsChanged = pyqtSignal(bool, float, int, str, str, float, str, float)
+    settingsChanged = pyqtSignal(float, int, str, str, float, str, float)
     resetRequested = pyqtSignal()
     CUSTOM_PRESET_ID = "custom"
 
@@ -29,10 +29,6 @@ class ReplicaPopup(QWidget):
         self.setObjectName("replicaPopup")
         self.setWindowTitle("Replica")
         layout = QVBoxLayout(self)
-        self.enabled_check = QCheckBox("Enable replica", self)
-        layout.addWidget(self.enabled_check)
-        layout.addSpacing(3)
-
         settings_group = QGroupBox("Settings", self)
         settings_form = QFormLayout(settings_group)
         self.preset_combo = QComboBox(self)
@@ -106,7 +102,6 @@ class ReplicaPopup(QWidget):
         QWidget.setTabOrder(self.color_2_button, self.opacity_spin)
         QWidget.setTabOrder(self.opacity_spin, self.marker_combo)
         QWidget.setTabOrder(self.marker_combo, self.marker_size_spin)
-        self.enabled_check.toggled.connect(self._emitSettings)
         self.preset_combo.currentIndexChanged.connect(self._presetChanged)
         self.interval_spin.valueChanged.connect(self._intervalChanged)
         self.pair_count_spin.valueChanged.connect(self._emitSettings)
@@ -147,8 +142,8 @@ class ReplicaPopup(QWidget):
     def _emitSettings(self, *_args):
         """Emit normalized UI values, converting percent opacity at the boundary."""
         self.settingsChanged.emit(
-            self.enabled_check.isChecked(), self.interval_spin.value(),
-            self.pair_count_spin.value(), self.color_1_button.color(),
+            self.interval_spin.value(), self.pair_count_spin.value(),
+            self.color_1_button.color(),
             self.color_2_button.color(), self.opacity_spin.value() / 100.0,
             self.marker_combo.currentData(), self.marker_size_spin.value(),
         )
@@ -156,13 +151,12 @@ class ReplicaPopup(QWidget):
     def setSettings(self, settings):
         """Refresh controls from runtime state without emitting writes."""
         controls = (
-            self.enabled_check, self.preset_combo, self.interval_spin,
+            self.preset_combo, self.interval_spin,
             self.pair_count_spin, self.color_1_button, self.color_2_button,
             self.opacity_spin, self.marker_combo, self.marker_size_spin,
         )
         previous = [control.blockSignals(True) for control in controls]
         try:
-            self.enabled_check.setChecked(settings.enabled)
             self.interval_spin.setValue(settings.interval_mm)
             preset_id = replica_preset_id_for_interval(settings.interval_mm) or self.CUSTOM_PRESET_ID
             self.preset_combo.setCurrentIndex(max(0, self.preset_combo.findData(preset_id)))

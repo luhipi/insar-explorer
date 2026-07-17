@@ -5,7 +5,7 @@ of branching on Qt binding versions or using enum aliases directly.
 """
 
 try:
-    from qgis.PyQt.QtCore import QPoint, QRect, QSize, Qt
+    from qgis.PyQt.QtCore import QEvent, QPoint, QRect, QSize, Qt
     try:
         from qgis.PyQt.QtGui import QAction, QActionGroup, QGuiApplication
     except ImportError:
@@ -13,7 +13,7 @@ try:
         from qgis.PyQt.QtGui import QGuiApplication
     from qgis.PyQt.QtWidgets import QApplication, QColorDialog, QFrame, QMessageBox, QSizePolicy, QToolButton
 except ImportError:
-    from PySide6.QtCore import QPoint, QRect, QSize, Qt
+    from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt
     from PySide6.QtGui import QAction, QActionGroup, QGuiApplication
     from PySide6.QtWidgets import QApplication, QColorDialog, QFrame, QMessageBox, QSizePolicy, QToolButton
 
@@ -32,6 +32,10 @@ def _enum_value(owner, enum_name, value_name, legacy_name=None):
     return getattr(owner, legacy_name or value_name)
 
 
+# QEvent enums
+EVENT_ENTER = _enum_value(QEvent, "Type", "Enter")
+EVENT_LEAVE = _enum_value(QEvent, "Type", "Leave")
+
 # QtCore.Qt enums
 BOTTOM_DOCK_WIDGET_AREA = _enum_value(Qt, "DockWidgetArea", "BottomDockWidgetArea")
 ALIGN_RIGHT = _enum_value(Qt, "AlignmentFlag", "AlignRight")
@@ -42,6 +46,7 @@ RED = _enum_value(Qt, "GlobalColor", "red")
 WAIT_CURSOR = _enum_value(Qt, "CursorShape", "WaitCursor")
 LEFT_MOUSE_BUTTON = _enum_value(Qt, "MouseButton", "LeftButton")
 RIGHT_MOUSE_BUTTON = _enum_value(Qt, "MouseButton", "RightButton")
+DOWN_ARROW = _enum_value(Qt, "ArrowType", "DownArrow")
 ITEM_IS_EDITABLE = _enum_value(Qt, "ItemFlag", "ItemIsEditable")
 DASH_LINE = _enum_value(Qt, "PenStyle", "DashLine")
 DOT_LINE = _enum_value(Qt, "PenStyle", "DotLine")
@@ -70,6 +75,11 @@ TOOL_BUTTON_INSTANT_POPUP = _enum_value(
     QToolButton,
     "ToolButtonPopupMode",
     "InstantPopup",
+)
+TOOL_BUTTON_MENU_BUTTON_POPUP = _enum_value(
+    QToolButton,
+    "ToolButtonPopupMode",
+    "MenuButtonPopup",
 )
 
 # QMessageBox enums
