@@ -217,6 +217,7 @@ class TimeSeriesToolbar(QToolBar):
             primary_checkable=True,
             parent=self,
             object_name="tool_ts_replica",
+            arrow_side=SplitToolButton.Right,
         )
         self.replica_button.setIconSize(self.iconSize())
         self.replica_button.setPrimaryAccessibleName("Replica")
@@ -258,6 +259,7 @@ class TimeSeriesToolbar(QToolBar):
             primary_checkable=False,
             parent=self,
             object_name="tool_ts_plot_export",
+            arrow_side=SplitToolButton.Left,
         )
         self.plot_export_button.setIconSize(self.iconSize())
         self.plot_export_button.setPrimaryToolTip("Export plot")

@@ -15,13 +15,13 @@ QToolButton[splitPart="secondary"] {
     margin: 0;
     padding: 0;
 }
-QToolButton[splitPart="primary"] {
+QToolButton[splitPosition="left"] {
     border-top-left-radius: 3px;
     border-bottom-left-radius: 3px;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
 }
-QToolButton[splitPart="secondary"] {
+QToolButton[splitPosition="right"] {
     border-left-color: palette(midlight);
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
@@ -34,14 +34,14 @@ QToolButton[splitPart="secondary"][splitHover="true"] {
     border-top-color: palette(mid);
     border-bottom-color: palette(mid);
 }
-QToolButton[splitPart="primary"][splitHover="true"] {
+QToolButton[splitPosition="left"][splitHover="true"] {
     border-left-color: palette(mid);
 }
-QToolButton[splitPart="secondary"][splitHover="true"] {
+QToolButton[splitPosition="right"][splitHover="true"] {
     border-left-color: palette(mid);
     border-right-color: palette(mid);
 }
-QToolButton[splitPart="secondary"][splitChecked="true"] {
+QToolButton[splitPosition="right"][splitChecked="true"] {
     border-left-color: palette(highlighted-text);
 }
 QToolButton[splitPart="primary"]:checked,
@@ -60,6 +60,9 @@ class SplitToolButton(QWidget):
     primaryToggled = pyqtSignal(bool)
     secondaryTriggered = pyqtSignal()
 
+    Left = "left"
+    Right = "right"
+
     PRIMARY_WIDTH = 28
     SECONDARY_WIDTH = 15
     TOTAL_WIDTH = PRIMARY_WIDTH + SECONDARY_WIDTH
@@ -71,9 +74,16 @@ class SplitToolButton(QWidget):
         primary_checkable=False,
         parent=None,
         object_name="split_tool_button",
+        arrow_side=Right,
     ):
         """Build a compact joined control with independent action regions."""
+        if arrow_side not in (self.Left, self.Right):
+            raise ValueError(
+                "arrow_side must be SplitToolButton.Left or SplitToolButton.Right"
+            )
+
         super().__init__(parent)
+        self.arrow_side = arrow_side
         self.setObjectName(object_name)
         self.setFixedSize(self.TOTAL_WIDTH, self.HEIGHT)
 
@@ -107,10 +117,20 @@ class SplitToolButton(QWidget):
             button.setProperty("splitHover", False)
             button.installEventFilter(self)
 
+        if self.arrow_side == self.Left:
+            left_button = self.secondary_button
+            right_button = self.primary_button
+        else:
+            left_button = self.primary_button
+            right_button = self.secondary_button
+
+        left_button.setProperty("splitPosition", "left")
+        right_button.setProperty("splitPosition", "right")
+
         self.setStyleSheet(SPLIT_TOOL_BUTTON_STYLESHEET)
-        layout.addWidget(self.primary_button)
-        layout.addWidget(self.secondary_button)
-        QWidget.setTabOrder(self.primary_button, self.secondary_button)
+        layout.addWidget(left_button)
+        layout.addWidget(right_button)
+        QWidget.setTabOrder(left_button, right_button)
 
         self.primary_button.clicked.connect(self.primaryTriggered.emit)
         self.primary_button.toggled.connect(self._onPrimaryToggled)
