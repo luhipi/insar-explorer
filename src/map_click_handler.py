@@ -317,7 +317,7 @@ class TSClickHandler(MapClickHandler):
 
             dates = date_values[:, 0]
             self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values,
-                                coords=coords, ref_coords=ref_coords)
+                                coords=coords, ref_coords=ref_coords, report_statistics=True)
 
     def choosePointClickedRaster(self, *, point: QgsPointXY, layer: QgsMapLayer = None, ref=False):
         status, message = grd_layer_utils.checkGrdTimeseries(layer)
@@ -352,11 +352,11 @@ class TSClickHandler(MapClickHandler):
 
         dates = date_values[:, 0]
         self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values,
-                            coords=coords, ref_coords=ref_coords)
+                            coords=coords, ref_coords=ref_coords, report_statistics=True)
 
     def resetReferencePoint(self):
         self.clearReferenceFeatureHighlight()
-        self.plot_ts.plotTs(ref_values=0)
+        self.plot_ts.plotTs(ref_values=0, report_statistics=True)
 
 
 class PolygonClickHandler(MapClickHandler):
@@ -458,7 +458,7 @@ class PolygonClickHandler(MapClickHandler):
                     self.map_reference_clicked_value = np.mean(clicked_values)
 
             self.plot_ts.plotTs(dates=dates, ts_values=ts_values, ref_values=ref_values, coords=coords,
-                                ref_coords=ref_coords, plot_multiple=True)
+                                ref_coords=ref_coords, plot_multiple=True, report_statistics=True)
 
 
 class ClickHandler(TSClickHandler, PolygonClickHandler):

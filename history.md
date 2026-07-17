@@ -1,6 +1,7 @@
 ### History
 
 v2.6.0dev
+- Report r2 and rmse in status bar.
 - Update exponential model icon.
 - Add logarithm model fitting.
 - Fix exponential fit: remove fallback to linear and report failure. 

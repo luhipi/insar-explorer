@@ -1,6 +1,57 @@
+from dataclasses import dataclass
+from typing import Optional
+
 import numpy as np
 from scipy.optimize import curve_fit
 from datetime import datetime
+
+
+@dataclass(frozen=True)
+class FitStatistics:
+    """Numerical quality metrics for one successful fit calculation."""
+
+    observation_count: int
+    r_squared: Optional[float]
+    rmse: float
+
+
+def calculateFitStatistics(y_observed, y_fitted):
+    """Return R-squared and RMSE for matching finite observation values."""
+    observed = np.asarray(y_observed, dtype=np.float64)
+    fitted = np.asarray(y_fitted, dtype=np.float64)
+
+    if observed.ndim != 1 or fitted.ndim != 1:
+        raise ValueError("Fit statistics require one-dimensional inputs.")
+    if observed.shape != fitted.shape:
+        raise ValueError("Fit statistics require matching input shapes.")
+    if observed.size == 0:
+        raise ValueError("Fit statistics require at least one observation.")
+
+    finite_mask = np.isfinite(observed) & np.isfinite(fitted)
+    if not np.all(finite_mask):
+        raise ValueError("Fit statistics require finite observed and fitted values.")
+
+    residuals = observed - fitted
+    squared_residuals = np.square(residuals)
+    rmse = float(np.sqrt(np.mean(squared_residuals)))
+    if not np.isfinite(rmse):
+        raise ValueError("Fit statistics produced a non-finite RMSE.")
+
+    rss = float(np.sum(squared_residuals))
+    centered = observed - np.mean(observed)
+    tss = float(np.sum(np.square(centered)))
+    if np.isclose(tss, 0.0):
+        r_squared = None
+    else:
+        r_squared = float(1.0 - rss / tss)
+        if not np.isfinite(r_squared):
+            raise ValueError("Fit statistics produced a non-finite R-squared value.")
+
+    return FitStatistics(
+        observation_count=int(observed.size),
+        r_squared=r_squared,
+        rmse=rmse,
+    )
 
 
 class ModelFitError(RuntimeError):

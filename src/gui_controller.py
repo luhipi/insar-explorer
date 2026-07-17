@@ -123,6 +123,7 @@ class GuiController(QObject):
         plotter.auto_view_requested_callback = self._handlePlotAutoRequest
         plotter.axis_state_sync_callback = self._syncAxisToolbarControls
         plotter.fit_failure_callback = self._handleTimeSeriesFitFailure
+        plotter.fit_success_callback = self._handleTimeSeriesFitSuccess
         self.click_tool = None  # plugin.click_tool
         self.drawing_tool = None  # for polygon drawing
         self.drawing_tool_reference = None  # for reference polygon drawing
@@ -598,6 +599,36 @@ class GuiController(QObject):
                 flipped_pixmap = pixmap.transformed(transform)
                 combo_box.setItemIcon(index, QIcon(flipped_pixmap))
 
+    @staticmethod
+    def _formatFitRmse(value):
+        """Format RMSE without rounding a small non-zero value to zero."""
+        value = float(value)
+        if value == 0.0:
+            return "0.00"
+        if abs(value) >= 0.01:
+            return f"{value:.2f}"
+        return f"{value:.2g}"
+
+    def _handleTimeSeriesFitSuccess(self, model_id, statistics, *, seasonal=False):
+        """Report transient quality metrics for one fresh successful fit."""
+        label = {
+            "poly-1": "Linear",
+            "poly-2": "Quadratic",
+            "poly-3": "Cubic",
+            "exp": "Exponential",
+            "log": "Logarithmic",
+        }.get(model_id, "Model")
+        r_squared = (
+            "n/a" if statistics.r_squared is None else f"{statistics.r_squared:.3f}"
+        )
+        seasonal_suffix = " + seasonal" if seasonal else ""
+        message = (
+            f"R² {r_squared} · "
+            f"RMSE {self._formatFitRmse(statistics.rmse)} mm — "
+            f"{label}{seasonal_suffix} fit"
+        )
+        self.msg_signal.emit(message, "i", 6000)
+
     def _handleTimeSeriesFitFailure(self, error, *, seasonal=False):
         """Show a non-modal fitting failure message."""
         label = {
@@ -641,7 +672,7 @@ class GuiController(QObject):
         self._syncTimeSeriesFitControls()
         if refresh:
             with plotter.axisViewUpdateGuard():
-                plotter.plotTs(update=True)
+                plotter.plotTs(update=True, report_statistics=True)
         if hasattr(self, "time_series_style_popup"):
             self._refreshTimeSeriesStylePopup()
 
@@ -649,11 +680,7 @@ class GuiController(QObject):
         """Enable or disable the currently selected model in one operation."""
         self.time_series_fit_state.setFitEnabled(enabled)
         self._applyTimeSeriesFitState()
-        if enabled:
-            self.msg_signal.emit(
-                f"Fit model selected: {self.time_series_fit_state.selected_fit_model}", "i", 0
-            )
-        else:
+        if not enabled:
             self.msg_signal.emit("No fit model selected.", "i", 0)
 
     def setTimeSeriesFitModel(self, model):
@@ -665,15 +692,14 @@ class GuiController(QObject):
         """Set seasonal fitting and activate fitting when seasonal is enabled."""
         self.time_series_fit_state.setSeasonalEnabled(enabled)
         self._applyTimeSeriesFitState()
-        self.msg_signal.emit(
-            "Seasonal fit enabled using the selected model."
-            if enabled else "Seasonal fit disabled.", "i", 0
-        )
 
     def setTimeSeriesResidualEnabled(self, enabled):
-        """Set residual visibility and activate fitting when residuals are enabled."""
+        """Set residual visibility without reporting unchanged fit statistics."""
         self.time_series_fit_state.setResidualEnabled(enabled)
-        self._applyTimeSeriesFitState()
+        self._applyTimeSeriesFitState(refresh=False)
+        plotter = self.choose_point_click_handler.plot_ts
+        with plotter.axisViewUpdateGuard():
+            plotter.plotTs(update=True, report_statistics=False)
         self.msg_signal.emit(
             "Residual plot enabled using the selected fit model."
             if enabled else "Residual plot disabled.", "i", 0
