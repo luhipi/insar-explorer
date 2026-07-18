@@ -21,6 +21,7 @@ from ...time_series.style_schema import (
     RESIDUAL_MARKER_OPTIONS, RESIDUAL_MARKER_SIZE_RANGE, alpha_to_percent,
 )
 from .time_series_style_popup import CompactColorButton
+from .defaults_menu import createDefaultsMenu
 
 
 FIT_MODELS = (
@@ -50,9 +51,13 @@ class FitPopup(QWidget):
     residualLineColorChanged = pyqtSignal(str)
     residualLineWidthChanged = pyqtSignal(float)
     residualLineOpacityChanged = pyqtSignal(int)
-    setCurrentFitStyleAsDefaultRequested = pyqtSignal()
+    applySavedFitDefaultRequested = pyqtSignal()
+    saveCurrentFitAsDefaultRequested = pyqtSignal()
+    applyFactoryFitDefaultRequested = pyqtSignal()
     randomizeResidualColorRequested = pyqtSignal()
-    setCurrentResidualStyleAsDefaultRequested = pyqtSignal()
+    applySavedResidualDefaultRequested = pyqtSignal()
+    saveCurrentResidualAsDefaultRequested = pyqtSignal()
+    applyFactoryResidualDefaultRequested = pyqtSignal()
 
     def __init__(self, parent=None):
         """Create the three focused tabs without mutating runtime state."""
@@ -70,6 +75,8 @@ class FitPopup(QWidget):
         self._createSettingsTab()
         self._createFitStyleTab()
         self._createResidualStyleTab()
+        self.setFitStyleAvailable(False)
+        self.setResidualStyleAvailable(False)
         self.setMaximumWidth(430)
 
     def _createSettingsTab(self):
@@ -147,6 +154,7 @@ class FitPopup(QWidget):
         """Build the compact fitted-model style editor."""
         tab = QWidget(self.tabs)
         tab.setObjectName("tab_ts_fit_fit_style")
+        self.fit_style_tab = tab
         layout = QVBoxLayout(tab)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(6)
@@ -172,19 +180,17 @@ class FitPopup(QWidget):
         form.addRow("Opacity", self.fit_line_opacity)
         layout.addWidget(self.fit_group, 0)
 
-        self.fit_default_button = QPushButton("Set as default", tab)
-        self.fit_default_button.setToolTip(
-            "Set the current fit style as the default."
+        action_layout = QHBoxLayout()
+        action_layout.setContentsMargins(0, 0, 0, 0)
+        self.fit_default_button = createDefaultsMenu(
+            tab, self.applySavedFitDefaultRequested.emit,
+            self.saveCurrentFitAsDefaultRequested.emit,
+            self.applyFactoryFitDefaultRequested.emit,
+            "button_fit_defaults",
         )
-        self.fit_default_button.setAccessibleName("Set fit style as default")
-        self.fit_default_button.setAccessibleDescription(
-            "Set the current fit style as the default."
-        )
-        actions = QHBoxLayout()
-        actions.setContentsMargins(0, 0, 0, 0)
-        actions.addStretch(1)
-        actions.addWidget(self.fit_default_button)
-        layout.addLayout(actions)
+        action_layout.addStretch(1)
+        action_layout.addWidget(self.fit_default_button)
+        layout.addLayout(action_layout)
         layout.addStretch(1)
 
         self.fit_line_type.currentTextChanged.connect(
@@ -200,9 +206,6 @@ class FitPopup(QWidget):
             else self.fitOpacityChanged.emit(int(value))
         )
         self.fit_line_color.colorChanged.connect(self.fitLineColorChanged.emit)
-        self.fit_default_button.clicked.connect(
-            self.setCurrentFitStyleAsDefaultRequested.emit
-        )
         self._setCompactEditorWidths(
             self.fit_line_type, self.fit_line_width, self.fit_line_opacity
         )
@@ -212,6 +215,7 @@ class FitPopup(QWidget):
         """Build side-by-side compact residual marker and line editors."""
         tab = QWidget(self.tabs)
         tab.setObjectName("tab_ts_fit_residual_style")
+        self.residual_style_tab = tab
         layout = QVBoxLayout(tab)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(6)
@@ -282,15 +286,11 @@ class FitPopup(QWidget):
         self.residual_randomize_button.setAccessibleDescription(
             "Assign new colors to the residual series."
         )
-        self.residual_default_button = QPushButton("Set as default", tab)
-        self.residual_default_button.setToolTip(
-            "Set the current residual style as the default."
-        )
-        self.residual_default_button.setAccessibleName(
-            "Set residual style as default"
-        )
-        self.residual_default_button.setAccessibleDescription(
-            "Set the current residual style as the default."
+        self.residual_default_button = createDefaultsMenu(
+            tab, self.applySavedResidualDefaultRequested.emit,
+            self.saveCurrentResidualAsDefaultRequested.emit,
+            self.applyFactoryResidualDefaultRequested.emit,
+            "button_residual_defaults",
         )
         actions.addWidget(self.residual_randomize_button)
         actions.addStretch(1)
@@ -331,15 +331,21 @@ class FitPopup(QWidget):
         self.residual_randomize_button.clicked.connect(
             self.randomizeResidualColorRequested.emit
         )
-        self.residual_default_button.clicked.connect(
-            self.setCurrentResidualStyleAsDefaultRequested.emit
-        )
         self._setCompactEditorWidths(
             self.residual_marker_type, self.residual_marker_size,
             self.residual_marker_opacity, self.residual_line_type,
             self.residual_line_width, self.residual_line_opacity,
         )
         self.tabs.addTab(tab, "Residual style")
+
+
+    def setFitStyleAvailable(self, available):
+        """Enable Fit appearance editing when a selected snapshot exists."""
+        self.fit_style_tab.setEnabled(bool(available))
+
+    def setResidualStyleAvailable(self, available):
+        """Enable Residual appearance editing when a selected snapshot exists."""
+        self.residual_style_tab.setEnabled(bool(available))
 
     @staticmethod
     def _setCompactEditorWidths(*editors):

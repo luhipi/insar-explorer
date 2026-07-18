@@ -2,8 +2,8 @@
 
 from qgis.PyQt.QtCore import pyqtSignal
 from qgis.PyQt.QtWidgets import (
-    QComboBox, QDoubleSpinBox, QFormLayout, QGridLayout, QGroupBox,
-    QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget,
+    QComboBox, QDoubleSpinBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout,
+    QLabel, QSpinBox, QVBoxLayout, QWidget,
 )
 
 from ...qt_compat import POPUP_WINDOW_FLAG
@@ -14,13 +14,16 @@ from ...time_series.replica_schema import (
 )
 from ...time_series.style_schema import MARKER_OPTIONS
 from .time_series_style_popup import CompactColorButton
+from .defaults_menu import createDefaultsMenu
 
 
 class ReplicaPopup(QWidget):
     """Edit all global Replica settings without Apply or Cancel controls."""
 
     settingsChanged = pyqtSignal(float, int, str, str, float, str, float)
-    resetRequested = pyqtSignal()
+    applySavedDefaultRequested = pyqtSignal()
+    saveCurrentAsDefaultRequested = pyqtSignal()
+    applyFactoryDefaultRequested = pyqtSignal()
     CUSTOM_PRESET_ID = "custom"
 
     def __init__(self, parent=None):
@@ -96,8 +99,16 @@ class ReplicaPopup(QWidget):
         appearance_form.addRow("Marker size", self.marker_size_spin)
         layout.addWidget(appearance_group)
 
-        self.reset_button = QPushButton("Reset settings", self)
-        layout.addWidget(self.reset_button)
+        actions = QHBoxLayout()
+        actions.addStretch(1)
+        self.defaults_button = createDefaultsMenu(
+            self, self.applySavedDefaultRequested.emit,
+            self.saveCurrentAsDefaultRequested.emit,
+            self.applyFactoryDefaultRequested.emit,
+            "button_replica_defaults",
+        )
+        actions.addWidget(self.defaults_button)
+        layout.addLayout(actions)
         QWidget.setTabOrder(self.color_1_button, self.color_2_button)
         QWidget.setTabOrder(self.color_2_button, self.opacity_spin)
         QWidget.setTabOrder(self.opacity_spin, self.marker_combo)
@@ -110,7 +121,6 @@ class ReplicaPopup(QWidget):
         self.opacity_spin.valueChanged.connect(self._emitSettings)
         self.marker_combo.currentIndexChanged.connect(self._emitSettings)
         self.marker_size_spin.valueChanged.connect(self._emitSettings)
-        self.reset_button.clicked.connect(self.resetRequested.emit)
 
     def _setPresetForInterval(self, interval_mm):
         """Synchronize the preset view from the authoritative numeric interval."""

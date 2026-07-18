@@ -6,12 +6,16 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit, QPushButton, QVBoxLayout, QWidget,
 )
 
+from .defaults_menu import createDefaultsMenu
+
 
 class ExportSettingsPopup(QWidget):
     """Edit persistent export defaults with immediate commit semantics."""
 
     settingsChanged = pyqtSignal(str, float, str)
-    resetRequested = pyqtSignal()
+    applySavedDefaultRequested = pyqtSignal()
+    saveCurrentAsDefaultRequested = pyqtSignal()
+    applyFactoryDefaultRequested = pyqtSignal()
 
     DPI_OPTIONS = ("72", "150", "300", "600", "1200")
 
@@ -56,16 +60,19 @@ class ExportSettingsPopup(QWidget):
         layout.addLayout(form)
 
         actions = QHBoxLayout()
-        self.reset_button = QPushButton("Reset defaults", self)
-        self.reset_button.setObjectName("button_export_reset_defaults")
-        actions.addWidget(self.reset_button)
         actions.addStretch(1)
+        self.defaults_button = createDefaultsMenu(
+            self, self.applySavedDefaultRequested.emit,
+            self.saveCurrentAsDefaultRequested.emit,
+            self.applyFactoryDefaultRequested.emit,
+            "button_export_defaults",
+        )
+        actions.addWidget(self.defaults_button)
         layout.addLayout(actions)
 
         self.resolution_combo.currentIndexChanged.connect(self._emitSettings)
         self.aspect_ratio_spin.valueChanged.connect(self._emitSettings)
         self.credit_edit.textChanged.connect(self._emitSettings)
-        self.reset_button.clicked.connect(self.resetRequested.emit)
 
     def settings(self):
         """Return the normalized values currently displayed by the popup."""

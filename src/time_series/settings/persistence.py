@@ -177,8 +177,8 @@ class TimeSeriesSettingsPersistence:
         self.style_config.save_default_ensemble_style(settings)
 
     def load_replica_defaults(self):
-        """Return canonical Replica defaults independent of persisted values."""
-        return ReplicaSettings()
+        """Return the currently persisted Replica defaults."""
+        return self.load().replica
 
     def save_replica_defaults(self, settings):
         """Persist Replica defaults while retaining session activation/interval."""

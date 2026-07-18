@@ -20,11 +20,23 @@ class TimeSeriesStyleAvailability:
 
     @property
     def fit_available(self):
+        """Return whether a rendered Fit layer is available for rerendering."""
         return self.fit_target_count > 0
 
     @property
     def residual_available(self):
+        """Return whether a rendered Residual layer is available for rerendering."""
         return self.residual_target_count > 0
+
+    @property
+    def fit_style_available(self):
+        """Return whether Fit appearance has a selected snapshot to edit."""
+        return self.selected_count > 0
+
+    @property
+    def residual_style_available(self):
+        """Return whether Residual appearance has a selected snapshot to edit."""
+        return self.selected_count > 0
 
     @property
     def ensemble_available(self):

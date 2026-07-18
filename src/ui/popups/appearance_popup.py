@@ -3,11 +3,12 @@
 from qgis.PyQt.QtCore import pyqtSignal
 from qgis.PyQt.QtWidgets import (
     QComboBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QWidget,
+    QLineEdit, QSpinBox, QVBoxLayout, QWidget,
 )
 
 from ...qt_compat import POPUP_WINDOW_FLAG, SIZE_POLICY_FIXED
 from .time_series_style_popup import CompactColorButton
+from .defaults_menu import createDefaultsMenu
 
 
 class AppearancePopup(QWidget):
@@ -16,7 +17,9 @@ class AppearancePopup(QWidget):
     settingsChanged = pyqtSignal(
         str, str, str, str, str, str, str, int, str, str, str
     )
-    resetRequested = pyqtSignal()
+    applySavedDefaultRequested = pyqtSignal()
+    saveCurrentAsDefaultRequested = pyqtSignal()
+    applyFactoryDefaultRequested = pyqtSignal()
 
     GRID_MODES = (
         ("Both", "both"),
@@ -98,9 +101,14 @@ class AppearancePopup(QWidget):
         layout.addWidget(colors)
 
         actions = QHBoxLayout()
-        self.reset_button = QPushButton("Reset defaults", self)
-        actions.addWidget(self.reset_button)
         actions.addStretch(1)
+        self.defaults_button = createDefaultsMenu(
+            self, self.applySavedDefaultRequested.emit,
+            self.saveCurrentAsDefaultRequested.emit,
+            self.applyFactoryDefaultRequested.emit,
+            "button_appearance_defaults",
+        )
+        actions.addWidget(self.defaults_button)
         layout.addLayout(actions)
 
         for editor in self._textEditors():
@@ -110,7 +118,6 @@ class AppearancePopup(QWidget):
         self.grid_mode_combo.currentIndexChanged.connect(self._emitSettings)
         self.plot_background_button.colorChanged.connect(self._emitSettings)
         self.canvas_background_button.colorChanged.connect(self._emitSettings)
-        self.reset_button.clicked.connect(self.resetRequested.emit)
 
     def _compactLineEdit(self):
         """Return a width-bounded single-line editor suitable for two columns."""

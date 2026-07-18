@@ -42,6 +42,10 @@
     <file>icons/fit_exponential.svg</file>
     <file>icons/fit_log.svg</file>
     <file>icons/fit__add_seasonal.svg</file>
+    <file>icons/bookmark.svg</file>
+    <file>icons/bookmark_star.svg</file>
+    <file>icons/bookmark_set.svg</file>
+    <file>icons/bookmark_reset.svg</file>
     <file>icons/replica.svg</file>
     <file>icons/data_range.svg</file>
     <file>icons/export.svg</file>

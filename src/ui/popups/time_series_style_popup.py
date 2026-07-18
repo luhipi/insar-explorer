@@ -26,6 +26,7 @@ from ...time_series.style_schema import (
     OPACITY_PERCENT_MIN, OPACITY_PERCENT_MAX, OPACITY_PERCENT_STEP,
     alpha_to_percent,
 )
+from .defaults_menu import createDefaultsMenu
 from ...qt_compat import (
     POPUP_WINDOW_FLAG,
     SIZE_POLICY_FIXED,
@@ -103,13 +104,17 @@ class TimeSeriesStylePopup(QWidget):
     lineWidthChanged = pyqtSignal(float)
     lineOpacityChanged = pyqtSignal(int)
     randomizeColorRequested = pyqtSignal()
-    setCurrentStyleAsDefaultRequested = pyqtSignal()
+    applySavedSeriesDefaultRequested = pyqtSignal()
+    saveCurrentSeriesAsDefaultRequested = pyqtSignal()
+    applyFactorySeriesDefaultRequested = pyqtSignal()
     ensembleMemberColorChanged = pyqtSignal(str)
     ensembleMemberWidthChanged = pyqtSignal(float)
     ensembleMemberOpacityChanged = pyqtSignal(int)
     ensembleFillColorChanged = pyqtSignal(str)
     ensembleFillOpacityChanged = pyqtSignal(int)
-    ensembleSetAsDefaultRequested = pyqtSignal()
+    applySavedEnsembleDefaultRequested = pyqtSignal()
+    saveCurrentEnsembleAsDefaultRequested = pyqtSignal()
+    applyFactoryEnsembleDefaultRequested = pyqtSignal()
 
     def __init__(self, parent=None):
         """Create compact tabbed style controls without applying changes."""
@@ -180,14 +185,16 @@ class TimeSeriesStylePopup(QWidget):
         self.randomize_button.setIcon(QIcon(":/icons/icons/plot_random_color.svg"))
         configure_compact_command_button(self.randomize_button)
         self.randomize_button.setToolTip("Randomize marker and line color")
-        self.default_button = QPushButton("Set as default", tab)
-        self.default_button.setToolTip(
-            "Use the current series style as the default for newly created time series."
-        )
         actions_layout = QHBoxLayout()
         actions_layout.setContentsMargins(0, 0, 0, 0)
         actions_layout.addWidget(self.randomize_button)
         actions_layout.addStretch(1)
+        self.default_button = createDefaultsMenu(
+            tab, self.applySavedSeriesDefaultRequested.emit,
+            self.saveCurrentSeriesAsDefaultRequested.emit,
+            self.applyFactorySeriesDefaultRequested.emit,
+            "button_series_defaults",
+        )
         actions_layout.addWidget(self.default_button)
         layout.addLayout(actions_layout)
 
@@ -200,7 +207,6 @@ class TimeSeriesStylePopup(QWidget):
         self.marker_color.colorChanged.connect(self.markerColorChanged.emit)
         self.line_color.colorChanged.connect(self.lineColorChanged.emit)
         self.randomize_button.clicked.connect(self.randomizeColorRequested.emit)
-        self.default_button.clicked.connect(self.setCurrentStyleAsDefaultRequested.emit)
         for editor in (self.marker_type, self.marker_size, self.marker_opacity, self.line_type, self.line_width, self.line_opacity):
             editor.setMaximumWidth(110)
         self.marker_group.setSizePolicy(SIZE_POLICY_MAXIMUM, SIZE_POLICY_PREFERRED)
@@ -245,10 +251,14 @@ class TimeSeriesStylePopup(QWidget):
         groups.addWidget(self.ensemble_spread_group)
         layout.addLayout(groups)
 
-        self.ensemble_default_button = QPushButton("Set as default", tab)
-        self.ensemble_default_button.setToolTip("Use the current ensemble style as the default for future ensemble plots.")
         actions = QHBoxLayout()
         actions.addStretch(1)
+        self.ensemble_default_button = createDefaultsMenu(
+            tab, self.applySavedEnsembleDefaultRequested.emit,
+            self.saveCurrentEnsembleAsDefaultRequested.emit,
+            self.applyFactoryEnsembleDefaultRequested.emit,
+            "button_ensemble_defaults",
+        )
         actions.addWidget(self.ensemble_default_button)
         layout.addLayout(actions)
         layout.addStretch(1)
@@ -258,7 +268,6 @@ class TimeSeriesStylePopup(QWidget):
         self.ensemble_member_opacity.valueChanged.connect(lambda v: None if self._loading else self.ensembleMemberOpacityChanged.emit(int(v)))
         self.ensemble_fill_color.colorChanged.connect(self.ensembleFillColorChanged.emit)
         self.ensemble_fill_opacity.valueChanged.connect(lambda v: None if self._loading else self.ensembleFillOpacityChanged.emit(int(v)))
-        self.ensemble_default_button.clicked.connect(self.ensembleSetAsDefaultRequested.emit)
         for editor in (self.ensemble_member_width, self.ensemble_member_opacity, self.ensemble_fill_opacity):
             editor.setMaximumWidth(90)
         self.tabs.addTab(tab, "Ensemble")
