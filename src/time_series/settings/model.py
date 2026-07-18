@@ -274,6 +274,8 @@ class TimeSeriesSettingsModel:
     series_defaults: SeriesStyleSettings = field(default_factory=SeriesStyleSettings)
     fit_defaults: FitStyleSettings = field(default_factory=FitStyleSettings)
     residual_defaults: ResidualStyleSettings = field(default_factory=ResidualStyleSettings)
+    fit_current: FitStyleSettings = field(default_factory=FitStyleSettings)
+    residual_current: ResidualStyleSettings = field(default_factory=ResidualStyleSettings)
     ensemble_defaults: EnsembleStyleSettings = field(default_factory=EnsembleStyleSettings)
     replica: ReplicaSettings = field(default_factory=ReplicaSettings)
     y_axis: YAxisSettings = field(default_factory=YAxisSettings)
@@ -354,5 +356,6 @@ class TimeSeriesSettingsModel:
     def copy(self):
         """Return a defensive model copy without sharing listeners."""
         return TimeSeriesSettingsModel(**{name: deepcopy(getattr(self, name)) for name in (
-            "series_defaults", "fit_defaults", "residual_defaults", "ensemble_defaults",
-            "replica", "y_axis", "x_axis", "appearance", "export")})
+            "series_defaults", "fit_defaults", "residual_defaults", "fit_current",
+            "residual_current", "ensemble_defaults", "replica", "y_axis", "x_axis",
+            "appearance", "export")})

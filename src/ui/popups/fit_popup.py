@@ -158,8 +158,13 @@ class FitPopup(QWidget):
         layout = QVBoxLayout(tab)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(6)
+        self.fit_style_content = QWidget(tab)
+        content_layout = QVBoxLayout(self.fit_style_content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(6)
+        layout.addWidget(self.fit_style_content)
 
-        self.fit_group = QGroupBox("Fit line", tab)
+        self.fit_group = QGroupBox("Fit line", self.fit_style_content)
         self.fit_group.setSizePolicy(SIZE_POLICY_MAXIMUM, SIZE_POLICY_PREFERRED)
         form = QFormLayout(self.fit_group)
         form.setContentsMargins(8, 6, 8, 6)
@@ -178,20 +183,20 @@ class FitPopup(QWidget):
         form.addRow("Width", self.fit_line_width)
         form.addRow("Color", self.fit_line_color)
         form.addRow("Opacity", self.fit_line_opacity)
-        layout.addWidget(self.fit_group, 0)
+        content_layout.addWidget(self.fit_group, 0)
 
         action_layout = QHBoxLayout()
         action_layout.setContentsMargins(0, 0, 0, 0)
         self.fit_default_button = createDefaultsMenu(
-            tab, self.applySavedFitDefaultRequested.emit,
+            self.fit_style_content, self.applySavedFitDefaultRequested.emit,
             self.saveCurrentFitAsDefaultRequested.emit,
             self.applyFactoryFitDefaultRequested.emit,
             "button_fit_defaults",
         )
         action_layout.addStretch(1)
         action_layout.addWidget(self.fit_default_button)
-        layout.addLayout(action_layout)
-        layout.addStretch(1)
+        content_layout.addLayout(action_layout)
+        content_layout.addStretch(1)
 
         self.fit_line_type.currentTextChanged.connect(
             lambda value: None if self._loading
@@ -219,12 +224,17 @@ class FitPopup(QWidget):
         layout = QVBoxLayout(tab)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(6)
+        self.residual_style_content = QWidget(tab)
+        content_layout = QVBoxLayout(self.residual_style_content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(6)
+        layout.addWidget(self.residual_style_content)
 
         groups = QHBoxLayout()
         groups.setContentsMargins(0, 0, 0, 0)
         groups.setSpacing(8)
 
-        self.residual_marker_group = QGroupBox("Marker", tab)
+        self.residual_marker_group = QGroupBox("Marker", self.residual_style_content)
         self.residual_marker_group.setSizePolicy(
             SIZE_POLICY_MAXIMUM, SIZE_POLICY_PREFERRED
         )
@@ -246,7 +256,7 @@ class FitPopup(QWidget):
         marker_form.addRow("Color", self.residual_marker_color)
         marker_form.addRow("Opacity", self.residual_marker_opacity)
 
-        self.residual_line_group = QGroupBox("Line", tab)
+        self.residual_line_group = QGroupBox("Line", self.residual_style_content)
         self.residual_line_group.setSizePolicy(
             SIZE_POLICY_MAXIMUM, SIZE_POLICY_PREFERRED
         )
@@ -270,11 +280,11 @@ class FitPopup(QWidget):
         groups.addWidget(self.residual_marker_group)
         groups.addWidget(self.residual_line_group)
         groups.addStretch(1)
-        layout.addLayout(groups)
+        content_layout.addLayout(groups)
 
         actions = QHBoxLayout()
         actions.setContentsMargins(0, 0, 0, 0)
-        self.residual_randomize_button = QToolButton(tab)
+        self.residual_randomize_button = QToolButton(self.residual_style_content)
         self.residual_randomize_button.setIcon(
             QIcon(":/icons/icons/plot_random_color.svg")
         )
@@ -287,7 +297,7 @@ class FitPopup(QWidget):
             "Assign new colors to the residual series."
         )
         self.residual_default_button = createDefaultsMenu(
-            tab, self.applySavedResidualDefaultRequested.emit,
+            self.residual_style_content, self.applySavedResidualDefaultRequested.emit,
             self.saveCurrentResidualAsDefaultRequested.emit,
             self.applyFactoryResidualDefaultRequested.emit,
             "button_residual_defaults",
@@ -295,8 +305,8 @@ class FitPopup(QWidget):
         actions.addWidget(self.residual_randomize_button)
         actions.addStretch(1)
         actions.addWidget(self.residual_default_button)
-        layout.addLayout(actions)
-        layout.addStretch(1)
+        content_layout.addLayout(actions)
+        content_layout.addStretch(1)
 
         self.residual_marker_type.currentTextChanged.connect(
             lambda value: None if self._loading
@@ -340,12 +350,12 @@ class FitPopup(QWidget):
 
 
     def setFitStyleAvailable(self, available):
-        """Enable Fit appearance editing when a selected snapshot exists."""
-        self.fit_style_tab.setEnabled(bool(available))
+        """Toggle Fit appearance contents while keeping its tab selectable."""
+        self.fit_style_content.setEnabled(bool(available))
 
     def setResidualStyleAvailable(self, available):
-        """Enable Residual appearance editing when a selected snapshot exists."""
-        self.residual_style_tab.setEnabled(bool(available))
+        """Toggle Residual appearance contents while keeping its tab selectable."""
+        self.residual_style_content.setEnabled(bool(available))
 
     @staticmethod
     def _setCompactEditorWidths(*editors):

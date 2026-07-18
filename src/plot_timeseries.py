@@ -275,7 +275,8 @@ class PlotTs():
         """Refresh compatibility views once for domains represented by legacy objects."""
         compatibility_domains = {
             "series_defaults", "fit_defaults", "residual_defaults",
-            "ensemble_defaults", "replica", "appearance", "export",
+            "fit_current", "residual_current", "ensemble_defaults",
+            "replica", "appearance", "export",
         }
         if change_set.domains & compatibility_domains:
             self.refreshCompatibilityViews()
@@ -726,7 +727,7 @@ class PlotTs():
 
     def _normalizedResidualStyle(self, style: TimeSeriesStyle):
         """Return snapshot-owned residual appearance with runtime-default fallbacks."""
-        values = self.settings_model.residual_defaults.asParams()
+        values = self.settings_model.residual_current.asParams()
         snapshot_params = style.params if isinstance(style.params, dict) else {}
         snapshot_residual = snapshot_params.get("residual plot", {})
         if isinstance(snapshot_residual, dict):

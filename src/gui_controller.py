@@ -675,7 +675,12 @@ class GuiController(QObject):
         toolbar.setSeasonalEnabled(state.seasonal_enabled)
         toolbar.setResidualEnabled(state.residual_enabled)
         if hasattr(self, "fit_popup"):
-            self.fit_popup.setSettings(state.selected_fit_model, state.seasonal_enabled, state.residual_enabled)
+            self.fit_popup.setSettings(
+                state.selected_fit_model,
+                state.seasonal_enabled,
+                state.residual_enabled,
+            )
+            self._refreshFitPopupAvailability()
 
     def _applyTimeSeriesFitState(self, refresh=True):
         """Apply fit state to the plotter and both temporary UI surfaces."""
@@ -720,6 +725,32 @@ class GuiController(QObject):
             if enabled else "Residual plot disabled.", "i", 0
         )
 
+    def _fitStyleAvailable(self):
+        """Return Fit Style editability from Fit activation alone."""
+        return bool(self.time_series_fit_state.fit_enabled)
+
+    def _residualStyleAvailable(self):
+        """Return Residual Style editability from Fit and residual feature state."""
+        state = self.time_series_fit_state
+        return bool(state.fit_enabled and state.residual_enabled)
+
+    def _refreshFitStyleAvailability(self):
+        """Synchronize Fit Style contents without rendering or emitting edits."""
+        if hasattr(self, "fit_popup"):
+            self.fit_popup.setFitStyleAvailable(self._fitStyleAvailable())
+
+    def _refreshResidualStyleAvailability(self):
+        """Synchronize Residual Style contents without rendering or emitting edits."""
+        if hasattr(self, "fit_popup"):
+            self.fit_popup.setResidualStyleAvailable(
+                self._residualStyleAvailable()
+            )
+
+    def _refreshFitPopupAvailability(self):
+        """Synchronize both Fit popup style domains from feature state."""
+        self._refreshFitStyleAvailability()
+        self._refreshResidualStyleAvailability()
+
     def selectedTimeSeriesSnapshots(self):
         """Return all explicit style-edit targets for current and future selection UIs."""
         return self.choose_point_click_handler.plot_ts.selectedTimeSeriesSnapshots()
@@ -750,18 +781,42 @@ class GuiController(QObject):
         changed = self.time_series_style_controller.applyProperty(snapshots, property_name, value)
         self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
 
+    def _currentFitStyle(self):
+        """Return the authoritative runtime Fit appearance."""
+        return self.time_series_settings.fit_current
+
+    def _currentResidualStyle(self):
+        """Return the authoritative runtime Residual appearance."""
+        return self.time_series_settings.residual_current
+
+    def _updateCurrentFitStyle(self, property_name, value):
+        """Update one authoritative Fit property without touching saved defaults."""
+        values = self._currentFitStyle().asParams()
+        values[self.fit_style_controller.STYLE_KEYS[property_name]] = value
+        style = FitStyleSettings.fromParams({"model fit": values})
+        self.time_series_settings.replace_domain("fit_current", style)
+        return style
+
+    def _updateCurrentResidualStyle(self, property_name, value):
+        """Update one authoritative Residual property without touching saved defaults."""
+        values = self._currentResidualStyle().asParams()
+        values[self.residual_style_controller.STYLE_KEYS[property_name]] = value
+        style = ResidualStyleSettings.fromParams({"residual plot": values})
+        self.time_series_settings.replace_domain("residual_current", style)
+        return style
+
     def _applySelectedFitStyle(self, property_name, value):
-        """Apply one Fit style property and redraw only when Fit is visible."""
+        """Store one Fit property and rerender selected renderable targets once."""
+        self._updateCurrentFitStyle(property_name, value)
         snapshots = self._selectedTimeSeriesSnapshots()
-        if not snapshots:
-            return
-        changed = self.fit_style_controller.applyProperty(
-            snapshots, property_name, value
-        )
-        if self.timeSeriesStyleAvailability(snapshots).fit_available:
-            self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(
-                changed
+        if snapshots:
+            changed = self.fit_style_controller.applyProperty(
+                snapshots, property_name, value
             )
+            if self.timeSeriesStyleAvailability(snapshots).fit_available:
+                self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(
+                    changed
+                )
         self._refreshTimeSeriesStylePopup()
 
 
@@ -778,26 +833,34 @@ class GuiController(QObject):
         self._refreshTimeSeriesStylePopup()
 
     def _applySelectedResidualStyle(self, property_name, value):
-        """Apply one residual-series property and redraw exactly once."""
+        """Store one Residual property and rerender selected visible targets once."""
+        self._updateCurrentResidualStyle(property_name, value)
         snapshots = self._selectedTimeSeriesSnapshots()
-        if not snapshots:
-            return
-        changed = self.residual_style_controller.applyProperty(
-            snapshots, property_name, value
-        )
-        # only mutate/render live residual artists when that layer is available.
-        if self.timeSeriesStyleAvailability(snapshots).residual_available:
-            self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+        if snapshots:
+            changed = self.residual_style_controller.applyProperty(
+                snapshots, property_name, value
+            )
+            if self.timeSeriesStyleAvailability(snapshots).residual_available:
+                self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
         self._refreshTimeSeriesStylePopup()
 
     def randomizeSelectedResidualColor(self):
-        """Randomize selected residual colors only."""
+        """Store one random residual color and apply it to selected targets."""
+        from random import randint
+        color = "#{:02x}{:02x}{:02x}".format(
+            randint(0, 255), randint(0, 255), randint(0, 255)
+        )
+        values = self._currentResidualStyle().asParams()
+        values.update({"marker color": color, "line color": color})
+        current = ResidualStyleSettings.fromParams({"residual plot": values})
+        self.time_series_settings.replace_domain("residual_current", current)
         snapshots = self._selectedTimeSeriesSnapshots()
-        if not snapshots:
-            return
-        changed = self.residual_style_controller.randomizeColor(snapshots)
-        if self.timeSeriesStyleAvailability(snapshots).residual_available:
-            self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+        if snapshots:
+            changed = self.residual_style_controller.applyValues(
+                snapshots, current.asParams()
+            )
+            if self.timeSeriesStyleAvailability(snapshots).residual_available:
+                self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
         self._refreshTimeSeriesStylePopup()
 
 
@@ -837,34 +900,30 @@ class GuiController(QObject):
         self._settings_ensemble_style_before = plotter.style_config.load_ensemble_style_values()
         self.msg_signal.emit("Current ensemble style saved as default.", "done", 3000)
 
-    def restoreResidualStyleDefaults(self):
-        """Apply the persisted residual defaults to the selected series."""
+    def _applyCurrentResidualStyle(self, style):
+        """Replace current Residual style and update selected render targets."""
+        self.time_series_settings.replace_domain("residual_current", style)
         snapshots = self._selectedTimeSeriesSnapshots()
-        if not snapshots:
-            return
-        defaults = self.choose_point_click_handler.plot_ts.settings_persistence.load().residual_defaults
-        changed = self.residual_style_controller.applyValues(
-            snapshots, defaults.asParams()
-        )
-        if self.timeSeriesStyleAvailability(snapshots).residual_available:
-            self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+        if snapshots:
+            changed = self.residual_style_controller.applyValues(
+                snapshots, style.asParams()
+            )
+            if self.timeSeriesStyleAvailability(snapshots).residual_available:
+                self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
         self._refreshTimeSeriesStylePopup()
+
+    def restoreResidualStyleDefaults(self):
+        """Apply saved Residual defaults to current and selected styles."""
+        defaults = self.choose_point_click_handler.plot_ts.settings_persistence.load().residual_defaults
+        self._applyCurrentResidualStyle(defaults)
 
     def applyFactoryResidualStyleDefaults(self):
         """Apply canonical Residual style without changing saved defaults."""
-        snapshots = self._selectedTimeSeriesSnapshots()
-        if snapshots:
-            changed = self.residual_style_controller.applyValues(snapshots, ResidualStyleSettings().asParams())
-            if self.timeSeriesStyleAvailability(snapshots).residual_available:
-                self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
-            self._refreshTimeSeriesStylePopup()
+        self._applyCurrentResidualStyle(ResidualStyleSettings())
 
     def setCurrentResidualStyleAsDefault(self):
-        """Persist selected residual appearance for future series only."""
-        snapshots = self._selectedTimeSeriesSnapshots()
-        if not snapshots:
-            return
-        residual_style = self.residual_style_controller.residualStyle(snapshots[0])
+        """Persist the authoritative current Residual appearance."""
+        residual_style = self._currentResidualStyle()
         plotter = self.choose_point_click_handler.plot_ts
         plotter.settings_model.replace_domain("residual_defaults", residual_style)
         plotter.settings_persistence.save_residual_defaults(residual_style)
@@ -913,34 +972,30 @@ class GuiController(QObject):
         self._settings_style_before = plotter.style_config.load_style_values()
         self.msg_signal.emit("Current plot style set as default for new time series.", "done", 3000)
 
-    def restoreFitStyleDefaults(self):
-        """Apply the persisted fit-line defaults to selected series."""
+    def _applyCurrentFitStyle(self, style):
+        """Replace current Fit style and update selected render targets."""
+        self.time_series_settings.replace_domain("fit_current", style)
         snapshots = self._selectedTimeSeriesSnapshots()
-        if not snapshots:
-            return
-        defaults = self.choose_point_click_handler.plot_ts.settings_persistence.load().fit_defaults
-        changed = self.fit_style_controller.applyValues(
-            snapshots, defaults.asParams()
-        )
-        if self.timeSeriesStyleAvailability(snapshots).fit_available:
-            self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
+        if snapshots:
+            changed = self.fit_style_controller.applyValues(
+                snapshots, style.asParams()
+            )
+            if self.timeSeriesStyleAvailability(snapshots).fit_available:
+                self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
         self._refreshTimeSeriesStylePopup()
+
+    def restoreFitStyleDefaults(self):
+        """Apply saved Fit defaults to current and selected styles."""
+        defaults = self.choose_point_click_handler.plot_ts.settings_persistence.load().fit_defaults
+        self._applyCurrentFitStyle(defaults)
 
     def applyFactoryFitStyleDefaults(self):
         """Apply canonical Fit style without changing saved defaults."""
-        snapshots = self._selectedTimeSeriesSnapshots()
-        if snapshots:
-            changed = self.fit_style_controller.applyValues(snapshots, FitStyleSettings().asParams())
-            if self.timeSeriesStyleAvailability(snapshots).fit_available:
-                self.choose_point_click_handler.plot_ts.rerenderTimeSeriesSnapshots(changed)
-            self._refreshTimeSeriesStylePopup()
+        self._applyCurrentFitStyle(FitStyleSettings())
 
     def setCurrentFitStyleAsDefault(self):
-        """Persist current fit-line appearance for future series only."""
-        snapshots = self._selectedTimeSeriesSnapshots()
-        if not snapshots:
-            return
-        fit_style = self.fit_style_controller.fitStyle(snapshots[0])
+        """Persist the authoritative current Fit appearance."""
+        fit_style = self._currentFitStyle()
         plotter = self.choose_point_click_handler.plot_ts
         plotter.settings_model.replace_domain("fit_defaults", fit_style)
         plotter.settings_persistence.save_fit_defaults(fit_style)
@@ -948,12 +1003,11 @@ class GuiController(QObject):
         self.msg_signal.emit("Current fit style saved as default.", "done", 3000)
 
     def _refreshFitStyleTab(self):
-        """Refresh only Fit controls from the current selected snapshot."""
+        """Refresh Fit controls from selection or authoritative current style."""
         snapshots = self.selectedTimeSeriesSnapshots()
-        if snapshots:
-            self.fit_popup.setFitStyle(
-                self.fit_style_controller.fitStyle(snapshots[0])
-            )
+        style = (self.fit_style_controller.fitStyle(snapshots[0])
+                 if snapshots else self._currentFitStyle())
+        self.fit_popup.setFitStyle(style)
 
     def _refreshTimeSeriesStylePopup(self):
         """Refresh popup controls from actual selected snapshot styles without edits."""
@@ -961,10 +1015,7 @@ class GuiController(QObject):
         popup = self.time_series_style_popup
         availability = self.timeSeriesStyleAvailability(snapshots)
         popup.setLayerAvailability(availability)
-        self.fit_popup.setFitStyleAvailable(availability.fit_style_available)
-        self.fit_popup.setResidualStyleAvailable(
-            availability.residual_style_available
-        )
+        self._refreshFitPopupAvailability()
         if snapshots:
             styles = self.time_series_style_controller.selectedSeriesStyles(snapshots)
             popup.setStyle(styles[0])
@@ -981,6 +1032,8 @@ class GuiController(QObject):
                 self.time_series_style_controller.mixedProperties(snapshots)
             )
         else:
+            self.fit_popup.setFitStyle(self._currentFitStyle())
+            self.fit_popup.setResidualStyle(self._currentResidualStyle())
             popup.setMixedProperties(set())
 
 
