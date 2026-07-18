@@ -1528,10 +1528,30 @@ class GuiController(QObject):
         return self.choose_point_click_handler.plot_ts.settings_model.replica.pair_count
 
 
+    def _applicableReplicaTargets(self):
+        """Return current plotted targets eligible for Replica rerendering."""
+        selected = self._selectedTimeSeriesSnapshots()
+        if not selected:
+            return []
+        plot = self.choose_point_click_handler.plot_ts
+        return list(getattr(plot, "series_history", ()) or ())
+
+    def _replicaStyleAvailable(self):
+        """Return Replica Style availability from feature activation alone."""
+        return bool(self.time_series_settings.replica.enabled)
+
+    def _refreshReplicaPopupAvailability(self):
+        """Synchronize Replica Style availability from feature activation."""
+        if hasattr(self, "replica_popup"):
+            self.replica_popup.setReplicaStyleAvailable(
+                self._replicaStyleAvailable()
+            )
+
     def syncReplicaPopup(self):
-        """Refresh the Replica popup from authoritative runtime settings."""
+        """Refresh Replica values and Style availability from runtime state."""
         if hasattr(self, "replica_popup"):
             self.replica_popup.setSettings(self.time_series_settings.replica)
+            self._refreshReplicaPopupAvailability()
 
     def showReplicaPopup(self):
         """Open the Replica popup without changing activation state."""
@@ -1569,6 +1589,26 @@ class GuiController(QObject):
         self.replica_popup.show()
         self.replica_popup.raise_()
 
+    def _applyReplicaSettingsSnapshot(self, settings, *, rerender):
+        """Synchronize one complete Replica snapshot before an optional redraw."""
+        applied = settings
+        self.time_series_settings.replace_domain("replica", applied)
+        self.time_series_replica_enabled = applied.enabled
+        self.time_series_replica_interval_mm = applied.interval_mm
+        self.time_series_replica_pair_count = applied.pair_count
+
+        plot = self.choose_point_click_handler.plot_ts
+        plot.replicate_flag = applied.enabled
+        plot.replicate_value = applied.interval_mm
+        plot.refreshCompatibilityViews()
+        self.settings.setValue("insar_explorer/replica_enabled", applied.enabled)
+
+        # synchronize controls only after every rendering-facing value is authoritative.
+        self._syncTimeSeriesReplicaControls()
+        if rerender and self._applicableReplicaTargets():
+            self._refreshReplicaGraphicsAndYAxis()
+        return applied
+
     def updateReplicaCoreSettings(
         self, interval_mm, pair_count, color_1, color_2, opacity, marker, marker_size
     ):
@@ -1579,55 +1619,38 @@ class GuiController(QObject):
             color_1=color_1, color_2=color_2, opacity=opacity,
             marker=marker, marker_size=marker_size,
         )
-        extent_changed = (
-            previous.enabled != replica.enabled
-            or previous.interval_mm != replica.interval_mm
-            or previous.pair_count != replica.pair_count
-        )
-        self.time_series_settings.replace_domain("replica", replica)
-        self.time_series_replica_enabled = replica.enabled
-        self.time_series_replica_interval_mm = replica.interval_mm
-        self.time_series_replica_pair_count = replica.pair_count
-        plot = self.choose_point_click_handler.plot_ts
-        self.settings.setValue("insar_explorer/replica_enabled", replica.enabled)
-        plot.replicate_flag = replica.enabled
-        plot.replicate_value = replica.interval_mm
-        plot.refreshCompatibilityViews()
-        self._syncTimeSeriesReplicaControls()
-        if plot.ax is not None and plot.series_history:
-            plot.rerenderTimeSeriesSnapshots(list(plot.series_history), draw=False)
-            if extent_changed and self._shouldReapplyAutomaticYAxisAfterReplicaChange():
-                with plot.axisViewUpdateGuard():
-                    plot.setYlims(ax=plot.ax, parms=plot.parms["time series plot"])
-            plot._draw()
+        self._applyReplicaSettingsSnapshot(replica, rerender=True)
+
+    def _applyReplicaDefaults(self, settings):
+        """Apply one Replica default snapshot through the real rendering path."""
+        current = self.time_series_settings.replica
+        applied = replace(settings, enabled=current.enabled)
+        self._applyReplicaSettingsSnapshot(applied, rerender=True)
 
     def restoreReplicaDefaults(self):
-        """Restore Replica controls from persisted defaults, preserving activation."""
-        current = self.time_series_settings.replica
+        """Apply persisted Replica defaults when an applicable target exists."""
+        if not self._replicaStyleAvailable():
+            self.syncReplicaPopup()
+            return
         defaults = self.choose_point_click_handler.plot_ts.settings_persistence.load_replica_defaults()
-        restored = replace(defaults, enabled=current.enabled)
-        self.time_series_settings.replace_domain("replica", restored)
-        self.time_series_replica_interval_mm = restored.interval_mm
-        self.time_series_replica_pair_count = restored.pair_count
-        self.choose_point_click_handler.plot_ts.refreshCompatibilityViews()
-        self._syncTimeSeriesReplicaControls()
+        self._applyReplicaDefaults(defaults)
 
     def setCurrentReplicaAsDefault(self):
-        """Persist the current Replica controls as the new defaults."""
+        """Persist the current Replica controls only for an applicable target."""
+        if not self._replicaStyleAvailable():
+            self.syncReplicaPopup()
+            return
         current = self.time_series_settings.replica
         self.choose_point_click_handler.plot_ts.settings_persistence.save_replica_defaults(current)
         self.settings.setValue("insar_explorer/replica_interval_mm", current.interval_mm)
         self.msg_signal.emit("Current replica settings saved as default.", "done", 3000)
 
     def applyFactoryReplicaDefaults(self):
-        """Apply canonical Replica values while preserving activation state."""
-        current = self.time_series_settings.replica
-        factory = replace(ReplicaSettings(), enabled=current.enabled)
-        self.time_series_settings.replace_domain("replica", factory)
-        self.time_series_replica_interval_mm = factory.interval_mm
-        self.time_series_replica_pair_count = factory.pair_count
-        self.choose_point_click_handler.plot_ts.refreshCompatibilityViews()
-        self._syncTimeSeriesReplicaControls()
+        """Apply canonical Replica values when an applicable target exists."""
+        if not self._replicaStyleAvailable():
+            self.syncReplicaPopup()
+            return
+        self._applyReplicaDefaults(ReplicaSettings())
 
     def _reloadReplicaPairCountFromConfig(self):
         """Reload the canonical Replica pair count and synchronize its toolbar view."""
@@ -1666,10 +1689,11 @@ class GuiController(QObject):
     def _refreshReplicaGraphicsAndYAxis(self):
         """Refresh Replica graphics and the effective main Y range with one draw."""
         plot = self.choose_point_click_handler.plot_ts
-        if plot.ax is None or not plot.series_history:
+        targets = self._applicableReplicaTargets()
+        if plot.ax is None or not targets:
             return
 
-        plot.rerenderTimeSeriesSnapshots(list(plot.series_history), draw=False)
+        plot.rerenderTimeSeriesSnapshots(targets, draw=False)
         if self._shouldReapplyAutomaticYAxisAfterReplicaChange():
             with plot.axisViewUpdateGuard():
                 plot.setYlims(ax=plot.ax, parms=plot.parms["time series plot"])
@@ -1678,23 +1702,13 @@ class GuiController(QObject):
 
     def _applyTimeSeriesReplicaState(self, refresh=True):
         """Apply Replica state and optionally refresh graphics and Y range once."""
-        plot = self.choose_point_click_handler.plot_ts
-        replica = replace(self.time_series_settings.replica,
-                          enabled=self.time_series_replica_enabled,
-                          interval_mm=self.time_series_replica_interval_mm,
-                          pair_count=self.time_series_replica_pair_count)
-        self.time_series_settings.replace_domain("replica", replica)
-        plot.replicate_flag = replica.enabled
-        plot.replicate_value = self.time_series_replica_interval_mm
-        plot.parms["time series plot"][
-            "replica pair count"
-        ] = self.time_series_replica_pair_count
-        self._syncTimeSeriesReplicaControls()
-        self.settings.setValue(
-            "insar_explorer/replica_enabled", self.time_series_replica_enabled
+        replica = replace(
+            self.time_series_settings.replica,
+            enabled=self.time_series_replica_enabled,
+            interval_mm=self.time_series_replica_interval_mm,
+            pair_count=self.time_series_replica_pair_count,
         )
-        if refresh:
-            self._refreshReplicaGraphicsAndYAxis()
+        self._applyReplicaSettingsSnapshot(replica, rerender=refresh)
 
     def setTimeSeriesReplicaEnabled(self, enabled):
         """Enable or disable replicas while preserving the selected interval."""
@@ -1730,15 +1744,11 @@ class GuiController(QObject):
         pair_count = self._validateReplicaPairCount(pair_count)
         self._applyReplicaPairCount(pair_count)
 
-        plot = self.choose_point_click_handler.plot_ts
         self.time_series_replica_pair_count = pair_count
-        plot.parms.setdefault("time series plot", {})[
-            "replica pair count"
-        ] = pair_count
-        self._syncTimeSeriesReplicaControls()
-
-        if self.time_series_replica_enabled and plot.series_history:
-            self._refreshReplicaGraphicsAndYAxis()
+        self._applyReplicaSettingsSnapshot(
+            self.time_series_settings.replica,
+            rerender=self.time_series_replica_enabled,
+        )
 
         self.msg_signal.emit(
             f"Replica pairs set to {self.time_series_replica_pair_count}.", "i", 0
