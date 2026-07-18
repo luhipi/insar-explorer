@@ -130,6 +130,9 @@ class FitPopup(QWidget):
         options_layout.setSpacing(4)
         self.residual_checkbox = QCheckBox("Show residual plot", options)
         self.residual_checkbox.setObjectName("check_ts_fit_residual")
+        self.residual_checkbox.setIcon(
+            QIcon(":/icons/icons/residual.svg")
+        )
         options_layout.addWidget(self.residual_checkbox)
         layout.addWidget(options)
         layout.addStretch(1)
