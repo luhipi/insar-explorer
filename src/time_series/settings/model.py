@@ -8,8 +8,9 @@ from typing import Any, Callable, ClassVar, Dict, List, Optional
 
 from ..style_schema import (
     FIT_LINE_STYLE_DEFAULT, FIT_LINE_WIDTH_DEFAULT, FIT_LINE_WIDTH_RANGE,
-    LINE_WIDTH_RANGE, MARKER_SIZE_RANGE, RESIDUAL_LINE_WIDTH_RANGE,
-    RESIDUAL_MARKER_SIZE_RANGE, normalize_alpha, normalize_color,
+    LINE_WIDTH_RANGE, MARKER_SIZE_RANGE, RESIDUAL_DEFAULT_COLOR,
+    RESIDUAL_LINE_WIDTH_RANGE, RESIDUAL_MARKER_SIZE_RANGE, normalize_alpha,
+    normalize_color,
     normalize_fit_line_style, normalize_line_style, normalize_marker,
     normalize_number, normalize_residual_line_style, normalize_residual_marker,
 )
@@ -93,12 +94,12 @@ class ResidualStyleSettings:
     """Persistent defaults for residual series."""
 
     marker: str = "o"
-    marker_color: str = "#d62728"
+    marker_color: str = RESIDUAL_DEFAULT_COLOR
     marker_edge_color: str = "black"
     marker_size: float = 5.0
     marker_alpha: float = 0.8
     line_style: str = ""
-    line_color: str = "#1f77b4"
+    line_color: str = RESIDUAL_DEFAULT_COLOR
     line_width: float = 1.0
     line_alpha: float = 0.8
 
@@ -108,12 +109,12 @@ class ResidualStyleSettings:
         values = params.get("residual plot", {}) if isinstance(params, dict) else {}
         return cls(
             marker=normalize_residual_marker(values.get("marker"), "o"),
-            marker_color=normalize_color(values.get("marker color"), "#d62728"),
+            marker_color=normalize_color(values.get("marker color"), RESIDUAL_DEFAULT_COLOR),
             marker_edge_color=normalize_color(values.get("marker edge color"), "black"),
             marker_size=normalize_number(values.get("marker size"), RESIDUAL_MARKER_SIZE_RANGE, 5.0),
             marker_alpha=normalize_alpha(values.get("marker alpha"), 0.8),
             line_style=normalize_residual_line_style(values.get("line style"), ""),
-            line_color=normalize_color(values.get("line color"), "#1f77b4"),
+            line_color=normalize_color(values.get("line color"), RESIDUAL_DEFAULT_COLOR),
             line_width=normalize_number(values.get("line width"), RESIDUAL_LINE_WIDTH_RANGE, 1.0),
             line_alpha=normalize_alpha(values.get("line alpha"), 0.8),
         )
