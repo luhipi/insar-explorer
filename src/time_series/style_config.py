@@ -1,5 +1,6 @@
 """Plugin-owned adapter between config.json and time-series style models."""
 
+from collections.abc import Mapping
 from copy import deepcopy
 
 from ...external.setting_manager_ui.json_settings import JsonSettings
@@ -108,7 +109,7 @@ class TimeSeriesStyleConfig:
 
     def save_default_ensemble_style(self, ensemble_style):
         """Persist Ensemble defaults while retaining unrelated config metadata."""
-        values = ensemble_style.asParams() if isinstance(ensemble_style, EnsembleStyle) else dict(ensemble_style)
+        values = self._style_values(ensemble_style)
         settings = JsonSettings(self.config_file)
         block = settings.load(block_key=self.BLOCK_KEY)
         plot = block.get(self.PLOT_KEY)
@@ -139,7 +140,7 @@ class TimeSeriesStyleConfig:
 
     def save_default_fit_style(self, fit_style):
         """Persist fit-line defaults while preserving settings metadata."""
-        values = fit_style.asParams() if isinstance(fit_style, FitStyle) else dict(fit_style)
+        values = self._style_values(fit_style)
         settings = JsonSettings(self.config_file)
         block = settings.load(block_key=self.BLOCK_KEY)
         fit = block.get("model fit")
@@ -169,7 +170,7 @@ class TimeSeriesStyleConfig:
         return ResidualStyle.fromParams({"residual plot": self.load_residual_style_values()})
 
     def save_default_residual_style(self, residual_style):
-        values = residual_style.asParams() if isinstance(residual_style, ResidualStyle) else dict(residual_style)
+        values = self._style_values(residual_style)
         settings = JsonSettings(self.config_file)
         block = settings.load(block_key=self.BLOCK_KEY)
         residual = block.get("residual plot")
@@ -183,6 +184,26 @@ class TimeSeriesStyleConfig:
                 raise KeyError(f"Missing residual style setting: {key}")
             entry["value"] = self.normalize_residual_property(key, values.get(key))
         settings.save(self.BLOCK_KEY, block)
+
+    @staticmethod
+    def _style_values(style):
+        """Return a defensive plain mapping for a serializable style value object."""
+        serializer = getattr(style, "asParams", None)
+        if callable(serializer):
+            values = serializer()
+        elif isinstance(style, Mapping):
+            values = style
+        else:
+            raise TypeError(
+                f"Unsupported style value type: {type(style).__name__}"
+            )
+
+        if not isinstance(values, Mapping):
+            raise TypeError(
+                "Style asParams() must return a mapping, "
+                f"got {type(values).__name__}"
+            )
+        return dict(values)
 
     def normalize_residual_property(self, key, value):
         if key == "marker": return normalize_residual_marker(value, "o")
