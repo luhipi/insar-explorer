@@ -59,6 +59,7 @@ class TimeSeriesToolbar(QToolBar):
             "poly-2": ("Quadratic", ":/icons/icons/fit_poly2.svg"),
             "poly-3": ("Cubic", ":/icons/icons/fit_poly3.svg"),
             "exp": ("Exponential", ":/icons/icons/fit_exponential.svg"),
+            "log": ("Logarithmic", ":/icons/icons/fit_log.svg"),
         }
         self._selected_fit_model = "poly-1"
         self._seasonal_enabled = False

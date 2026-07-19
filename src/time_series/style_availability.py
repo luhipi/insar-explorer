@@ -13,6 +13,8 @@ class TimeSeriesStyleAvailability:
     fit_target_count: int = 0
     residual_target_count: int = 0
     ensemble_target_count: int = 0
+    fit_feature_enabled: bool = False
+    residual_feature_enabled: bool = False
 
     @property
     def series_available(self):
@@ -20,11 +22,23 @@ class TimeSeriesStyleAvailability:
 
     @property
     def fit_available(self):
+        """Return whether a rendered Fit layer is available for rerendering."""
         return self.fit_target_count > 0
 
     @property
     def residual_available(self):
+        """Return whether a rendered Residual layer is available for rerendering."""
         return self.residual_target_count > 0
+
+    @property
+    def fit_style_available(self):
+        """Return whether Fit appearance editing is enabled by feature state."""
+        return bool(self.fit_feature_enabled)
+
+    @property
+    def residual_style_available(self):
+        """Return whether Residual appearance editing is enabled by feature state."""
+        return bool(self.fit_feature_enabled and self.residual_feature_enabled)
 
     @property
     def ensemble_available(self):
@@ -46,4 +60,6 @@ class TimeSeriesStyleAvailability:
             fit_target_count=count if fit_enabled else 0,
             residual_target_count=count if residual_enabled and fit_enabled else 0,
             ensemble_target_count=ensemble_count,
+            fit_feature_enabled=bool(fit_enabled),
+            residual_feature_enabled=bool(residual_enabled),
         )

@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 
-FIT_MODELS = ("poly-1", "poly-2", "poly-3", "exp")
+FIT_MODELS = ("poly-1", "poly-2", "poly-3", "exp", "log")
 DEFAULT_FIT_MODEL = "poly-1"
 
 

@@ -112,6 +112,8 @@ class TimeSeriesSettingsPersistence:
             series_defaults=series,
             fit_defaults=fit,
             residual_defaults=residual_style,
+            fit_current=fit,
+            residual_current=residual_style,
             ensemble_defaults=ensemble,
             replica=ReplicaSettings(
                 enabled=False,
@@ -177,8 +179,8 @@ class TimeSeriesSettingsPersistence:
         self.style_config.save_default_ensemble_style(settings)
 
     def load_replica_defaults(self):
-        """Return canonical Replica defaults independent of persisted values."""
-        return ReplicaSettings()
+        """Return the currently persisted Replica defaults."""
+        return self.load().replica
 
     def save_replica_defaults(self, settings):
         """Persist Replica defaults while retaining session activation/interval."""
@@ -242,9 +244,9 @@ def build_legacy_plot_params(model, existing=None):
         "replica marker": model.replica.marker,
         "replica marker size": model.replica.marker_size,
     })
-    params.setdefault("model fit", {}).update(model.fit_defaults.asParams())
+    params.setdefault("model fit", {}).update(model.fit_current.asParams())
     residual = params.setdefault("residual plot", {})
-    residual.update(model.residual_defaults.asParams())
+    residual.update(model.residual_current.asParams())
     residual.update({
         "title": model.appearance.residual_title,
         "xlabel": model.appearance.residual_x_label,

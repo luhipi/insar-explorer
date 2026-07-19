@@ -10,7 +10,7 @@ import numpy as np
 from ..external import pyqtgraph as pg
 from qgis.PyQt.QtGui import QColor, QFont
 
-from .model_fitting import FittingModels
+from .model_fitting import calculateFitStatistics, FittingModels, ModelFitError
 from .export_plot import TimeSeriesPlotExporter
 from .time_series.settings.model import AxisManualRange, ResidualStyleSettings
 from .time_series.settings.persistence import TimeSeriesSettingsPersistence, build_legacy_plot_params
@@ -150,6 +150,8 @@ class PlotTs():
         self._axis_view_update_depth = 0
         self.axis_view_changed_callback = None
         self.axis_state_sync_callback = None
+        self.fit_failure_callback = None
+        self.fit_success_callback = None
         self._last_axis_ranges = {}
 
 
@@ -273,7 +275,8 @@ class PlotTs():
         """Refresh compatibility views once for domains represented by legacy objects."""
         compatibility_domains = {
             "series_defaults", "fit_defaults", "residual_defaults",
-            "ensemble_defaults", "replica", "appearance", "export",
+            "fit_current", "residual_current", "ensemble_defaults",
+            "replica", "appearance", "export",
         }
         if change_set.domains & compatibility_domains:
             self.refreshCompatibilityViews()
@@ -395,14 +398,14 @@ class PlotTs():
                 self.ax_residuals = None
 
     def plotTs(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, coords=None, ref_coords=None,
-               update=False):
+               update=False, report_statistics=False):
         """Render under the nested-safe axis guard and normalize first-plot state."""
         initial_plot = self.ax is None
         with self.axisViewUpdateGuard():
             result = self._plotTsGuarded(
                 dates=dates, ts_values=ts_values, ref_values=ref_values,
                 plot_multiple=plot_multiple, coords=coords, ref_coords=ref_coords,
-                update=update,
+                update=update, report_statistics=report_statistics,
             )
         if initial_plot and self.ax is not None:
             x_state = replace(self.settings_model.x_axis, policy="from_data", custom_view=False)
@@ -418,7 +421,7 @@ class PlotTs():
         return result
 
     def _plotTsGuarded(self, *, dates=None, ts_values=None, ref_values=None, plot_multiple=True, coords=None, ref_coords=None,
-               update=False):
+               update=False, report_statistics=False):
         # update: flag indicating if the plot should be updated or a new one created
 
         self.updateSettings()
@@ -474,7 +477,9 @@ class PlotTs():
             rand_color = randomTimeSeriesColor()
             style.params['time series plot']['marker color'] = rand_color
             style.params['time series plot']['line color'] = rand_color
-        items, residuals_values = self._render_time_series(series, style, plot_multiple=plot_multiple)
+        items, residuals_values = self._render_time_series(
+            series, style, plot_multiple=plot_multiple, report_statistics=report_statistics
+        )
         if residuals_values is not None:
             series = series.withResiduals(residuals_values)
             self._set_current_series(series)
@@ -492,7 +497,10 @@ class PlotTs():
         except (TypeError, ValueError):
             return float(default)
 
-    def _render_time_series(self, series: TimeSeriesData, style: TimeSeriesStyle, *, plot_multiple=True) -> Tuple[TimeSeriesGraphics, Optional[np.ndarray]]:
+    def _render_time_series(
+        self, series: TimeSeriesData, style: TimeSeriesStyle, *,
+        plot_multiple=True, report_statistics=False
+    ) -> Tuple[TimeSeriesGraphics, Optional[np.ndarray]]:
         items = TimeSeriesGraphics()
         main_y_data = []
         parms = style.params['time series plot']
@@ -566,7 +574,9 @@ class PlotTs():
         self.updateYlim(ax=self.ax, y_data=main_y_data)
 
         self.decoratePlot(parms=parms)
-        items.fit_plot, residuals_values = self.fitModel(series, style, items)
+        items.fit_plot, residuals_values = self.fitModel(
+            series, style, items, report_statistics=report_statistics
+        )
 
         parms_figure = style.params['figure']
         self.decorateFigure(parms=parms_figure)
@@ -650,7 +660,10 @@ class PlotTs():
 
         return replicate_up_list, replicate_dn_list
 
-    def fitModel(self, series: TimeSeriesData, style: TimeSeriesStyle, graphics=None):
+    def fitModel(
+        self, series: TimeSeriesData, style: TimeSeriesStyle, graphics=None, *,
+        report_statistics=False
+    ):
         if series.plot_values is None:
             return None, None
         if series.dates is None:
@@ -669,8 +682,16 @@ class PlotTs():
             return None, None
         else:
             fit_model = self.fit_models[0]
-            model_values, model_x, model_y = (
-                FittingModels(series.dates, series.plot_values, model=fit_model).fit(seasonal=fit_seasonal))
+            try:
+                model_values, model_x, model_y = (
+                    FittingModels(series.dates, series.plot_values, model=fit_model).fit(
+                        seasonal=fit_seasonal
+                    )
+                )
+            except ModelFitError as error:
+                if self.fit_failure_callback is not None:
+                    self.fit_failure_callback(error, seasonal=fit_seasonal)
+                return None, None
             fit_plot = None
             if fit_line_type and fit_line_width > 0 and fit_line_alpha > 0:
                 fit_plot = self.ax.plot(
@@ -678,14 +699,35 @@ class PlotTs():
                     model_y,
                     pen=self._pen(fit_line_color, fit_line_width, fit_line_alpha, fit_line_type)
                 )
-            residuals_values = series.plot_values - model_values
+            observed_values = np.asarray(series.plot_values, dtype=np.float64)
+            fitted_values = np.asarray(model_values, dtype=np.float64)
+            finite_mask = np.isfinite(observed_values) & np.isfinite(fitted_values)
+            try:
+                statistics = calculateFitStatistics(
+                    observed_values[finite_mask], fitted_values[finite_mask]
+                )
+            except ValueError:
+                error = ModelFitError(
+                    fit_model,
+                    f"{fit_model} fit returned invalid statistics.",
+                    finite_observation_count=int(np.count_nonzero(finite_mask)),
+                )
+                if self.fit_failure_callback is not None:
+                    self.fit_failure_callback(error, seasonal=fit_seasonal)
+                return None, None
+
+            residuals_values = observed_values - fitted_values
             self.plotResiduals(series, style, graphics, residuals_values)
+            if report_statistics and self.fit_success_callback is not None:
+                self.fit_success_callback(
+                    fit_model, statistics, seasonal=fit_seasonal
+                )
 
         return fit_plot, residuals_values
 
     def _normalizedResidualStyle(self, style: TimeSeriesStyle):
         """Return snapshot-owned residual appearance with runtime-default fallbacks."""
-        values = self.settings_model.residual_defaults.asParams()
+        values = self.settings_model.residual_current.asParams()
         snapshot_params = style.params if isinstance(style.params, dict) else {}
         snapshot_residual = snapshot_params.get("residual plot", {})
         if isinstance(snapshot_residual, dict):

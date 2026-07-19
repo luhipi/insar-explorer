@@ -1,6 +1,10 @@
 ### History
 
 v2.6.0dev
+- Report r2 and rmse in status bar.
+- Update exponential model icon.
+- Add logarithm model fitting.
+- Fix exponential fit: remove fallback to linear and report failure. 
 - Fix time series plot to align year labels to calendar boundaries.
 - Move plot settings to time series toolbar.
 - Move replica to time series toolbar.
