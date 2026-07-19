@@ -9,6 +9,12 @@ from typing import Any, List, Optional
 import numpy as np
 
 
+def randomTimeSeriesColor() -> str:
+    """Return a random canonical ``#RRGGBB`` color string."""
+    channels = np.random.randint(0, 256, size=3)
+    return "#{:02x}{:02x}{:02x}".format(*(int(channel) for channel in channels))
+
+
 def _readonlyArray(values: Any, *, dtype: Any = None, ndmin: int = 0) -> np.ndarray:
     """Return a defensive, read-only numpy array copy."""
     array = np.array(values, dtype=dtype, copy=True, ndmin=ndmin)
@@ -38,6 +44,14 @@ class TimeSeriesData:
         values = np.asarray(self.plot_values, dtype=np.float64)
         return bool(np.sum(np.isfinite(values)) > 0)
 
+    def hasEnsembleData(self) -> bool:
+        """Return True when this snapshot contains multiple member time series."""
+        return bool(
+            self.plot_multiple_values is not None
+            and np.asarray(self.plot_multiple_values).ndim == 2
+            and np.asarray(self.plot_multiple_values).shape[1] > 1
+        )
+
     def dateStrings(self) -> List[str]:
         """Return dates formatted for ASCII export."""
         return [date.strftime('%Y-%m-%d') for date in self.dates]
@@ -59,8 +73,36 @@ class TimeSeriesStyle:
 
     @classmethod
     def fromParams(cls, params: Optional[dict], **kwargs: Any) -> "TimeSeriesStyle":
-        """Create style metadata with a defensive copy of mutable settings."""
-        return cls(params=deepcopy(params) if params is not None else {}, **kwargs)
+        """Create per-series style metadata without global overlay settings."""
+        copied_params = deepcopy(params) if params is not None else {}
+        copied_params.get("time series plot", {}).pop("replica pair count", None)
+        return cls(params=copied_params, **kwargs)
+
+
+@dataclass
+class DefaultTimeSeriesStyle:
+    """Mutable source of defaults used only when creating new time-series snapshots."""
+
+    def __init__(self, style: TimeSeriesStyle):
+        self._style = TimeSeriesStyle.fromParams(style.params)
+
+    @classmethod
+    def fromParams(cls, params: Optional[dict]) -> "DefaultTimeSeriesStyle":
+        """Create a default-style source from copied plot parameters."""
+        return cls(TimeSeriesStyle.fromParams(params))
+
+    def snapshotStyle(self) -> TimeSeriesStyle:
+        """Return an independent style copy for a newly-created series."""
+        return TimeSeriesStyle.fromParams(self._style.params)
+
+    def replaceFromSeries(self, style: TimeSeriesStyle) -> None:
+        """Replace defaults with a defensive copy of a series style."""
+        self._style = TimeSeriesStyle.fromParams(style.params)
+
+    @property
+    def params(self) -> dict:
+        """Return a defensive copy of the current default parameters."""
+        return deepcopy(self._style.params)
 
 
 @dataclass

@@ -1,5 +1,16 @@
 ### History
 
+v2.6.0dev
+- Report r2 and rmse in status bar.
+- Update exponential model icon.
+- Add logarithm model fitting.
+- Fix exponential fit: remove fallback to linear and report failure. 
+- Fix time series plot to align year labels to calendar boundaries.
+- Move plot settings to time series toolbar.
+- Move replica to time series toolbar.
+- Move fit curve to time series toolbar.
+- Move time series setting and exports to time series toolbar.
+
 v2.5.0
 - Support for Qt6 for compatibility with QGIS 4.
 - Remove "." from marker options.
