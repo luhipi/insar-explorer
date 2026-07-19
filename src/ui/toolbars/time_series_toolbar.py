@@ -81,8 +81,6 @@ class TimeSeriesToolbar(QToolBar):
         self.fit_button.setSecondaryAccessibleDescription(
             "Choose the fitting model and configure fit appearance."
         )
-        self.addWidget(self.fit_button)
-        self.addSeparator()
         self._updateFitMetadata()
 
         self.x_axis_button = QToolButton(self)
@@ -127,9 +125,6 @@ class TimeSeriesToolbar(QToolBar):
         self.x_axis_button.setMenu(self.x_axis_menu)
         self.x_axis_button.setCheckable(False)
         self._updateXAxisSelector(self.x_axis_actions["from_data"])
-        self.addWidget(self.x_axis_button)
-
-        self.addSeparator()
 
         self.y_axis_button = QToolButton(self)
         self.y_axis_button.setObjectName("tool_ts_y_axis")
@@ -187,9 +182,7 @@ class TimeSeriesToolbar(QToolBar):
         self.y_axis_button.setMenu(self.y_axis_menu)
         self.y_axis_button.setCheckable(False)
         self._updateYAxisSelector(self.y_axis_actions["from_data"])
-        self.addWidget(self.y_axis_button)
 
-        self.addSeparator()
         self.replica_button = SplitToolButton(
             icon=QIcon(":/icons/icons/replica.svg"),
             primary_checkable=True,
@@ -207,25 +200,12 @@ class TimeSeriesToolbar(QToolBar):
         self.replica_button.setSecondaryAccessibleDescription(
             "Open Replica settings."
         )
-        self.addWidget(self.replica_button)
-
-        self.addSeparator()
         self.plot_style_action = self._createAction(
             ":/icons/icons/plot_settings.svg",
             "Plot style",
             "Edit the style of the current time series",
             "action_ts_plot_style",
         )
-        self.addAction(self.plot_style_action)
-
-        spacer = QWidget(self)
-        spacer.setObjectName("timeSeriesToolbarSpacer")
-        spacer.setSizePolicy(
-            SIZE_POLICY_EXPANDING,
-            SIZE_POLICY_PREFERRED,
-        )
-        self.addWidget(spacer)
-
         self.appearance_action = self._createAction(
             ":/icons/icons/setting.svg",
             "Appearance",
@@ -262,6 +242,22 @@ class TimeSeriesToolbar(QToolBar):
             "Export the current time-series data",
             "action_ts_export_data",
         )
+
+        self.addAction(self.plot_style_action)
+        self.addSeparator()
+        self.addWidget(self.x_axis_button)
+        self.addWidget(self.y_axis_button)
+        self.addSeparator()
+        self.addWidget(self.fit_button)
+        self.addWidget(self.replica_button)
+
+        self._spacer_widget = QWidget(self)
+        self._spacer_widget.setObjectName("timeSeriesToolbarSpacer")
+        self._spacer_widget.setSizePolicy(
+            SIZE_POLICY_EXPANDING,
+            SIZE_POLICY_PREFERRED,
+        )
+        self.addWidget(self._spacer_widget)
 
         self.addAction(self.appearance_action)
         self.addSeparator()
