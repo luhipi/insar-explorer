@@ -218,6 +218,7 @@ class TimeSeriesToolbar(QToolBar):
             parent=self,
             object_name="tool_ts_plot_export",
             arrow_side=SplitToolButton.Left,
+            visual_role=SplitToolButton.Command,
         )
         self.plot_export_button.setIconSize(self.iconSize())
         self.plot_export_button.setPrimaryToolTip("Export plot")
