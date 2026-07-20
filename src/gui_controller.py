@@ -1113,10 +1113,10 @@ class GuiController(QObject):
             self.choose_point_click_handler.plot_ts.settings_model.export
         )
 
-    def updateExportSettings(self, dpi, aspect_ratio, credit):
+    def updateExportSettings(self, dpi, aspect_ratio, include_attribution):
         """Normalize, commit, and persist one complete export settings value."""
         plotter = self.choose_point_click_handler.plot_ts
-        settings = ExportSettings.normalized(dpi, aspect_ratio, credit)
+        settings = ExportSettings.normalized(dpi, aspect_ratio, include_attribution)
         plotter.settings_model.replace_domain("export", settings)
         plotter.parms = build_legacy_plot_params(plotter.settings_model, plotter.parms)
         self.syncExportSettingsPopup()

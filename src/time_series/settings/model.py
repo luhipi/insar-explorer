@@ -249,12 +249,27 @@ class ExportSettings:
 
     dpi: str = "300"
     aspect_ratio: float = 4.0
-    credit: str = "Powered by InSAR Explorer"
+    include_attribution: bool = True
 
     DPI_OPTIONS = ("72", "150", "300", "600", "1200")
 
+    @staticmethod
+    def _normalize_bool(value, fallback=True):
+        """Return a strict boolean while tolerating common persisted scalar forms."""
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)) and value in (0, 1):
+            return bool(value)
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "1", "yes", "on"}:
+                return True
+            if normalized in {"false", "0", "no", "off", ""}:
+                return False
+        return fallback
+
     @classmethod
-    def normalized(cls, dpi=None, aspect_ratio=None, credit=None):
+    def normalized(cls, dpi=None, aspect_ratio=None, include_attribution=None):
         """Build settings with schema-compatible normalization."""
         dpi = str(dpi) if dpi is not None else cls().dpi
         if dpi not in cls.DPI_OPTIONS:
@@ -264,8 +279,14 @@ class ExportSettings:
         except (TypeError, ValueError, OverflowError):
             aspect_ratio = cls().aspect_ratio
         aspect_ratio = max(1.0, min(10.0, aspect_ratio))
-        credit = cls().credit if credit is None else str(credit)
-        return cls(dpi=dpi, aspect_ratio=aspect_ratio, credit=credit)
+        include_attribution = cls._normalize_bool(
+            include_attribution, cls().include_attribution
+        )
+        return cls(
+            dpi=dpi,
+            aspect_ratio=aspect_ratio,
+            include_attribution=include_attribution,
+        )
 
 
 @dataclass

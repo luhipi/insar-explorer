@@ -60,6 +60,22 @@ class TimeSeriesSettingsPersistence:
         """Normalize the constrained grid mode."""
         return AppearanceSettings.normalize_grid_mode(value)
 
+    @classmethod
+    def _include_attribution(cls, export):
+        """Resolve the new attribution flag with isolated legacy-credit migration."""
+        export = cls._mapping(export)
+        if "include attribution" in export:
+            value = cls._value(export, "include attribution", True)
+            return ExportSettings._normalize_bool(value, True)
+
+        credit_entry = export.get("credit")
+        if credit_entry is None:
+            return True
+        legacy_credit = cls._value(export, "credit", None)
+        if legacy_credit is None:
+            return True
+        return bool(str(legacy_credit).strip())
+
     @staticmethod
     def _normalize_pair_count(value):
         """Return the supported persistent Replica pair count."""
@@ -143,7 +159,7 @@ class TimeSeriesSettingsPersistence:
             export=ExportSettings.normalized(
                 dpi=self._value(export, "dpi", "300"),
                 aspect_ratio=self._value(export, "aspect ratio", 4.0),
-                credit=self._value(export, "credit", "Powered by InSAR Explorer"),
+                include_attribution=self._include_attribution(export),
             ),
         )
 
@@ -215,9 +231,37 @@ class TimeSeriesSettingsPersistence:
             self._save_value(section, key, value)
 
     def save_export(self, settings):
-        """Persist typed export defaults through scoped metadata writes."""
-        for key, value in (("dpi", settings.dpi), ("aspect ratio", settings.aspect_ratio), ("credit", settings.credit)):
-            self._save_value("export", key, value)
+        """Persist typed export defaults and remove the obsolete credit field."""
+        json_settings = JsonSettings(self.config_file)
+        block = self._load_block()
+        export = block.setdefault("export", {})
+        if not isinstance(export, dict):
+            export = {}
+            block["export"] = export
+        export.pop("credit", None)
+        export["dpi"] = self._updated_entry(export.get("dpi"), settings.dpi)
+        export["aspect ratio"] = self._updated_entry(
+            export.get("aspect ratio"), settings.aspect_ratio
+        )
+        attribution = self._updated_entry(
+            export.get("include attribution"), settings.include_attribution
+        )
+        attribution.update({
+            "type": "bool",
+            "default": True,
+            "advanced": False,
+            "text": "Include attribution",
+            "icon": ":/plugins/insar-explorer/icon.svg",
+        })
+        export["include attribution"] = attribution
+        json_settings.save(self.BLOCK_KEY, block)
+
+    @staticmethod
+    def _updated_entry(entry, value):
+        """Return one defensive metadata entry with its current value replaced."""
+        entry = dict(entry) if isinstance(entry, dict) else {}
+        entry["value"] = value
+        return entry
 
 
 def build_legacy_plot_params(model, existing=None):
@@ -260,6 +304,6 @@ def build_legacy_plot_params(model, existing=None):
     params["export"] = {
         "dpi": model.export.dpi,
         "aspect ratio": model.export.aspect_ratio,
-        "credit": model.export.credit,
+        "include attribution": model.export.include_attribution,
     }
     return params
