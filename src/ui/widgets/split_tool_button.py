@@ -46,9 +46,6 @@ QToolButton[visualRole="flat"][splitPart="secondary"][splitHover="true"] {
 QToolButton[visualRole="command"][splitHover="true"] {
     background-color: palette(alternate-base);
 }
-QToolButton[visualRole="command"]:pressed {
-    background-color: palette(midlight);
-}
 QToolButton[visualRole="command"]:focus {
     border-color: palette(highlight);
 }
@@ -78,6 +75,19 @@ QToolButton[splitPart="primary"]:checked[splitHover="true"] {
     border-color: palette(highlight);
     background-color: palette(highlight);
     color: palette(highlighted-text);
+}
+QToolButton[visualRole="command"][splitPart]:pressed:enabled {
+    background-color: palette(mid);
+    border-top-color: palette(dark);
+    border-bottom-color: palette(dark);
+}
+QToolButton[visualRole="command"][splitPosition="left"]:pressed:enabled {
+    border-left-color: palette(dark);
+    border-right: 0;
+}
+QToolButton[visualRole="command"][splitPosition="right"]:pressed:enabled {
+    border-left: 1px solid palette(dark);
+    border-right-color: palette(dark);
 }
 """
 
