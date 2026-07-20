@@ -20,6 +20,7 @@ from .ui.popups.manual_x_axis_popup import ManualXAxisPopup
 from .ui.popups.export_settings_popup import ExportSettingsPopup
 from .ui.popups.appearance_popup import AppearancePopup
 from .ui.popups.replica_popup import ReplicaPopup
+from .ui.widgets.split_tool_button import SplitButtonPopupHoverReconciler
 from .qt_compat import (
     RASTER_LAYER,
     VECTOR_LAYER,
@@ -159,6 +160,7 @@ class GuiController(QObject):
         self.export_settings_popup = ExportSettingsPopup(self.ui)
         self.appearance_popup = AppearancePopup(self.ui)
         self.replica_popup = ReplicaPopup(self.ui)
+        self._installSplitButtonPopupHoverReconciliation()
         self._manual_y_axis_session = None
         self.time_series_style_controller = TimeSeriesStyleController()
         self.fit_style_controller = FitStyleController()
@@ -186,6 +188,20 @@ class GuiController(QObject):
         self.onLayerChanged()
 
         self.setVectorFields()
+
+    def _installSplitButtonPopupHoverReconciliation(self):
+        """Reconcile split-button hover whenever an associated popup closes."""
+        toolbar = self.ui.time_series_toolbar
+        mappings = (
+            (self.fit_popup, toolbar.fit_button),
+            (self.replica_popup, toolbar.replica_button),
+            (self.export_settings_popup, toolbar.plot_export_button),
+        )
+        self._split_button_popup_hover_reconcilers = []
+        for popup, split_button in mappings:
+            reconciler = SplitButtonPopupHoverReconciler(split_button, popup)
+            popup.installEventFilter(reconciler)
+            self._split_button_popup_hover_reconcilers.append(reconciler)
 
     def initializeUiParams(self):
         """Initialize code-created controls; migrated style controls live in the popup."""

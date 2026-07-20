@@ -35,6 +35,8 @@ def _enum_value(owner, enum_name, value_name, legacy_name=None):
 # QEvent enums
 EVENT_ENTER = _enum_value(QEvent, "Type", "Enter")
 EVENT_LEAVE = _enum_value(QEvent, "Type", "Leave")
+EVENT_HIDE = _enum_value(QEvent, "Type", "Hide")
+EVENT_CLOSE = _enum_value(QEvent, "Type", "Close")
 
 # QtCore.Qt enums
 BOTTOM_DOCK_WIDGET_AREA = _enum_value(Qt, "DockWidgetArea", "BottomDockWidgetArea")

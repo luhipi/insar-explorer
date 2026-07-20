@@ -1,10 +1,16 @@
 """Reusable joined split-button control for compact toolbars."""
 
-from qgis.PyQt.QtCore import QSize, QTimer, pyqtSignal
+from qgis.PyQt.QtCore import QObject, QSize, QTimer, pyqtSignal
 from qgis.PyQt.QtGui import QCursor, QIcon
 from qgis.PyQt.QtWidgets import QApplication, QHBoxLayout, QToolButton, QWidget
 
-from ...qt_compat import DOWN_ARROW, EVENT_ENTER, EVENT_LEAVE
+from ...qt_compat import (
+    DOWN_ARROW,
+    EVENT_CLOSE,
+    EVENT_ENTER,
+    EVENT_HIDE,
+    EVENT_LEAVE,
+)
 
 
 SPLIT_TOOL_BUTTON_STYLESHEET = """
@@ -162,7 +168,7 @@ class SplitToolButton(QWidget):
 
         self._hover_reconcile_timer = QTimer(self)
         self._hover_reconcile_timer.setSingleShot(True)
-        self._hover_reconcile_timer.timeout.connect(self._reconcileUnifiedHover)
+        self._hover_reconcile_timer.timeout.connect(self.reconcileHoverFromCursor)
 
         self.secondary_button.setProperty("splitChecked", False)
         for button in (self.primary_button, self.secondary_button):
@@ -201,8 +207,8 @@ class SplitToolButton(QWidget):
                 self._hover_reconcile_timer.start(0)
         return super().eventFilter(watched, event)
 
-    def _reconcileUnifiedHover(self):
-        """Synchronize hover with the widget currently under the cursor."""
+    def reconcileHoverFromCursor(self):
+        """Recompute shared hover from the widget currently under the cursor."""
         widget = QApplication.widgetAt(QCursor.pos())
         hovered = (
             self.isVisible()
@@ -317,3 +323,18 @@ class SplitToolButton(QWidget):
         """Clear shared hover when neither action region remains enabled."""
         if not self.primary_button.isEnabled() and not self.secondary_button.isEnabled():
             self._setUnifiedHover(False)
+
+class SplitButtonPopupHoverReconciler(QObject):
+    """Reconcile one split button after an associated popup disappears."""
+
+    def __init__(self, split_button, parent=None):
+        """Observe popup lifecycle events for ``split_button``."""
+        super().__init__(parent)
+        self._split_button = split_button
+
+    def eventFilter(self, watched, event):
+        """Schedule cursor-based hover reconciliation after hide or close."""
+        if event.type() in (EVENT_HIDE, EVENT_CLOSE):
+            QTimer.singleShot(0, self._split_button.reconcileHoverFromCursor)
+        return super().eventFilter(watched, event)
+
