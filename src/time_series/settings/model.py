@@ -213,6 +213,8 @@ class YAxisSettings:
     policy: str = "from_data"
     series_manual: AxisManualRange = field(default_factory=AxisManualRange)
     residual_manual: AxisManualRange = field(default_factory=AxisManualRange)
+    series_display_mode: str = "from_data"
+    residual_display_mode: str = "from_data"
     series_custom_view: bool = False
     residual_custom_view: bool = False
 
@@ -239,6 +241,54 @@ class YAxisSettings:
         return self.series_custom_view or (
             residual_available and self.residual_custom_view
         )
+
+    def display_mode_for_axis(self, axis_name):
+        """Return the effective saved-range/display selection for one Y axis."""
+        if axis_name == "series_y":
+            return self.series_display_mode
+        if axis_name == "residual_y":
+            return self.residual_display_mode
+        raise ValueError(f"Unsupported Y axis: {axis_name}")
+
+    def policy_for_effective_display(self, residual_available=False):
+        """Return the aggregate toolbar policy from currently visible local modes."""
+        modes = (self.series_display_mode,)
+        if residual_available:
+            modes += (self.residual_display_mode,)
+        return "manual" if "manual" in modes else "from_data"
+
+    def select_all_from_data(self):
+        """Select From Data for every Y axis without altering saved Manual ranges."""
+        return replace(
+            self,
+            policy="from_data",
+            series_display_mode="from_data",
+            residual_display_mode="from_data",
+            series_custom_view=False,
+            residual_custom_view=False,
+        )
+
+    def select_manual_for_visible_axes(self, residual_available=False):
+        """Select saved Manual rendering for every currently relevant Y axis."""
+        state = replace(
+            self, series_display_mode="manual", series_custom_view=False
+        )
+        if residual_available:
+            state = replace(
+                state, residual_display_mode="manual", residual_custom_view=False
+            )
+        return replace(state, policy="manual")
+
+    def select_from_data_for_visible_axes(self, residual_available=False):
+        """Select From Data rendering without discarding saved Manual ranges."""
+        state = replace(
+            self, series_display_mode="from_data", series_custom_view=False
+        )
+        if residual_available:
+            state = replace(
+                state, residual_display_mode="from_data", residual_custom_view=False
+            )
+        return replace(state, policy="from_data")
 
 
 @dataclass(frozen=True, init=False)
