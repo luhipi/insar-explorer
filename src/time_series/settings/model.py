@@ -203,14 +203,62 @@ class YAxisSettings:
     residual_custom_view: bool = False
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, init=False)
 class XAxisSettings:
-    """Session-only X-axis policy, manual date range, and transient viewport state."""
+    """Session-only per-bound X-axis policies, manual dates, and viewport state."""
 
-    policy: str = "from_data"
+    start_policy: str = "from_data"
+    end_policy: str = "from_data"
+    manual_editor_start_policy: str = "from_data"
+    manual_editor_end_policy: str = "from_data"
     manual_start: Optional[datetime] = None
     manual_end: Optional[datetime] = None
     custom_view: bool = False
+
+    def __init__(
+        self, start_policy="from_data", end_policy="from_data",
+        manual_editor_start_policy=None, manual_editor_end_policy=None,
+        manual_start=None, manual_end=None, custom_view=False, policy=None,
+    ):
+        """Create active and remembered editor policies with legacy migration."""
+        if policy in {"from_data", "manual"}:
+            start_policy = end_policy = policy
+        start_policy = self._normalize_policy(start_policy)
+        end_policy = self._normalize_policy(end_policy)
+        if manual_editor_start_policy is None:
+            manual_editor_start_policy = start_policy
+        if manual_editor_end_policy is None:
+            manual_editor_end_policy = end_policy
+        object.__setattr__(self, "start_policy", start_policy)
+        object.__setattr__(self, "end_policy", end_policy)
+        object.__setattr__(self, "manual_editor_start_policy", self._normalize_policy(manual_editor_start_policy))
+        object.__setattr__(self, "manual_editor_end_policy", self._normalize_policy(manual_editor_end_policy))
+        object.__setattr__(self, "manual_start", manual_start)
+        object.__setattr__(self, "manual_end", manual_end)
+        object.__setattr__(self, "custom_view", bool(custom_view))
+
+    @staticmethod
+    def _normalize_policy(value):
+        """Normalize one X-bound policy at the settings-domain boundary."""
+        return value if value in {"from_data", "manual"} else "from_data"
+
+    @property
+    def policy(self):
+        """Return the toolbar-compatible aggregate policy for this bound pair."""
+        return "from_data" if self.both_from_data else "manual"
+
+    @property
+    def both_from_data(self):
+        """Return whether both X bounds follow the available data extent."""
+        return self.start_policy == "from_data" and self.end_policy == "from_data"
+
+    def effective_range(self, data_start, data_end):
+        """Resolve and validate the effective range from data and manual bounds."""
+        start = data_start if self.start_policy == "from_data" else self.manual_start
+        end = data_end if self.end_policy == "from_data" else self.manual_end
+        if start is None or end is None or start >= end:
+            return None
+        return start, end
 
 
 @dataclass(frozen=True)

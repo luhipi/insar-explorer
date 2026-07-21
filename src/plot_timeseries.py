@@ -408,7 +408,7 @@ class PlotTs():
                 update=update, report_statistics=report_statistics,
             )
         if initial_plot and self.ax is not None:
-            x_state = replace(self.settings_model.x_axis, policy="from_data", custom_view=False)
+            x_state = replace(self.settings_model.x_axis, custom_view=False)
             y_state = replace(
                 self.settings_model.y_axis, policy="from_data",
                 series_custom_view=False, residual_custom_view=False,
@@ -825,33 +825,34 @@ class PlotTs():
         self._applyDateFormat(ax=ax, parms=parms)
 
 
-    def setXlims(self, *, ax=None, use_data_xlim=True, padding=30):
-        """
-        Set the x-axis limits.
+    def resolveXAxisRange(self, state=None, *, use_data_xlim=True, padding=30):
+        """Resolve the effective X limits used by preview and committed rendering."""
+        if self.dates is None or len(self.dates) == 0:
+            return None
+        state = self.settings_model.x_axis if state is None else state
+        min_date, max_date = self.availableDateRange()
+        if use_data_xlim:
+            data_start = min_date - timedelta(days=padding)
+            data_end = max_date + timedelta(days=padding)
+        else:
+            data_start = datetime(min_date.year, 1, 1)
+            data_end = datetime(max_date.year + 1, 1, 1)
+        return state.effective_range(data_start, data_end)
 
-        :param use_data_xlim: bool
-            If True, set the x-axis limits to the min and max of the data.
-            If False, set the x-axis limits to the start and end of the year.
-        :param padding: int
-            Number of days to pad the x-axis limits.
-        """
+    def setXlims(self, *, ax=None, use_data_xlim=True, padding=30):
+        """Apply the same resolved X limits used by transactional preview."""
         if not ax:
             ax = self.ax
-        state = self.settings_model.x_axis
-        if state.policy == "manual" and state.manual_start is not None and state.manual_end is not None:
-            x_min = self._dateToX(state.manual_start)
-            x_max = self._dateToX(state.manual_end)
-        else:
-            min_date = np.nanmin(self.dates)
-            max_date = np.nanmax(self.dates)
-            if use_data_xlim:
-                x_min = self._dateToX(min_date - timedelta(days=padding))
-                x_max = self._dateToX(max_date + timedelta(days=padding))
-            else:
-                x_min = self._dateToX(datetime(min_date.year, 1, 1))
-                x_max = self._dateToX(datetime(max_date.year + 1, 1, 1))
+        effective = self.resolveXAxisRange(
+            use_data_xlim=use_data_xlim, padding=padding
+        )
+        if effective is None:
+            return False
+        x_min = self._dateToX(effective[0])
+        x_max = self._dateToX(effective[1])
         with self.axisViewUpdateGuard():
             ax.setXRange(x_min, x_max, padding=0)
+        return True
 
     def applyXAxisViewport(self, start, end, *, draw=True):
         """Apply only the existing main X viewport with zero padding."""

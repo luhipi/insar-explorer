@@ -37,6 +37,7 @@ from .time_series.style_schema import percent_to_alpha
 from .time_series.settings.model import (
     AppearanceSettings, AxisManualRange, EnsembleStyleSettings, ExportSettings,
     FitStyleSettings, ReplicaSettings, ResidualStyleSettings, SeriesStyleSettings,
+    XAxisSettings,
 )
 from .time_series.settings.persistence import build_legacy_plot_params
 
@@ -1256,7 +1257,7 @@ class GuiController(QObject):
         if axis_name in {"x", "combined"}:
             x_state = self.time_series_settings.x_axis
             self.time_series_settings.replace_domain(
-                "x_axis", replace(x_state, policy="from_data", custom_view=False)
+                "x_axis", replace(x_state, start_policy="from_data", end_policy="from_data", custom_view=False)
             )
         if axis_name in {"series_y", "combined"}:
             y_state = self.time_series_settings.y_axis
@@ -1295,8 +1296,7 @@ class GuiController(QObject):
         current = self.time_series_settings.x_axis
         self.time_series_settings.replace_domain(
             "x_axis", replace(
-                current, policy="from_data", manual_start=None, manual_end=None,
-                custom_view=False,
+                current, start_policy="from_data", end_policy="from_data", custom_view=False,
             )
         )
         self._syncTimeSeriesXAxisControls()
@@ -1318,18 +1318,36 @@ class GuiController(QObject):
         return True
 
     def _applyTimeSeriesXAxisMode(self, mode, refresh=True):
-        """Apply one session-local X-axis policy without rebuilding plot graphics."""
+        """Apply Auto or restore the last committed manual-editor configuration."""
         state = self.time_series_settings.x_axis
-        if mode == "manual" and (state.manual_start is None or state.manual_end is None):
-            self._syncTimeSeriesXAxisControls()
-            if refresh:
-                self.showManualXAxisPopup()
-            return False
         if mode not in {"from_data", "manual"}:
             mode = "from_data"
-        self.time_series_settings.replace_domain(
-            "x_axis", replace(state, policy=mode, custom_view=False)
-        )
+        if mode == "from_data":
+            updated = replace(
+                state, start_policy="from_data", end_policy="from_data", custom_view=False
+            )
+        else:
+            if (
+                state.manual_editor_start_policy == "from_data"
+                and state.manual_editor_end_policy == "from_data"
+            ):
+                self._syncTimeSeriesXAxisControls()
+                if refresh:
+                    self.showManualXAxisPopup()
+                return False
+            updated = replace(
+                state,
+                start_policy=state.manual_editor_start_policy,
+                end_policy=state.manual_editor_end_policy,
+                custom_view=False,
+            )
+            plotter = self.choose_point_click_handler.plot_ts
+            if plotter.resolveXAxisRange(updated) is None:
+                self._syncTimeSeriesXAxisControls()
+                if refresh:
+                    self.showManualXAxisPopup()
+                return False
+        self.time_series_settings.replace_domain("x_axis", updated)
         self._syncTimeSeriesXAxisControls()
         if refresh:
             self._applyXAxisLimitsToExistingPlot()
@@ -1350,10 +1368,11 @@ class GuiController(QObject):
         state = self.time_series_settings.x_axis
         viewport = plotter.captureViewport()
         self._manual_x_axis_session = {"x_axis": state, "viewport": viewport}
-        data_start, data_end = plotter.availableDateRange()
-        start = state.manual_start or data_start
-        end = state.manual_end or data_end
-        self.manual_x_axis_popup.openForRange(start, end)
+        data_start, data_end = plotter.resolveXAxisRange(XAxisSettings())
+        self.manual_x_axis_popup.openForBounds(
+            state.manual_start, state.manual_end, data_start, data_end,
+            state.manual_editor_start_policy, state.manual_editor_end_policy,
+        )
         self.manual_x_axis_popup.adjustSize()
         button = self.ui.time_series_toolbar.x_axis_button
         top_left = button.mapToGlobal(QPoint(0, 0))
@@ -1364,33 +1383,55 @@ class GuiController(QObject):
         )
         self.manual_x_axis_popup.show(); self.manual_x_axis_popup.raise_(); self.manual_x_axis_popup.activateWindow()
 
-    def previewManualXAxisRange(self, start, end):
-        """Preview a valid draft range on existing graphics without committing it."""
-        if self._manual_x_axis_session is None or start >= end:
-            return
-        plotter = self.choose_point_click_handler.plot_ts
-        if plotter.ax is None:
-            return
-        plotter.applyXAxisViewport(start, end, draw=True)
-        self._manual_x_axis_session["preview_range"] = (start, end)
-
-    def applyManualXAxisRange(self, start, end):
-        """Commit the previewed dates and activate Manual without rerendering graphics."""
-        if start >= end:
-            return
-        session = self._manual_x_axis_session
-        plotter = self.choose_point_click_handler.plot_ts
-        if session is None or session.get("preview_range") != (start, end):
-            if plotter.ax is not None:
-                plotter.applyXAxisViewport(start, end, draw=True)
-        state = self.time_series_settings.x_axis
-        self.time_series_settings.replace_domain(
-            "x_axis", replace(
-                state, policy="manual", manual_start=start, manual_end=end, custom_view=False
-            )
+    def _draftXAxisState(self, start_policy, end_policy, manual_start, manual_end):
+        """Build and validate one per-bound X-axis draft against current data."""
+        if start_policy not in {"from_data", "manual"} or end_policy not in {"from_data", "manual"}:
+            return None, None
+        state = replace(
+            self.time_series_settings.x_axis,
+            start_policy=start_policy, end_policy=end_policy,
+            manual_start=manual_start, manual_end=manual_end, custom_view=False,
         )
+        plotter = self.choose_point_click_handler.plot_ts
+        if plotter.dates is None or len(plotter.dates) == 0:
+            return state, None
+        return state, plotter.resolveXAxisRange(state)
+
+    def previewManualXAxisRange(
+        self, start_policy, end_policy, manual_start, manual_end,
+    ):
+        """Preview one valid per-bound draft without committing runtime state."""
+        if self._manual_x_axis_session is None:
+            return
+        state, effective = self._draftXAxisState(
+            start_policy, end_policy, manual_start, manual_end
+        )
+        plotter = self.choose_point_click_handler.plot_ts
+        if state is None or effective is None or plotter.ax is None:
+            return
+        plotter.applyXAxisViewport(*effective, draw=True)
+        self._manual_x_axis_session["preview_range"] = effective
+
+    def applyManualXAxisRange(
+        self, start_policy, end_policy, manual_start, manual_end,
+    ):
+        """Commit independent X-bound policies while retaining manual drafts."""
+        if self._manual_x_axis_session is None:
+            return
+        state, effective = self._draftXAxisState(
+            start_policy, end_policy, manual_start, manual_end
+        )
+        if state is None or effective is None:
+            return
+        state = replace(
+            state,
+            manual_editor_start_policy=start_policy,
+            manual_editor_end_policy=end_policy,
+        )
+        self.time_series_settings.replace_domain("x_axis", state)
         self._manual_x_axis_session = None
         self._syncTimeSeriesXAxisControls()
+        self._applyXAxisLimitsToExistingPlot()
 
     def captureCurrentManualXAxisView(self):
         """Commit the complete visible viewport without snapping or changing it."""
@@ -1401,7 +1442,9 @@ class GuiController(QObject):
         state = self.time_series_settings.x_axis
         self.time_series_settings.replace_domain(
             "x_axis", replace(
-                state, policy="manual", manual_start=start, manual_end=end, custom_view=False
+                state, start_policy="manual", end_policy="manual",
+                manual_editor_start_policy="manual", manual_editor_end_policy="manual",
+                manual_start=start, manual_end=end, custom_view=False
             )
         )
         self._manual_x_axis_session = None
