@@ -290,6 +290,29 @@ class YAxisSettings:
             )
         return replace(state, policy="from_data")
 
+    def commit_current_view(self, axis_name, lower, upper, residual_available=False):
+        """Commit one visible axis viewport as Manual without changing its sibling."""
+        manual = AxisManualRange(lower, upper, lower, upper)
+        if axis_name == "series":
+            state = replace(
+                self,
+                series_manual=manual,
+                series_display_mode="manual",
+                series_custom_view=False,
+            )
+        elif axis_name == "residual":
+            state = replace(
+                self,
+                residual_manual=manual,
+                residual_display_mode="manual",
+                residual_custom_view=False,
+            )
+        else:
+            raise ValueError(f"Unsupported Y axis: {axis_name}")
+        return replace(
+            state, policy=state.policy_for_effective_display(residual_available)
+        )
+
 
 @dataclass(frozen=True, init=False)
 class XAxisSettings:

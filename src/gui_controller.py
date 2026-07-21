@@ -1616,7 +1616,7 @@ class GuiController(QObject):
 
 
     def captureCurrentManualYAxisView(self, axis_name):
-        """Commit the visible Y-range as session-local Manual state and close."""
+        """Commit one visible Y viewport as Manual without touching its sibling."""
         if self._manual_y_axis_session is None:
             return
         plotter = self.choose_point_click_handler.plot_ts
@@ -1624,29 +1624,15 @@ class GuiController(QObject):
         if axis is None:
             return
         lower, upper = (float(value) for value in axis.viewRange()[1])
-        if axis_name == "residual":
-            self.residual_manual_y_lower = lower
-            self.residual_manual_y_upper = upper
-            axis_state = self.time_series_settings.y_axis
-            self.time_series_settings.replace_domain(
-                "y_axis", replace(
-                    axis_state, policy="manual", residual_display_mode="manual",
-                    residual_manual=AxisManualRange(lower, upper, lower, upper),
-                )
-            )
-        else:
-            self.time_series_manual_y_lower = lower
-            self.time_series_manual_y_upper = upper
-            axis_state = self.time_series_settings.y_axis
-            self.time_series_settings.replace_domain(
-                "y_axis", replace(
-                    axis_state, policy="manual", series_display_mode="manual",
-                    series_manual=AxisManualRange(lower, upper, lower, upper),
-                )
-            )
+        residual_available = plotter.ax_residuals is not None
+        updated = self.time_series_settings.y_axis.commit_current_view(
+            axis_name, lower, upper, residual_available
+        )
+        self.time_series_settings.replace_domain("y_axis", updated)
         self._manual_y_axis_session = None
         self.manual_y_axis_popup.closeAfterCommit()
-        self._applyTimeSeriesYAxisMode("manual", refresh=True)
+        self._syncTimeSeriesYAxisControls(updated.policy)
+        self.msg_signal.emit("Current Y-axis view saved as Manual.", "i", 0)
 
     def previewManualYAxisRange(self, axis_name, lower, upper):
         """Preview the complete draft through the same paths used by Apply."""
