@@ -234,6 +234,12 @@ class YAxisSettings:
         """Return the truthful aggregate policy for the current editor state."""
         return "manual" if self.has_configured_manual(residual_available) else "from_data"
 
+    def has_custom_view(self, residual_available=False):
+        """Return whether any currently visible Y axis has a custom viewport."""
+        return self.series_custom_view or (
+            residual_available and self.residual_custom_view
+        )
+
 
 @dataclass(frozen=True, init=False)
 class XAxisSettings:

@@ -1244,6 +1244,9 @@ class GuiController(QObject):
         if axis_name == "series_y":
             updated = replace(state, series_custom_view=True)
         elif axis_name == "residual_y":
+            if not self.choose_point_click_handler.plot_ts.plot_residuals_flag:
+                self._syncTimeSeriesYAxisControls(state.policy)
+                return
             updated = replace(state, residual_custom_view=True)
         else:
             return
@@ -1483,17 +1486,19 @@ class GuiController(QObject):
         self._applyTimeSeriesYAxisMode(self.time_series_y_axis_mode, refresh=False)
 
     def _syncTimeSeriesYAxisControls(self, mode):
-        """Synchronize the code-created toolbar from shared Y-axis state."""
+        """Synchronize the toolbar from policy and aggregate visible custom state."""
         state = self.time_series_settings.y_axis
+        residual_visible = bool(
+            self.choose_point_click_handler.plot_ts.plot_residuals_flag
+        )
         self.ui.time_series_toolbar.setSelectedYAxisMode(
             mode,
             self.time_series_manual_y_lower,
             self.time_series_manual_y_upper,
             self.residual_manual_y_lower,
             self.residual_manual_y_upper,
-            bool(self.choose_point_click_handler.plot_ts.plot_residuals_flag),
-            state.series_custom_view,
-            state.residual_custom_view,
+            residual_visible,
+            state.has_custom_view(residual_visible),
         )
 
     def _applyTimeSeriesYAxisMode(self, mode, refresh=True):

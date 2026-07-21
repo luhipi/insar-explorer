@@ -379,26 +379,22 @@ class TimeSeriesToolbar(QToolBar):
         self.x_axis_button.setWhatsThis(tooltip)
         self.x_axis_button.setAccessibleName(f"Selected X-axis mode: {action.text()}")
 
-    def setSelectedYAxisMode(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True, series_custom_view=False, residual_custom_view=False):
+    def setSelectedYAxisMode(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True, custom_view=False):
         """Update the selected Y-axis mode without emitting a user-change signal."""
         self.refreshYAxisPresentation(
             mode, lower, upper, residual_lower, residual_upper, residual_active,
-            series_custom_view, residual_custom_view,
+            custom_view,
         )
 
-    def refreshYAxisPresentation(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True, series_custom_view=False, residual_custom_view=False):
-        """Refresh checked policy, icon, label, and tooltip from runtime Y state."""
+    def refreshYAxisPresentation(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True, custom_view=False):
+        """Refresh checked policy and aggregate visible viewport presentation."""
         action = self.y_axis_actions[mode]
         if mode == "manual":
             self.setManualYAxisSummary(lower, upper, residual_lower, residual_upper, residual_active)
         previous = self.y_axis_group.blockSignals(True)
         action.setChecked(True)
         self.y_axis_group.blockSignals(previous)
-        self._updateYAxisSelector(
-            action,
-            series_custom_view=series_custom_view,
-            residual_custom_view=residual_custom_view,
-        )
+        self._updateYAxisSelector(action, custom_view=custom_view)
 
     def setManualYAxisSummary(self, lower, upper, residual_lower=None, residual_upper=None, residual_active=True):
         """Update Manual action text and metadata with its configured bounds."""
@@ -418,23 +414,19 @@ class TimeSeriesToolbar(QToolBar):
             f"Time series: {display(lower)} to {display(upper)}\n"
             f"Residuals: {residual_summary}"
         )
-        if action.isChecked():
-            self._updateYAxisSelector(action)
 
     def _yAxisActionTriggered(self, action):
         """Emit the requested policy; the controller owns presentation refresh."""
         self.yAxisModeChanged.emit(action.data())
 
-    def _updateYAxisSelector(self, action, *, series_custom_view=False, residual_custom_view=False):
-        """Render Y-axis presentation from policy plus independent viewport states."""
-        if series_custom_view:
+    def _updateYAxisSelector(self, action, *, custom_view=False):
+        """Render the aggregate visible Y-axis presentation for the selected policy."""
+        if custom_view:
             self.y_axis_button.setIcon(QIcon(":/icons/icons/y_axis_custom.svg"))
-            tooltip = f"Time series: Custom view\nBase policy: {action.text()}"
+            tooltip = f"Custom Y view\nBase policy: {action.text()}"
         else:
             self.y_axis_button.setIcon(action.icon())
             tooltip = action.toolTip()
-        if residual_custom_view:
-            tooltip += "\nResiduals: Custom view"
         self.y_axis_button.setText(action.text())
         self.y_axis_button.setToolTip(tooltip)
         self.y_axis_button.setStatusTip(tooltip)
