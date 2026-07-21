@@ -81,8 +81,6 @@ class TimeSeriesToolbar(QToolBar):
         self.fit_button.setSecondaryAccessibleDescription(
             "Choose the fitting model and configure fit appearance."
         )
-        self.addWidget(self.fit_button)
-        self.addSeparator()
         self._updateFitMetadata()
 
         self.x_axis_button = QToolButton(self)
@@ -127,9 +125,6 @@ class TimeSeriesToolbar(QToolBar):
         self.x_axis_button.setMenu(self.x_axis_menu)
         self.x_axis_button.setCheckable(False)
         self._updateXAxisSelector(self.x_axis_actions["from_data"])
-        self.addWidget(self.x_axis_button)
-
-        self.addSeparator()
 
         self.y_axis_button = QToolButton(self)
         self.y_axis_button.setObjectName("tool_ts_y_axis")
@@ -187,9 +182,7 @@ class TimeSeriesToolbar(QToolBar):
         self.y_axis_button.setMenu(self.y_axis_menu)
         self.y_axis_button.setCheckable(False)
         self._updateYAxisSelector(self.y_axis_actions["from_data"])
-        self.addWidget(self.y_axis_button)
 
-        self.addSeparator()
         self.replica_button = SplitToolButton(
             icon=QIcon(":/icons/icons/replica.svg"),
             primary_checkable=True,
@@ -207,25 +200,12 @@ class TimeSeriesToolbar(QToolBar):
         self.replica_button.setSecondaryAccessibleDescription(
             "Open Replica settings."
         )
-        self.addWidget(self.replica_button)
-
-        self.addSeparator()
         self.plot_style_action = self._createAction(
             ":/icons/icons/plot_settings.svg",
             "Plot style",
             "Edit the style of the current time series",
             "action_ts_plot_style",
         )
-        self.addAction(self.plot_style_action)
-
-        spacer = QWidget(self)
-        spacer.setObjectName("timeSeriesToolbarSpacer")
-        spacer.setSizePolicy(
-            SIZE_POLICY_EXPANDING,
-            SIZE_POLICY_PREFERRED,
-        )
-        self.addWidget(spacer)
-
         self.appearance_action = self._createAction(
             ":/icons/icons/setting.svg",
             "Appearance",
@@ -238,6 +218,7 @@ class TimeSeriesToolbar(QToolBar):
             parent=self,
             object_name="tool_ts_plot_export",
             arrow_side=SplitToolButton.Left,
+            visual_role=SplitToolButton.Command,
         )
         self.plot_export_button.setIconSize(self.iconSize())
         self.plot_export_button.setPrimaryToolTip("Export plot")
@@ -262,6 +243,22 @@ class TimeSeriesToolbar(QToolBar):
             "Export the current time-series data",
             "action_ts_export_data",
         )
+
+        self.addAction(self.plot_style_action)
+        self.addSeparator()
+        self.addWidget(self.x_axis_button)
+        self.addWidget(self.y_axis_button)
+        self.addSeparator()
+        self.addWidget(self.fit_button)
+        self.addWidget(self.replica_button)
+
+        self._spacer_widget = QWidget(self)
+        self._spacer_widget.setObjectName("timeSeriesToolbarSpacer")
+        self._spacer_widget.setSizePolicy(
+            SIZE_POLICY_EXPANDING,
+            SIZE_POLICY_PREFERRED,
+        )
+        self.addWidget(self._spacer_widget)
 
         self.addAction(self.appearance_action)
         self.addSeparator()
@@ -382,26 +379,22 @@ class TimeSeriesToolbar(QToolBar):
         self.x_axis_button.setWhatsThis(tooltip)
         self.x_axis_button.setAccessibleName(f"Selected X-axis mode: {action.text()}")
 
-    def setSelectedYAxisMode(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True, series_custom_view=False, residual_custom_view=False):
+    def setSelectedYAxisMode(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True, custom_view=False):
         """Update the selected Y-axis mode without emitting a user-change signal."""
         self.refreshYAxisPresentation(
             mode, lower, upper, residual_lower, residual_upper, residual_active,
-            series_custom_view, residual_custom_view,
+            custom_view,
         )
 
-    def refreshYAxisPresentation(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True, series_custom_view=False, residual_custom_view=False):
-        """Refresh checked policy, icon, label, and tooltip from runtime Y state."""
+    def refreshYAxisPresentation(self, mode, lower=None, upper=None, residual_lower=None, residual_upper=None, residual_active=True, custom_view=False):
+        """Refresh checked policy and aggregate visible viewport presentation."""
         action = self.y_axis_actions[mode]
         if mode == "manual":
             self.setManualYAxisSummary(lower, upper, residual_lower, residual_upper, residual_active)
         previous = self.y_axis_group.blockSignals(True)
         action.setChecked(True)
         self.y_axis_group.blockSignals(previous)
-        self._updateYAxisSelector(
-            action,
-            series_custom_view=series_custom_view,
-            residual_custom_view=residual_custom_view,
-        )
+        self._updateYAxisSelector(action, custom_view=custom_view)
 
     def setManualYAxisSummary(self, lower, upper, residual_lower=None, residual_upper=None, residual_active=True):
         """Update Manual action text and metadata with its configured bounds."""
@@ -421,23 +414,19 @@ class TimeSeriesToolbar(QToolBar):
             f"Time series: {display(lower)} to {display(upper)}\n"
             f"Residuals: {residual_summary}"
         )
-        if action.isChecked():
-            self._updateYAxisSelector(action)
 
     def _yAxisActionTriggered(self, action):
         """Emit the requested policy; the controller owns presentation refresh."""
         self.yAxisModeChanged.emit(action.data())
 
-    def _updateYAxisSelector(self, action, *, series_custom_view=False, residual_custom_view=False):
-        """Render Y-axis presentation from policy plus independent viewport states."""
-        if series_custom_view:
+    def _updateYAxisSelector(self, action, *, custom_view=False):
+        """Render the aggregate visible Y-axis presentation for the selected policy."""
+        if custom_view:
             self.y_axis_button.setIcon(QIcon(":/icons/icons/y_axis_custom.svg"))
-            tooltip = f"Time series: Custom view\nBase policy: {action.text()}"
+            tooltip = f"Custom Y view\nBase policy: {action.text()}"
         else:
             self.y_axis_button.setIcon(action.icon())
             tooltip = action.toolTip()
-        if residual_custom_view:
-            tooltip += "\nResiduals: Custom view"
         self.y_axis_button.setText(action.text())
         self.y_axis_button.setToolTip(tooltip)
         self.y_axis_button.setStatusTip(tooltip)

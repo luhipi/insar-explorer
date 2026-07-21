@@ -20,6 +20,7 @@ from .ui.popups.manual_x_axis_popup import ManualXAxisPopup
 from .ui.popups.export_settings_popup import ExportSettingsPopup
 from .ui.popups.appearance_popup import AppearancePopup
 from .ui.popups.replica_popup import ReplicaPopup
+from .ui.widgets.split_tool_button import SplitButtonPopupHoverReconciler
 from .qt_compat import (
     RASTER_LAYER,
     VECTOR_LAYER,
@@ -36,6 +37,7 @@ from .time_series.style_schema import percent_to_alpha
 from .time_series.settings.model import (
     AppearanceSettings, AxisManualRange, EnsembleStyleSettings, ExportSettings,
     FitStyleSettings, ReplicaSettings, ResidualStyleSettings, SeriesStyleSettings,
+    XAxisSettings,
 )
 from .time_series.settings.persistence import build_legacy_plot_params
 
@@ -159,6 +161,7 @@ class GuiController(QObject):
         self.export_settings_popup = ExportSettingsPopup(self.ui)
         self.appearance_popup = AppearancePopup(self.ui)
         self.replica_popup = ReplicaPopup(self.ui)
+        self._installSplitButtonPopupHoverReconciliation()
         self._manual_y_axis_session = None
         self.time_series_style_controller = TimeSeriesStyleController()
         self.fit_style_controller = FitStyleController()
@@ -186,6 +189,20 @@ class GuiController(QObject):
         self.onLayerChanged()
 
         self.setVectorFields()
+
+    def _installSplitButtonPopupHoverReconciliation(self):
+        """Reconcile split-button hover whenever an associated popup closes."""
+        toolbar = self.ui.time_series_toolbar
+        mappings = (
+            (self.fit_popup, toolbar.fit_button),
+            (self.replica_popup, toolbar.replica_button),
+            (self.export_settings_popup, toolbar.plot_export_button),
+        )
+        self._split_button_popup_hover_reconcilers = []
+        for popup, split_button in mappings:
+            reconciler = SplitButtonPopupHoverReconciler(split_button, popup)
+            popup.installEventFilter(reconciler)
+            self._split_button_popup_hover_reconcilers.append(reconciler)
 
     def initializeUiParams(self):
         """Initialize code-created controls; migrated style controls live in the popup."""
@@ -1113,10 +1130,10 @@ class GuiController(QObject):
             self.choose_point_click_handler.plot_ts.settings_model.export
         )
 
-    def updateExportSettings(self, dpi, aspect_ratio, credit):
+    def updateExportSettings(self, dpi, aspect_ratio, include_attribution):
         """Normalize, commit, and persist one complete export settings value."""
         plotter = self.choose_point_click_handler.plot_ts
-        settings = ExportSettings.normalized(dpi, aspect_ratio, credit)
+        settings = ExportSettings.normalized(dpi, aspect_ratio, include_attribution)
         plotter.settings_model.replace_domain("export", settings)
         plotter.parms = build_legacy_plot_params(plotter.settings_model, plotter.parms)
         self.syncExportSettingsPopup()
@@ -1227,6 +1244,9 @@ class GuiController(QObject):
         if axis_name == "series_y":
             updated = replace(state, series_custom_view=True)
         elif axis_name == "residual_y":
+            if not self.choose_point_click_handler.plot_ts.plot_residuals_flag:
+                self._syncTimeSeriesYAxisControls(state.policy)
+                return
             updated = replace(state, residual_custom_view=True)
         else:
             return
@@ -1234,53 +1254,42 @@ class GuiController(QObject):
             self.time_series_settings.replace_domain("y_axis", updated)
         self._syncTimeSeriesYAxisControls(updated.policy)
 
-    def _handlePlotAutoRequest(self, axis_name):
-        """Translate pyqtgraph Auto into explicit From-data runtime policies."""
+    def _handlePlotAutoRequest(self):
+        """Reset the coordinated plot workspace to canonical From Data ranges."""
         plotter = self.choose_point_click_handler.plot_ts
-        if axis_name in {"x", "combined"}:
-            x_state = self.time_series_settings.x_axis
-            self.time_series_settings.replace_domain(
-                "x_axis", replace(x_state, policy="from_data", custom_view=False)
-            )
-        if axis_name in {"series_y", "combined"}:
-            y_state = self.time_series_settings.y_axis
-            self.time_series_settings.replace_domain(
-                "y_axis", replace(
-                    y_state, policy="from_data",
-                    series_custom_view=False, residual_custom_view=False,
-                )
-            )
-            self.time_series_y_axis_mode = "from_data"
-            self.residual_y_axis_mode = "from_data"
-        elif axis_name == "residual_y":
-            y_state = self.time_series_settings.y_axis
-            self.time_series_settings.replace_domain(
-                "y_axis", replace(
-                    y_state, policy="from_data",
-                    series_custom_view=False, residual_custom_view=False,
-                )
-            )
-            self.time_series_y_axis_mode = "from_data"
-            self.residual_y_axis_mode = "from_data"
+        if plotter.ax is None:
+            self._syncAxisToolbarControls()
+            return
 
         with plotter.axisViewUpdateGuard():
-            if axis_name in {"x", "combined"} and plotter.ax is not None:
-                plotter.setXlims(ax=plotter.ax)
-            if axis_name in {"series_y", "residual_y", "combined"} and plotter.ax is not None:
-                plotter.setYlims(ax=plotter.ax, parms=plotter.parms["time series plot"])
-            if axis_name in {"residual_y", "combined"} and plotter.ax_residuals is not None:
-                plotter.setYlims(ax=plotter.ax_residuals, parms=plotter.parms["residual plot"])
-        self._syncTimeSeriesXAxisControls()
-        self._syncTimeSeriesYAxisControls(self.time_series_settings.y_axis.policy)
-        plotter._draw()
+            x_state = self.time_series_settings.x_axis
+            self.time_series_settings.replace_domain(
+                "x_axis", replace(
+                    x_state,
+                    start_policy="from_data",
+                    end_policy="from_data",
+                    custom_view=False,
+                )
+            )
+            y_state = self.time_series_settings.y_axis
+            updated_y = y_state.select_all_from_data()
+            if updated_y != y_state:
+                self.time_series_settings.replace_domain("y_axis", updated_y)
+
+            plotter.resetSharedXAxisFromData()
+            plotter.setYlims(ax=plotter.ax)
+            if plotter.ax_residuals is not None:
+                plotter.setYlims(ax=plotter.ax_residuals)
+            self._syncTimeSeriesXAxisControls()
+            self._syncTimeSeriesYAxisControls(updated_y.policy)
+            plotter._draw()
 
     def _restoreTimeSeriesXAxisMode(self):
         """Reset the session-only X-axis state and synchronize the toolbar."""
         current = self.time_series_settings.x_axis
         self.time_series_settings.replace_domain(
             "x_axis", replace(
-                current, policy="from_data", manual_start=None, manual_end=None,
-                custom_view=False,
+                current, start_policy="from_data", end_policy="from_data", custom_view=False,
             )
         )
         self._syncTimeSeriesXAxisControls()
@@ -1302,18 +1311,36 @@ class GuiController(QObject):
         return True
 
     def _applyTimeSeriesXAxisMode(self, mode, refresh=True):
-        """Apply one session-local X-axis policy without rebuilding plot graphics."""
+        """Apply Auto or restore the last committed manual-editor configuration."""
         state = self.time_series_settings.x_axis
-        if mode == "manual" and (state.manual_start is None or state.manual_end is None):
-            self._syncTimeSeriesXAxisControls()
-            if refresh:
-                self.showManualXAxisPopup()
-            return False
         if mode not in {"from_data", "manual"}:
             mode = "from_data"
-        self.time_series_settings.replace_domain(
-            "x_axis", replace(state, policy=mode, custom_view=False)
-        )
+        if mode == "from_data":
+            updated = replace(
+                state, start_policy="from_data", end_policy="from_data", custom_view=False
+            )
+        else:
+            if (
+                state.manual_editor_start_policy == "from_data"
+                and state.manual_editor_end_policy == "from_data"
+            ):
+                self._syncTimeSeriesXAxisControls()
+                if refresh:
+                    self.showManualXAxisPopup()
+                return False
+            updated = replace(
+                state,
+                start_policy=state.manual_editor_start_policy,
+                end_policy=state.manual_editor_end_policy,
+                custom_view=False,
+            )
+            plotter = self.choose_point_click_handler.plot_ts
+            if plotter.resolveXAxisRange(updated) is None:
+                self._syncTimeSeriesXAxisControls()
+                if refresh:
+                    self.showManualXAxisPopup()
+                return False
+        self.time_series_settings.replace_domain("x_axis", updated)
         self._syncTimeSeriesXAxisControls()
         if refresh:
             self._applyXAxisLimitsToExistingPlot()
@@ -1334,10 +1361,11 @@ class GuiController(QObject):
         state = self.time_series_settings.x_axis
         viewport = plotter.captureViewport()
         self._manual_x_axis_session = {"x_axis": state, "viewport": viewport}
-        data_start, data_end = plotter.availableDateRange()
-        start = state.manual_start or data_start
-        end = state.manual_end or data_end
-        self.manual_x_axis_popup.openForRange(start, end)
+        data_start, data_end = plotter.resolveXAxisRange(XAxisSettings())
+        self.manual_x_axis_popup.openForBounds(
+            state.manual_start, state.manual_end, data_start, data_end,
+            state.manual_editor_start_policy, state.manual_editor_end_policy,
+        )
         self.manual_x_axis_popup.adjustSize()
         button = self.ui.time_series_toolbar.x_axis_button
         top_left = button.mapToGlobal(QPoint(0, 0))
@@ -1348,33 +1376,55 @@ class GuiController(QObject):
         )
         self.manual_x_axis_popup.show(); self.manual_x_axis_popup.raise_(); self.manual_x_axis_popup.activateWindow()
 
-    def previewManualXAxisRange(self, start, end):
-        """Preview a valid draft range on existing graphics without committing it."""
-        if self._manual_x_axis_session is None or start >= end:
-            return
-        plotter = self.choose_point_click_handler.plot_ts
-        if plotter.ax is None:
-            return
-        plotter.applyXAxisViewport(start, end, draw=True)
-        self._manual_x_axis_session["preview_range"] = (start, end)
-
-    def applyManualXAxisRange(self, start, end):
-        """Commit the previewed dates and activate Manual without rerendering graphics."""
-        if start >= end:
-            return
-        session = self._manual_x_axis_session
-        plotter = self.choose_point_click_handler.plot_ts
-        if session is None or session.get("preview_range") != (start, end):
-            if plotter.ax is not None:
-                plotter.applyXAxisViewport(start, end, draw=True)
-        state = self.time_series_settings.x_axis
-        self.time_series_settings.replace_domain(
-            "x_axis", replace(
-                state, policy="manual", manual_start=start, manual_end=end, custom_view=False
-            )
+    def _draftXAxisState(self, start_policy, end_policy, manual_start, manual_end):
+        """Build and validate one per-bound X-axis draft against current data."""
+        if start_policy not in {"from_data", "manual"} or end_policy not in {"from_data", "manual"}:
+            return None, None
+        state = replace(
+            self.time_series_settings.x_axis,
+            start_policy=start_policy, end_policy=end_policy,
+            manual_start=manual_start, manual_end=manual_end, custom_view=False,
         )
+        plotter = self.choose_point_click_handler.plot_ts
+        if plotter.dates is None or len(plotter.dates) == 0:
+            return state, None
+        return state, plotter.resolveXAxisRange(state)
+
+    def previewManualXAxisRange(
+        self, start_policy, end_policy, manual_start, manual_end,
+    ):
+        """Preview one valid per-bound draft without committing runtime state."""
+        if self._manual_x_axis_session is None:
+            return
+        state, effective = self._draftXAxisState(
+            start_policy, end_policy, manual_start, manual_end
+        )
+        plotter = self.choose_point_click_handler.plot_ts
+        if state is None or effective is None or plotter.ax is None:
+            return
+        plotter.applyXAxisViewport(*effective, draw=True)
+        self._manual_x_axis_session["preview_range"] = effective
+
+    def applyManualXAxisRange(
+        self, start_policy, end_policy, manual_start, manual_end,
+    ):
+        """Commit independent X-bound policies while retaining manual drafts."""
+        if self._manual_x_axis_session is None:
+            return
+        state, effective = self._draftXAxisState(
+            start_policy, end_policy, manual_start, manual_end
+        )
+        if state is None or effective is None:
+            return
+        state = replace(
+            state,
+            manual_editor_start_policy=start_policy,
+            manual_editor_end_policy=end_policy,
+        )
+        self.time_series_settings.replace_domain("x_axis", state)
         self._manual_x_axis_session = None
         self._syncTimeSeriesXAxisControls()
+        self._applyXAxisLimitsToExistingPlot()
 
     def captureCurrentManualXAxisView(self):
         """Commit the complete visible viewport without snapping or changing it."""
@@ -1385,7 +1435,9 @@ class GuiController(QObject):
         state = self.time_series_settings.x_axis
         self.time_series_settings.replace_domain(
             "x_axis", replace(
-                state, policy="manual", manual_start=start, manual_end=end, custom_view=False
+                state, start_policy="manual", end_policy="manual",
+                manual_editor_start_policy="manual", manual_editor_end_policy="manual",
+                manual_start=start, manual_end=end, custom_view=False
             )
         )
         self._manual_x_axis_session = None
@@ -1417,49 +1469,60 @@ class GuiController(QObject):
                 )
 
     def _restoreTimeSeriesYAxisMode(self):
-        """Restore the selected Y-axis mode after UI or plotter lifecycle changes."""
+        """Restore axis-local effective Y displays after plotter lifecycle changes."""
         plotter = self.choose_point_click_handler.plot_ts
-        plotter.manual_y_lower = self.time_series_manual_y_lower
-        plotter.manual_y_upper = self.time_series_manual_y_upper
-        self._applyTimeSeriesYAxisMode(self.time_series_y_axis_mode, refresh=False)
-
-    def _syncTimeSeriesYAxisControls(self, mode):
-        """Synchronize the code-created toolbar from shared Y-axis state."""
-        state = self.time_series_settings.y_axis
-        self.ui.time_series_toolbar.setSelectedYAxisMode(
-            mode,
-            self.time_series_manual_y_lower,
-            self.time_series_manual_y_upper,
-            self.residual_manual_y_lower,
-            self.residual_manual_y_upper,
-            bool(self.choose_point_click_handler.plot_ts.plot_residuals_flag),
-            state.series_custom_view,
-            state.residual_custom_view,
-        )
-
-    def _applyTimeSeriesYAxisMode(self, mode, refresh=True):
-        """Apply one shared Y-axis policy to both plot axes."""
-        if mode not in {"from_data", "symmetric", "adaptive", "manual"}:
-            mode = "from_data"
-        self.time_series_y_axis_mode = mode
-        self.residual_y_axis_mode = mode
-        current_axis = self.time_series_settings.y_axis
-        self.time_series_settings.replace_domain(
-            "y_axis", replace(
-                current_axis,
-                policy=mode,
-                series_custom_view=False,
-                residual_custom_view=False,
-            )
-        )
-        plotter = self.choose_point_click_handler.plot_ts
-        plotter.plot_y_axis = mode
-        plotter.residual_y_axis_mode = mode
         plotter.manual_y_lower = self.time_series_manual_y_lower
         plotter.manual_y_upper = self.time_series_manual_y_upper
         plotter.residual_manual_y_lower = self.residual_manual_y_lower
         plotter.residual_manual_y_upper = self.residual_manual_y_upper
-        self._syncTimeSeriesYAxisControls(mode)
+        self._syncTimeSeriesYAxisControls(self.time_series_settings.y_axis.policy)
+
+    def _syncTimeSeriesYAxisControls(self, mode):
+        """Synchronize the toolbar from policy and aggregate visible custom state."""
+        state = self.time_series_settings.y_axis
+        residual_visible = bool(
+            self.choose_point_click_handler.plot_ts.plot_residuals_flag
+        )
+        if state.policy in {"symmetric", "adaptive"}:
+            presentation_mode = state.policy
+        else:
+            presentation_mode = state.policy_for_effective_display(residual_visible)
+        self.ui.time_series_toolbar.setSelectedYAxisMode(
+            presentation_mode,
+            self.time_series_manual_y_lower,
+            self.time_series_manual_y_upper,
+            self.residual_manual_y_lower,
+            self.residual_manual_y_upper,
+            residual_visible,
+            state.has_custom_view(residual_visible),
+        )
+
+    def _applyTimeSeriesYAxisMode(self, mode, refresh=True):
+        """Apply an aggregate Y mode while preserving axis-local saved ranges."""
+        if mode not in {"from_data", "symmetric", "adaptive", "manual"}:
+            mode = "from_data"
+        plotter = self.choose_point_click_handler.plot_ts
+        residual_available = plotter.ax_residuals is not None
+        current_axis = self.time_series_settings.y_axis
+        if mode == "manual":
+            updated_axis = current_axis.select_manual_for_visible_axes(
+                residual_available
+            )
+        elif mode == "from_data":
+            updated_axis = current_axis.select_from_data_for_visible_axes(
+                residual_available
+            )
+        else:
+            updated_axis = replace(
+                current_axis, policy=mode,
+                series_custom_view=False, residual_custom_view=False,
+            )
+        self.time_series_settings.replace_domain("y_axis", updated_axis)
+        plotter.manual_y_lower = self.time_series_manual_y_lower
+        plotter.manual_y_upper = self.time_series_manual_y_upper
+        plotter.residual_manual_y_lower = self.residual_manual_y_lower
+        plotter.residual_manual_y_upper = self.residual_manual_y_upper
+        self._syncTimeSeriesYAxisControls(updated_axis.policy)
         if refresh and plotter.ax is not None:
             with plotter.axisViewUpdateGuard():
                 plotter.setYlims(ax=plotter.ax, parms=plotter.parms["time series plot"])
@@ -1467,8 +1530,40 @@ class GuiController(QObject):
                     plotter.setYlims(ax=plotter.ax_residuals, parms=plotter.parms["residual plot"])
             plotter._draw()
 
+    def _hasValidConfiguredManualYAxis(self):
+        """Return whether relevant stored Y bounds are configured and resolvable."""
+        plotter = self.choose_point_click_handler.plot_ts
+        if plotter.ax is None:
+            return False
+        state = self.time_series_settings.y_axis
+        residual_available = plotter.ax_residuals is not None
+        if not state.has_configured_manual(residual_available):
+            return False
+        if plotter.resolveManualYAxisRange(
+            ax=plotter.ax, manual=state.series_manual
+        ) is None:
+            return False
+        if residual_available and plotter.resolveManualYAxisRange(
+            ax=plotter.ax_residuals, manual=state.residual_manual
+        ) is None:
+            return False
+        return True
+
     def setTimeSeriesYAxisMode(self, mode):
         """Apply a toolbar-selected shared Y-axis policy immediately."""
+        if mode == "manual":
+            plotter = self.choose_point_click_handler.plot_ts
+            if plotter.ax is None:
+                self._syncTimeSeriesYAxisControls(
+                    self.time_series_settings.y_axis.policy
+                )
+                return
+            if not self._hasValidConfiguredManualYAxis():
+                self._syncTimeSeriesYAxisControls(
+                    self.time_series_settings.y_axis.policy
+                )
+                self.showManualYAxisPopup()
+                return
         self._applyTimeSeriesYAxisMode(mode)
         messages = {
             "from_data": "Y-axis range set from data.",
@@ -1481,18 +1576,35 @@ class GuiController(QObject):
     def showManualYAxisPopup(self):
         """Open the editor and capture both policies and viewports transactionally."""
         plotter = self.choose_point_click_handler.plot_ts
+        if plotter.ax is None:
+            self._syncTimeSeriesYAxisControls(self.time_series_settings.y_axis.policy)
+            return
+        if self._manual_y_axis_session is not None:
+            self.manual_y_axis_popup.show()
+            self.manual_y_axis_popup.raise_()
+            self.manual_y_axis_popup.activateWindow()
+            return
+        series_data = plotter.dataYAxisRange(plotter.ax)
+        if series_data is None:
+            self._syncTimeSeriesYAxisControls(self.time_series_settings.y_axis.policy)
+            return
+        residual_available = plotter.ax_residuals is not None
+        residual_data = (
+            plotter.dataYAxisRange(plotter.ax_residuals) if residual_available else None
+        )
+        if residual_available and residual_data is None:
+            self._syncTimeSeriesYAxisControls(self.time_series_settings.y_axis.policy)
+            return
         viewport = plotter.captureViewport()
         self._manual_y_axis_session = {
             "y_axis": self.time_series_settings.y_axis,
             "viewport": viewport,
         }
-        series_view = viewport.get("main", ((0, 1), tuple(plotter.ax.viewRange()[1])))[1]
-        residual_view = viewport.get("residual", ((0, 1), (0, 1)))[1]
         popup = self.manual_y_axis_popup
         popup.openForBounds(
-            (self.time_series_manual_y_lower, self.time_series_manual_y_upper),
-            (self.residual_manual_y_lower, self.residual_manual_y_upper),
-            series_view, residual_view, plotter.ax_residuals is not None,
+            self.time_series_settings.y_axis.series_manual,
+            self.time_series_settings.y_axis.residual_manual,
+            series_data, residual_data or (0.0, 1.0), residual_available,
         )
         popup.adjustSize()
         button = self.ui.time_series_toolbar.y_axis_button
@@ -1504,7 +1616,7 @@ class GuiController(QObject):
 
 
     def captureCurrentManualYAxisView(self, axis_name):
-        """Commit the visible Y-range as session-local Manual state and close."""
+        """Commit one visible Y viewport as Manual without touching its sibling."""
         if self._manual_y_axis_session is None:
             return
         plotter = self.choose_point_click_handler.plot_ts
@@ -1512,43 +1624,85 @@ class GuiController(QObject):
         if axis is None:
             return
         lower, upper = (float(value) for value in axis.viewRange()[1])
-        if axis_name == "residual":
-            self.residual_manual_y_lower = lower
-            self.residual_manual_y_upper = upper
-            axis_state = self.time_series_settings.y_axis
-            self.time_series_settings.replace_domain(
-                "y_axis", replace(axis_state, residual_manual=AxisManualRange(lower, upper))
-            )
-        else:
-            self.time_series_manual_y_lower = lower
-            self.time_series_manual_y_upper = upper
-            axis_state = self.time_series_settings.y_axis
-            self.time_series_settings.replace_domain(
-                "y_axis", replace(axis_state, series_manual=AxisManualRange(lower, upper))
-            )
+        residual_available = plotter.ax_residuals is not None
+        updated = self.time_series_settings.y_axis.commit_current_view(
+            axis_name, lower, upper, residual_available
+        )
+        self.time_series_settings.replace_domain("y_axis", updated)
         self._manual_y_axis_session = None
         self.manual_y_axis_popup.closeAfterCommit()
-        self._applyTimeSeriesYAxisMode("manual", refresh=True)
+        self._syncTimeSeriesYAxisControls(updated.policy)
+        self.msg_signal.emit("Current Y-axis view saved as Manual.", "i", 0)
 
     def previewManualYAxisRange(self, axis_name, lower, upper):
-        """Preview one tab without changing the other axis or persisted settings."""
-        if self._manual_y_axis_session is not None:
-            self.choose_point_click_handler.plot_ts.setManualYRange(axis_name, lower, upper)
+        """Preview the complete draft through the same paths used by Apply."""
+        if self._manual_y_axis_session is None:
+            return
+        popup = self.manual_y_axis_popup
+        series_lower, series_upper = popup.bounds("series")
+        residual_lower, residual_upper = popup.bounds("residual")
+        series_retained = popup.retainedBounds("series")
+        residual_retained = popup.retainedBounds("residual")
+        plotter = self.choose_point_click_handler.plot_ts
+        plotter.setManualYRanges(
+            AxisManualRange(
+                series_lower, series_upper, *series_retained
+            ),
+            AxisManualRange(
+                residual_lower, residual_upper, *residual_retained
+            ),
+            plotter.ax_residuals is not None,
+        )
 
     def applyManualYAxisRange(
         self, series_lower, series_upper, residual_lower, residual_upper,
+        series_retained_lower, series_retained_upper,
+        residual_retained_lower, residual_retained_upper,
         series_changed, residual_changed,
     ):
-        """Persist the editor transaction and activate the shared Manual policy."""
-        # Apply is a commit even when the user accepts viewport-seeded Series values.
-        self.time_series_manual_y_lower = series_lower
-        self.time_series_manual_y_upper = series_upper
+        """Commit editor memory and activate Manual or truthful From Data mode."""
+        state = self.time_series_settings.y_axis
+        state = replace(
+            state,
+            series_manual=AxisManualRange(
+                series_lower, series_upper,
+                series_retained_lower, series_retained_upper,
+            ),
+        )
         if residual_changed:
-            self.residual_manual_y_lower = residual_lower
-            self.residual_manual_y_upper = residual_upper
-
+            state = replace(
+                state,
+                residual_manual=AxisManualRange(
+                    residual_lower, residual_upper,
+                    residual_retained_lower, residual_retained_upper,
+                ),
+            )
+        residual_available = self.choose_point_click_handler.plot_ts.ax_residuals is not None
+        state = replace(
+            state,
+            series_display_mode=(
+                "manual" if series_lower is not None or series_upper is not None
+                else "from_data"
+            ),
+        )
+        if residual_available:
+            state = replace(
+                state, residual_display_mode=(
+                    "manual" if residual_lower is not None or residual_upper is not None
+                    else "from_data"
+                ),
+            )
+        resulting_policy = state.policy_for_effective_display(residual_available)
+        self.time_series_settings.replace_domain(
+            "y_axis", replace(state, policy=resulting_policy)
+        )
         self._manual_y_axis_session = None
-        self._applyTimeSeriesYAxisMode("manual", refresh=True)
+        self._applyTimeSeriesYAxisMode(resulting_policy, refresh=True)
+        message = (
+            "Y-axis range set from data." if resulting_policy == "from_data"
+            else "Stored manual Y-axis ranges applied."
+        )
+        self.msg_signal.emit(message, "i", 0)
 
     def cancelManualYAxisRange(self):
         """Restore both original policies and all captured X/Y view ranges."""
@@ -1736,7 +1890,10 @@ class GuiController(QObject):
         y_axis = self.time_series_settings.y_axis
         return (
             not y_axis.series_custom_view
-            and y_axis.policy in {"from_data", "symmetric", "adaptive"}
+            and (
+                y_axis.policy in {"symmetric", "adaptive"}
+                or y_axis.series_display_mode == "from_data"
+            )
         )
 
     def _refreshReplicaGraphicsAndYAxis(self):

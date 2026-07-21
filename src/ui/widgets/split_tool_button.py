@@ -1,19 +1,32 @@
 """Reusable joined split-button control for compact toolbars."""
 
-from qgis.PyQt.QtCore import QSize, QTimer, pyqtSignal
+from qgis.PyQt.QtCore import QObject, QSize, QTimer, pyqtSignal
 from qgis.PyQt.QtGui import QCursor, QIcon
 from qgis.PyQt.QtWidgets import QApplication, QHBoxLayout, QToolButton, QWidget
 
-from ...qt_compat import DOWN_ARROW, EVENT_ENTER, EVENT_LEAVE
+from ...qt_compat import (
+    DOWN_ARROW,
+    EVENT_CLOSE,
+    EVENT_ENTER,
+    EVENT_HIDE,
+    EVENT_LEAVE,
+)
 
 
 SPLIT_TOOL_BUTTON_STYLESHEET = """
 QToolButton[splitPart="primary"],
 QToolButton[splitPart="secondary"] {
-    border: 1px solid transparent;
-    background: transparent;
     margin: 0;
     padding: 0;
+}
+QToolButton[visualRole="flat"] {
+    border: 1px solid transparent;
+    background: transparent;
+}
+QToolButton[visualRole="command"] {
+    border: 1px solid palette(mid);
+    background-color: palette(button);
+    color: palette(button-text);
 }
 QToolButton[splitPosition="left"] {
     border-top-left-radius: 3px;
@@ -22,17 +35,36 @@ QToolButton[splitPosition="left"] {
     border-bottom-right-radius: 0;
 }
 QToolButton[splitPosition="right"] {
-    border-left-color: palette(midlight);
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     border-top-right-radius: 3px;
     border-bottom-right-radius: 3px;
 }
-QToolButton[splitPart="primary"][splitHover="true"],
-QToolButton[splitPart="secondary"][splitHover="true"] {
+QToolButton[visualRole="flat"][splitPosition="right"] {
+    border-left-color: palette(midlight);
+}
+QToolButton[visualRole="flat"][splitPart="primary"][splitHover="true"],
+QToolButton[visualRole="flat"][splitPart="secondary"][splitHover="true"] {
     background-color: palette(alternate-base);
     border-top-color: palette(mid);
     border-bottom-color: palette(mid);
+}
+QToolButton[visualRole="command"][splitHover="true"] {
+    background-color: palette(alternate-base);
+}
+QToolButton[visualRole="command"]:focus {
+    border-color: palette(highlight);
+}
+QToolButton[visualRole="command"]:disabled {
+    background-color: palette(window);
+    color: palette(mid);
+    border-color: palette(midlight);
+}
+QToolButton[visualRole="command"][splitPosition="left"] {
+    border-right: 0;
+}
+QToolButton[visualRole="command"][splitPosition="right"] {
+    border-left: 1px solid palette(mid);
 }
 QToolButton[splitPosition="left"][splitHover="true"] {
     border-left-color: palette(mid);
@@ -50,6 +82,19 @@ QToolButton[splitPart="primary"]:checked[splitHover="true"] {
     background-color: palette(highlight);
     color: palette(highlighted-text);
 }
+QToolButton[visualRole="command"][splitPart]:pressed:enabled {
+    background-color: palette(mid);
+    border-top-color: palette(dark);
+    border-bottom-color: palette(dark);
+}
+QToolButton[visualRole="command"][splitPosition="left"]:pressed:enabled {
+    border-left-color: palette(dark);
+    border-right: 0;
+}
+QToolButton[visualRole="command"][splitPosition="right"]:pressed:enabled {
+    border-left: 1px solid palette(dark);
+    border-right-color: palette(dark);
+}
 """
 
 
@@ -63,6 +108,9 @@ class SplitToolButton(QWidget):
     Left = "left"
     Right = "right"
 
+    Flat = "flat"
+    Command = "command"
+
     PRIMARY_WIDTH = 28
     SECONDARY_WIDTH = 15
     TOTAL_WIDTH = PRIMARY_WIDTH + SECONDARY_WIDTH
@@ -75,15 +123,23 @@ class SplitToolButton(QWidget):
         parent=None,
         object_name="split_tool_button",
         arrow_side=Right,
+        visual_role=Flat,
     ):
         """Build a compact joined control with independent action regions."""
         if arrow_side not in (self.Left, self.Right):
             raise ValueError(
                 "arrow_side must be SplitToolButton.Left or SplitToolButton.Right"
             )
+        if visual_role not in (self.Flat, self.Command):
+            raise ValueError(
+                "visual_role must be SplitToolButton.Flat or "
+                "SplitToolButton.Command"
+            )
 
         super().__init__(parent)
         self.arrow_side = arrow_side
+        self.visual_role = visual_role
+        self.setProperty("visualRole", visual_role)
         self.setObjectName(object_name)
         self.setFixedSize(self.TOTAL_WIDTH, self.HEIGHT)
 
@@ -94,8 +150,9 @@ class SplitToolButton(QWidget):
         self.primary_button = QToolButton(self)
         self.primary_button.setObjectName(f"{object_name}_primary")
         self.primary_button.setProperty("splitPart", "primary")
+        self.primary_button.setProperty("visualRole", visual_role)
         self.primary_button.setCheckable(bool(primary_checkable))
-        self.primary_button.setAutoRaise(True)
+        self.primary_button.setAutoRaise(visual_role == self.Flat)
         self.primary_button.setFixedSize(self.PRIMARY_WIDTH, self.HEIGHT)
         if icon is not None:
             self.primary_button.setIcon(icon if isinstance(icon, QIcon) else QIcon(icon))
@@ -103,14 +160,15 @@ class SplitToolButton(QWidget):
         self.secondary_button = QToolButton(self)
         self.secondary_button.setObjectName(f"{object_name}_secondary")
         self.secondary_button.setProperty("splitPart", "secondary")
+        self.secondary_button.setProperty("visualRole", visual_role)
         self.secondary_button.setCheckable(False)
-        self.secondary_button.setAutoRaise(True)
+        self.secondary_button.setAutoRaise(visual_role == self.Flat)
         self.secondary_button.setArrowType(DOWN_ARROW)
         self.secondary_button.setFixedSize(self.SECONDARY_WIDTH, self.HEIGHT)
 
         self._hover_reconcile_timer = QTimer(self)
         self._hover_reconcile_timer.setSingleShot(True)
-        self._hover_reconcile_timer.timeout.connect(self._reconcileUnifiedHover)
+        self._hover_reconcile_timer.timeout.connect(self.reconcileHoverFromCursor)
 
         self.secondary_button.setProperty("splitChecked", False)
         for button in (self.primary_button, self.secondary_button):
@@ -136,6 +194,10 @@ class SplitToolButton(QWidget):
         self.primary_button.toggled.connect(self._onPrimaryToggled)
         self.secondary_button.clicked.connect(self.secondaryTriggered.emit)
 
+    def visualRole(self):
+        """Return the configured visual role."""
+        return self.visual_role
+
     def eventFilter(self, watched, event):
         """Keep hover presentation unified while crossing child boundaries."""
         if watched in (self.primary_button, self.secondary_button):
@@ -145,8 +207,8 @@ class SplitToolButton(QWidget):
                 self._hover_reconcile_timer.start(0)
         return super().eventFilter(watched, event)
 
-    def _reconcileUnifiedHover(self):
-        """Synchronize hover with the widget currently under the cursor."""
+    def reconcileHoverFromCursor(self):
+        """Recompute shared hover from the widget currently under the cursor."""
         widget = QApplication.widgetAt(QCursor.pos())
         hovered = (
             self.isVisible()
@@ -261,3 +323,18 @@ class SplitToolButton(QWidget):
         """Clear shared hover when neither action region remains enabled."""
         if not self.primary_button.isEnabled() and not self.secondary_button.isEnabled():
             self._setUnifiedHover(False)
+
+class SplitButtonPopupHoverReconciler(QObject):
+    """Reconcile one split button after an associated popup disappears."""
+
+    def __init__(self, split_button, parent=None):
+        """Observe popup lifecycle events for ``split_button``."""
+        super().__init__(parent)
+        self._split_button = split_button
+
+    def eventFilter(self, watched, event):
+        """Schedule cursor-based hover reconciliation after hide or close."""
+        if event.type() in (EVENT_HIDE, EVENT_CLOSE):
+            QTimer.singleShot(0, self._split_button.reconcileHoverFromCursor)
+        return super().eventFilter(watched, event)
+

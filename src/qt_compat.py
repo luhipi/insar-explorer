@@ -35,6 +35,8 @@ def _enum_value(owner, enum_name, value_name, legacy_name=None):
 # QEvent enums
 EVENT_ENTER = _enum_value(QEvent, "Type", "Enter")
 EVENT_LEAVE = _enum_value(QEvent, "Type", "Leave")
+EVENT_HIDE = _enum_value(QEvent, "Type", "Hide")
+EVENT_CLOSE = _enum_value(QEvent, "Type", "Close")
 
 # QtCore.Qt enums
 BOTTOM_DOCK_WIDGET_AREA = _enum_value(Qt, "DockWidgetArea", "BottomDockWidgetArea")
@@ -45,6 +47,7 @@ YELLOW = _enum_value(Qt, "GlobalColor", "yellow")
 RED = _enum_value(Qt, "GlobalColor", "red")
 WAIT_CURSOR = _enum_value(Qt, "CursorShape", "WaitCursor")
 LEFT_MOUSE_BUTTON = _enum_value(Qt, "MouseButton", "LeftButton")
+KEY_SPACE = _enum_value(Qt, "Key", "Key_Space")
 RIGHT_MOUSE_BUTTON = _enum_value(Qt, "MouseButton", "RightButton")
 DOWN_ARROW = _enum_value(Qt, "ArrowType", "DownArrow")
 ITEM_IS_EDITABLE = _enum_value(Qt, "ItemFlag", "ItemIsEditable")

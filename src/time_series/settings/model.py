@@ -8,8 +8,9 @@ from typing import Any, Callable, ClassVar, Dict, List, Optional
 
 from ..style_schema import (
     FIT_LINE_STYLE_DEFAULT, FIT_LINE_WIDTH_DEFAULT, FIT_LINE_WIDTH_RANGE,
-    LINE_WIDTH_RANGE, MARKER_SIZE_RANGE, RESIDUAL_LINE_WIDTH_RANGE,
-    RESIDUAL_MARKER_SIZE_RANGE, normalize_alpha, normalize_color,
+    LINE_WIDTH_RANGE, MARKER_SIZE_RANGE, RESIDUAL_DEFAULT_COLOR,
+    RESIDUAL_LINE_WIDTH_RANGE, RESIDUAL_MARKER_SIZE_RANGE, normalize_alpha,
+    normalize_color,
     normalize_fit_line_style, normalize_line_style, normalize_marker,
     normalize_number, normalize_residual_line_style, normalize_residual_marker,
 )
@@ -93,12 +94,12 @@ class ResidualStyleSettings:
     """Persistent defaults for residual series."""
 
     marker: str = "o"
-    marker_color: str = "#d62728"
+    marker_color: str = RESIDUAL_DEFAULT_COLOR
     marker_edge_color: str = "black"
     marker_size: float = 5.0
     marker_alpha: float = 0.8
     line_style: str = ""
-    line_color: str = "#1f77b4"
+    line_color: str = RESIDUAL_DEFAULT_COLOR
     line_width: float = 1.0
     line_alpha: float = 0.8
 
@@ -108,12 +109,12 @@ class ResidualStyleSettings:
         values = params.get("residual plot", {}) if isinstance(params, dict) else {}
         return cls(
             marker=normalize_residual_marker(values.get("marker"), "o"),
-            marker_color=normalize_color(values.get("marker color"), "#d62728"),
+            marker_color=normalize_color(values.get("marker color"), RESIDUAL_DEFAULT_COLOR),
             marker_edge_color=normalize_color(values.get("marker edge color"), "black"),
             marker_size=normalize_number(values.get("marker size"), RESIDUAL_MARKER_SIZE_RANGE, 5.0),
             marker_alpha=normalize_alpha(values.get("marker alpha"), 0.8),
             line_style=normalize_residual_line_style(values.get("line style"), ""),
-            line_color=normalize_color(values.get("line color"), "#1f77b4"),
+            line_color=normalize_color(values.get("line color"), RESIDUAL_DEFAULT_COLOR),
             line_width=normalize_number(values.get("line width"), RESIDUAL_LINE_WIDTH_RANGE, 1.0),
             line_alpha=normalize_alpha(values.get("line alpha"), 0.8),
         )
@@ -185,10 +186,24 @@ class ReplicaSettings:
 
 @dataclass(frozen=True)
 class AxisManualRange:
-    """Optional lower and upper limits for one manual axis."""
+    """Session-only Y editor policies and retained numeric bound values.
+
+    ``lower`` and ``upper`` are the active editor endpoints: ``None`` means
+    Auto and a finite number means Manual.  ``retained_lower`` and
+    ``retained_upper`` preserve the last numeric draft even while the
+    corresponding endpoint is Auto.
+    """
 
     lower: Optional[float] = None
     upper: Optional[float] = None
+    retained_lower: Optional[float] = None
+    retained_upper: Optional[float] = None
+
+    def __post_init__(self):
+        if self.lower is not None and self.retained_lower is None:
+            object.__setattr__(self, "retained_lower", self.lower)
+        if self.upper is not None and self.retained_upper is None:
+            object.__setattr__(self, "retained_upper", self.upper)
 
 
 @dataclass(frozen=True)
@@ -198,18 +213,163 @@ class YAxisSettings:
     policy: str = "from_data"
     series_manual: AxisManualRange = field(default_factory=AxisManualRange)
     residual_manual: AxisManualRange = field(default_factory=AxisManualRange)
+    series_display_mode: str = "from_data"
+    residual_display_mode: str = "from_data"
     series_custom_view: bool = False
     residual_custom_view: bool = False
 
+    def relevant_manual_ranges(self, residual_available=False):
+        """Return the editor ranges that participate in the active Y policy."""
+        ranges = (self.series_manual,)
+        if residual_available:
+            ranges += (self.residual_manual,)
+        return ranges
 
-@dataclass(frozen=True)
+    def has_configured_manual(self, residual_available=False):
+        """Return whether any currently relevant endpoint is explicitly Manual."""
+        return any(
+            manual.lower is not None or manual.upper is not None
+            for manual in self.relevant_manual_ranges(residual_available)
+        )
+
+    def policy_for_manual_editor(self, residual_available=False):
+        """Return the truthful aggregate policy for the current editor state."""
+        return "manual" if self.has_configured_manual(residual_available) else "from_data"
+
+    def has_custom_view(self, residual_available=False):
+        """Return whether any currently visible Y axis has a custom viewport."""
+        return self.series_custom_view or (
+            residual_available and self.residual_custom_view
+        )
+
+    def display_mode_for_axis(self, axis_name):
+        """Return the effective saved-range/display selection for one Y axis."""
+        if axis_name == "series_y":
+            return self.series_display_mode
+        if axis_name == "residual_y":
+            return self.residual_display_mode
+        raise ValueError(f"Unsupported Y axis: {axis_name}")
+
+    def policy_for_effective_display(self, residual_available=False):
+        """Return the aggregate toolbar policy from currently visible local modes."""
+        modes = (self.series_display_mode,)
+        if residual_available:
+            modes += (self.residual_display_mode,)
+        return "manual" if "manual" in modes else "from_data"
+
+    def select_all_from_data(self):
+        """Select From Data for every Y axis without altering saved Manual ranges."""
+        return replace(
+            self,
+            policy="from_data",
+            series_display_mode="from_data",
+            residual_display_mode="from_data",
+            series_custom_view=False,
+            residual_custom_view=False,
+        )
+
+    def select_manual_for_visible_axes(self, residual_available=False):
+        """Select saved Manual rendering for every currently relevant Y axis."""
+        state = replace(
+            self, series_display_mode="manual", series_custom_view=False
+        )
+        if residual_available:
+            state = replace(
+                state, residual_display_mode="manual", residual_custom_view=False
+            )
+        return replace(state, policy="manual")
+
+    def select_from_data_for_visible_axes(self, residual_available=False):
+        """Select From Data rendering without discarding saved Manual ranges."""
+        state = replace(
+            self, series_display_mode="from_data", series_custom_view=False
+        )
+        if residual_available:
+            state = replace(
+                state, residual_display_mode="from_data", residual_custom_view=False
+            )
+        return replace(state, policy="from_data")
+
+    def commit_current_view(self, axis_name, lower, upper, residual_available=False):
+        """Commit one visible axis viewport as Manual without changing its sibling."""
+        manual = AxisManualRange(lower, upper, lower, upper)
+        if axis_name == "series":
+            state = replace(
+                self,
+                series_manual=manual,
+                series_display_mode="manual",
+                series_custom_view=False,
+            )
+        elif axis_name == "residual":
+            state = replace(
+                self,
+                residual_manual=manual,
+                residual_display_mode="manual",
+                residual_custom_view=False,
+            )
+        else:
+            raise ValueError(f"Unsupported Y axis: {axis_name}")
+        return replace(
+            state, policy=state.policy_for_effective_display(residual_available)
+        )
+
+
+@dataclass(frozen=True, init=False)
 class XAxisSettings:
-    """Session-only X-axis policy, manual date range, and transient viewport state."""
+    """Session-only per-bound X-axis policies, manual dates, and viewport state."""
 
-    policy: str = "from_data"
+    start_policy: str = "from_data"
+    end_policy: str = "from_data"
+    manual_editor_start_policy: str = "from_data"
+    manual_editor_end_policy: str = "from_data"
     manual_start: Optional[datetime] = None
     manual_end: Optional[datetime] = None
     custom_view: bool = False
+
+    def __init__(
+        self, start_policy="from_data", end_policy="from_data",
+        manual_editor_start_policy=None, manual_editor_end_policy=None,
+        manual_start=None, manual_end=None, custom_view=False, policy=None,
+    ):
+        """Create active and remembered editor policies with legacy migration."""
+        if policy in {"from_data", "manual"}:
+            start_policy = end_policy = policy
+        start_policy = self._normalize_policy(start_policy)
+        end_policy = self._normalize_policy(end_policy)
+        if manual_editor_start_policy is None:
+            manual_editor_start_policy = start_policy
+        if manual_editor_end_policy is None:
+            manual_editor_end_policy = end_policy
+        object.__setattr__(self, "start_policy", start_policy)
+        object.__setattr__(self, "end_policy", end_policy)
+        object.__setattr__(self, "manual_editor_start_policy", self._normalize_policy(manual_editor_start_policy))
+        object.__setattr__(self, "manual_editor_end_policy", self._normalize_policy(manual_editor_end_policy))
+        object.__setattr__(self, "manual_start", manual_start)
+        object.__setattr__(self, "manual_end", manual_end)
+        object.__setattr__(self, "custom_view", bool(custom_view))
+
+    @staticmethod
+    def _normalize_policy(value):
+        """Normalize one X-bound policy at the settings-domain boundary."""
+        return value if value in {"from_data", "manual"} else "from_data"
+
+    @property
+    def policy(self):
+        """Return the toolbar-compatible aggregate policy for this bound pair."""
+        return "from_data" if self.both_from_data else "manual"
+
+    @property
+    def both_from_data(self):
+        """Return whether both X bounds follow the available data extent."""
+        return self.start_policy == "from_data" and self.end_policy == "from_data"
+
+    def effective_range(self, data_start, data_end):
+        """Resolve and validate the effective range from data and manual bounds."""
+        start = data_start if self.start_policy == "from_data" else self.manual_start
+        end = data_end if self.end_policy == "from_data" else self.manual_end
+        if start is None or end is None or start >= end:
+            return None
+        return start, end
 
 
 @dataclass(frozen=True)
@@ -248,12 +408,27 @@ class ExportSettings:
 
     dpi: str = "300"
     aspect_ratio: float = 4.0
-    credit: str = "Powered by InSAR Explorer"
+    include_attribution: bool = True
 
     DPI_OPTIONS = ("72", "150", "300", "600", "1200")
 
+    @staticmethod
+    def _normalize_bool(value, fallback=True):
+        """Return a strict boolean while tolerating common persisted scalar forms."""
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)) and value in (0, 1):
+            return bool(value)
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "1", "yes", "on"}:
+                return True
+            if normalized in {"false", "0", "no", "off", ""}:
+                return False
+        return fallback
+
     @classmethod
-    def normalized(cls, dpi=None, aspect_ratio=None, credit=None):
+    def normalized(cls, dpi=None, aspect_ratio=None, include_attribution=None):
         """Build settings with schema-compatible normalization."""
         dpi = str(dpi) if dpi is not None else cls().dpi
         if dpi not in cls.DPI_OPTIONS:
@@ -263,8 +438,14 @@ class ExportSettings:
         except (TypeError, ValueError, OverflowError):
             aspect_ratio = cls().aspect_ratio
         aspect_ratio = max(1.0, min(10.0, aspect_ratio))
-        credit = cls().credit if credit is None else str(credit)
-        return cls(dpi=dpi, aspect_ratio=aspect_ratio, credit=credit)
+        include_attribution = cls._normalize_bool(
+            include_attribution, cls().include_attribution
+        )
+        return cls(
+            dpi=dpi,
+            aspect_ratio=aspect_ratio,
+            include_attribution=include_attribution,
+        )
 
 
 @dataclass

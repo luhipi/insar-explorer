@@ -26,7 +26,7 @@ class TimeSeriesPlotExporter:
     BASE_DPI = 96.0
     DEFAULT_DPI = 300
     DEFAULT_ASPECT_RATIO = 4.0
-    DEFAULT_CREDIT = 'Powered by InSAR Explorer'
+    DEFAULT_ATTRIBUTION_TEXT = 'Created with InSAR Explorer'
     DEFAULT_CREDIT_MARGIN = 8
     DEFAULT_CREDIT_FONT_SIZE = 9
     DEFAULT_CREDIT_FOOTER_HEIGHT = 22
@@ -51,7 +51,7 @@ class TimeSeriesPlotExporter:
         if suffix not in ('.png', '.jpg', '.svg'):
             return ExportResult(False, filename, f"Unsupported export format: {suffix or '(none)'}")
 
-        dpi, aspect_ratio, credit = self._exportSettings()
+        dpi, aspect_ratio, attribution_text = self._exportSettings()
         logical_width, logical_height = self._logicalExportSize(plot_widget, aspect_ratio)
         export_width = max(1, int(round(logical_width * dpi / self.BASE_DPI)))
         export_height = max(1, int(round(logical_height * dpi / self.BASE_DPI)))
@@ -64,20 +64,20 @@ class TimeSeriesPlotExporter:
                     self._setExporterParameter(exporter, 'height', logical_height)
                     exporter.export(filename)
                     error = self._addCreditToSvg(
-                        filename, logical_width, logical_height, credit
+                        filename, logical_width, logical_height, attribution_text
                     )
                 else:
                     exporter = exporters.ImageExporter(export_item)
                     self._setExporterParameter(exporter, 'width', export_width)
                     self._setExporterParameter(exporter, 'height', export_height)
                     exporter.export(filename)
-                    error = self._addCreditToRaster(filename, dpi, credit)
+                    error = self._addCreditToRaster(filename, dpi, attribution_text)
         except Exception as exc:
             return ExportResult(False, filename, f"Plot export failed: {exc}")
 
         if error:
             return ExportResult(False, filename, error)
-        error = self._validateFinalOutput(filename, suffix, credit)
+        error = self._validateFinalOutput(filename, suffix, attribution_text)
         if error:
             return ExportResult(False, filename, error)
         return ExportResult(True, filename)
@@ -88,12 +88,12 @@ class TimeSeriesPlotExporter:
             settings = settings_model.export
             dpi_value = settings.dpi
             aspect_value = settings.aspect_ratio
-            credit_value = settings.credit
+            include_attribution = settings.include_attribution
         else:
             export_parms = getattr(self.plotter, 'parms', {}).get('export', {})
             dpi_value = export_parms.get('dpi')
             aspect_value = export_parms.get('aspect ratio')
-            credit_value = export_parms.get('credit')
+            include_attribution = export_parms.get('include attribution', True)
 
         try:
             dpi = int(dpi_value)
@@ -106,8 +106,10 @@ class TimeSeriesPlotExporter:
         except (TypeError, ValueError, OverflowError):
             aspect_ratio = self.DEFAULT_ASPECT_RATIO
         aspect_ratio = max(1.0, min(10.0, aspect_ratio))
-        credit = self.DEFAULT_CREDIT if credit_value is None else str(credit_value)
-        return dpi, aspect_ratio, credit
+        attribution_text = (
+            self.DEFAULT_ATTRIBUTION_TEXT if include_attribution else ""
+        )
+        return dpi, aspect_ratio, attribution_text
 
     def _logicalExportSize(self, plot_widget, aspect_ratio):
         widget_width = int(round(plot_widget.width() or self.DEFAULT_MIN_LOGICAL_WIDTH))
@@ -185,11 +187,11 @@ class TimeSeriesPlotExporter:
 
         QApplication.processEvents()
 
-    def _addCreditToRaster(self, filename, dpi, credit):
+    def _addCreditToRaster(self, filename, dpi, attribution_text):
         plot_image = QImage(filename)
         if plot_image.isNull():
             return "The exported raster image could not be read."
-        if not credit:
+        if not attribution_text:
             return ""
 
         suffix = os.path.splitext(filename)[1].lower()
@@ -223,7 +225,7 @@ class TimeSeriesPlotExporter:
                 image.width() - 2 * margin,
                 footer_height,
                 ALIGN_RIGHT_VCENTER,
-                credit
+                attribution_text
             )
         finally:
             painter.end()
@@ -236,8 +238,8 @@ class TimeSeriesPlotExporter:
             return "The exported raster image could not be saved."
         return ""
 
-    def _addCreditToSvg(self, filename, width, height, credit):
-        if not credit:
+    def _addCreditToSvg(self, filename, width, height, attribution_text):
+        if not attribution_text:
             return ""
 
         try:
@@ -252,18 +254,18 @@ class TimeSeriesPlotExporter:
         total_height = height + footer_height
 
         svg_text = self._resizeSvgCanvas(svg_text, width, total_height)
-        escaped_credit = self._escapeSvgText(credit)
+        escaped_attribution = self._escapeSvgText(attribution_text)
         background = self._figureBackgroundColor().name()
         footer = (
-            f'\n<rect id="insar-explorer-export-credit-background" '
+            f'\n<rect id="insar-explorer-export-attribution-background" '
             f'x="0" y="{height:.3f}" width="{width:.3f}" height="{footer_height:.3f}" '
             f'fill="{background}"/>\n'
-            f'<text id="insar-explorer-export-credit" '
+            f'<text id="insar-explorer-export-attribution" '
             f'x="{width - margin:.3f}" y="{height + footer_height / 2.0:.3f}" '
             f'text-anchor="end" dominant-baseline="middle" '
             f'font-family="Arial, Helvetica, sans-serif" '
             f'font-size="{font_size}px" fill="#6e6e6e">'
-            f'{escaped_credit}</text>\n'
+            f'{escaped_attribution}</text>\n'
         )
 
         insert_at = svg_text.lower().rfind('</svg>')
@@ -277,7 +279,7 @@ class TimeSeriesPlotExporter:
             return f"The exported SVG could not be written: {exc}"
         return ""
 
-    def _validateFinalOutput(self, filename, suffix, credit):
+    def _validateFinalOutput(self, filename, suffix, attribution_text):
         """Return an error message unless the final output is usable."""
         if not os.path.isfile(filename):
             return "The export did not create an output file."
@@ -291,18 +293,18 @@ class TimeSeriesPlotExporter:
                 ElementTree.parse(filename)
             except (ElementTree.ParseError, OSError):
                 return "The exported SVG is not valid XML."
-            if credit:
+            if attribution_text:
                 try:
                     with open(filename, 'r', encoding='utf-8') as svg_file:
                         text = svg_file.read()
                 except OSError as exc:
                     return f"The exported SVG could not be read: {exc}"
                 required = (
-                    'insar-explorer-export-credit',
-                    'insar-explorer-export-credit-background',
+                    'insar-explorer-export-attribution',
+                    'insar-explorer-export-attribution-background',
                 )
                 if not all(marker in text for marker in required):
-                    return "The exported SVG credit footer is incomplete."
+                    return "The exported SVG attribution footer is incomplete."
         return ""
 
     def _resizeSvgCanvas(self, svg_text, width, height):

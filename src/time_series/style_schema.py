@@ -6,6 +6,7 @@ MARKER_OPTIONS = ("o", "s", "^", "v", "+", "x", "d", "*")
 LINE_STYLE_OPTIONS = ("", "-", "--", ":", "-.")
 RESIDUAL_MARKER_OPTIONS = ("o", "s", "^", "v", "+", "x", "d", "*")
 RESIDUAL_LINE_STYLE_OPTIONS = ("", "-", "--", ":", "-.")
+RESIDUAL_DEFAULT_COLOR = "#d62728"
 RESIDUAL_MARKER_SIZE_RANGE = (0.0, 100.0)
 RESIDUAL_LINE_WIDTH_RANGE = (0.0, 20.0)
 FIT_LINE_STYLE_OPTIONS = ("-", "--", ":", "-.")

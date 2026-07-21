@@ -13,6 +13,9 @@ from qgis.PyQt.QtGui import QColor, QFont
 from .model_fitting import calculateFitStatistics, FittingModels, ModelFitError
 from .export_plot import TimeSeriesPlotExporter
 from .time_series.settings.model import AxisManualRange, ResidualStyleSettings
+from .time_series.y_axis_range import (
+    resolve_manual_y_range, resolve_y_axis_display_range,
+)
 from .time_series.settings.persistence import TimeSeriesSettingsPersistence, build_legacy_plot_params
 from .time_series.fit_style_controller import FitStyle
 from .models.time_series import (
@@ -408,7 +411,7 @@ class PlotTs():
                 update=update, report_statistics=report_statistics,
             )
         if initial_plot and self.ax is not None:
-            x_state = replace(self.settings_model.x_axis, policy="from_data", custom_view=False)
+            x_state = replace(self.settings_model.x_axis, custom_view=False)
             y_state = replace(
                 self.settings_model.y_axis, policy="from_data",
                 series_custom_view=False, residual_custom_view=False,
@@ -825,33 +828,52 @@ class PlotTs():
         self._applyDateFormat(ax=ax, parms=parms)
 
 
-    def setXlims(self, *, ax=None, use_data_xlim=True, padding=30):
-        """
-        Set the x-axis limits.
+    def resolveXAxisRange(self, state=None, *, use_data_xlim=True, padding=30):
+        """Resolve the effective X limits used by preview and committed rendering."""
+        if self.dates is None or len(self.dates) == 0:
+            return None
+        state = self.settings_model.x_axis if state is None else state
+        min_date, max_date = self.availableDateRange()
+        if use_data_xlim:
+            data_start = min_date - timedelta(days=padding)
+            data_end = max_date + timedelta(days=padding)
+        else:
+            data_start = datetime(min_date.year, 1, 1)
+            data_end = datetime(max_date.year + 1, 1, 1)
+        return state.effective_range(data_start, data_end)
 
-        :param use_data_xlim: bool
-            If True, set the x-axis limits to the min and max of the data.
-            If False, set the x-axis limits to the start and end of the year.
-        :param padding: int
-            Number of days to pad the x-axis limits.
-        """
+    def setXlims(self, *, ax=None, use_data_xlim=True, padding=30):
+        """Apply the same resolved X limits used by transactional preview."""
         if not ax:
             ax = self.ax
-        state = self.settings_model.x_axis
-        if state.policy == "manual" and state.manual_start is not None and state.manual_end is not None:
-            x_min = self._dateToX(state.manual_start)
-            x_max = self._dateToX(state.manual_end)
-        else:
-            min_date = np.nanmin(self.dates)
-            max_date = np.nanmax(self.dates)
-            if use_data_xlim:
-                x_min = self._dateToX(min_date - timedelta(days=padding))
-                x_max = self._dateToX(max_date + timedelta(days=padding))
-            else:
-                x_min = self._dateToX(datetime(min_date.year, 1, 1))
-                x_max = self._dateToX(datetime(max_date.year + 1, 1, 1))
+        effective = self.resolveXAxisRange(
+            use_data_xlim=use_data_xlim, padding=padding
+        )
+        if effective is None:
+            return False
+        x_min = self._dateToX(effective[0])
+        x_max = self._dateToX(effective[1])
         with self.axisViewUpdateGuard():
             ax.setXRange(x_min, x_max, padding=0)
+        return True
+
+    def resetSharedXAxisFromData(self):
+        """Restore the linked X domain from the complete canonical date extent."""
+        if self.ax is None:
+            return False
+        state = replace(
+            self.settings_model.x_axis,
+            start_policy="from_data",
+            end_policy="from_data",
+            custom_view=False,
+        )
+        effective = self.resolveXAxisRange(state)
+        if effective is None:
+            return False
+        self.ax.setXRange(
+            self._dateToX(effective[0]), self._dateToX(effective[1]), padding=0
+        )
+        return True
 
     def applyXAxisViewport(self, start, end, *, draw=True):
         """Apply only the existing main X viewport with zero padding."""
@@ -903,64 +925,129 @@ class PlotTs():
         with self.axisViewUpdateGuard():
             ax.setYRange(y_min, y_max, padding=0.05)
 
+    def dataYAxisRange(self, ax=None):
+        """Return the canonical finite plotted-data extent for one Y axis."""
+        if ax is None:
+            ax = self.ax
+        if ax is None:
+            return None
+        data_range = self._y_data_ranges.get(id(ax))
+        if data_range is None:
+            return None
+        y_min, y_max = (float(value) for value in data_range)
+        if not np.isfinite(y_min) or not np.isfinite(y_max) or y_min > y_max:
+            return None
+        return y_min, y_max
+
+    def resolveManualYAxisRange(self, ax=None, manual=None):
+        """Resolve one axis Manual range from the same data extent as From Data."""
+        if ax is None:
+            ax = self.ax
+        data_range = self.dataYAxisRange(ax)
+        if data_range is None:
+            return None
+        if manual is None:
+            manual = (self.settings_model.y_axis.series_manual if ax is self.ax
+                      else self.settings_model.y_axis.residual_manual)
+        return resolve_manual_y_range(*data_range, manual.lower, manual.upper)
+
+    def resolveYAxisDisplayRange(self, ax=None, mode=None, manual=None):
+        """Resolve one axis independently for preview and committed rendering."""
+        if ax is None:
+            ax = self.ax
+        if ax is None:
+            return None
+        if mode is None:
+            state = self.settings_model.y_axis
+            if state.policy in {"symmetric", "adaptive"}:
+                mode = state.policy
+            else:
+                axis_name = "series_y" if ax is self.ax else "residual_y"
+                mode = state.display_mode_for_axis(axis_name)
+        data_range = self.dataYAxisRange(ax)
+        if data_range is None:
+            return None
+
+        y_min, y_max = data_range
+        if mode == "manual":
+            if manual is None:
+                manual = (self.settings_model.y_axis.series_manual if ax is self.ax
+                          else self.settings_model.y_axis.residual_manual)
+            return resolve_y_axis_display_range(
+                y_min, y_max, manual.lower, manual.upper
+            )
+
+        if mode in {"symmetric", "adaptive"}:
+            y_max = np.abs([y_min, y_max]).max()
+            y_min = -y_max
+
+        if mode == "adaptive":
+            y_range = y_max - y_min
+            y_min_rounded = -5
+            y_max_rounded = 5
+            for i in [10000, 1000, 100, 10]:
+                if y_range >= i:
+                    y_min_rounded = np.floor(y_min / i) * i
+                    y_max_rounded = np.ceil(y_max / i) * i
+                    break
+            y_min = np.min([y_min_rounded, -5])
+            y_max = np.max([y_max_rounded, 5])
+
+        if y_min == y_max:
+            y_min -= 1
+            y_max += 1
+        return y_min, y_max, 0.05
+
     def setYlims(self, ax=None, parms={}):
         if not ax:
             ax = self.ax
-
-        # get min/max from axis
-        y_min, y_max = self._y_data_ranges.get(id(ax), ax.viewRange()[1])
-        mode = self.settings_model.y_axis.policy
-        if mode == "manual":
-            manual = (self.settings_model.y_axis.series_manual if ax is self.ax
-                      else self.settings_model.y_axis.residual_manual)
-            lower = manual.lower
-            upper = manual.upper
-            data_span = y_max - y_min
-            from_data_lower = y_min - data_span * 0.05
-            from_data_upper = y_max + data_span * 0.05
-            ymin = from_data_lower if lower is None else lower
-            ymax = from_data_upper if upper is None else upper
-        else:
-            if mode in {"symmetric", "adaptive"}:
-                y_max = np.abs([y_min, y_max]).max()
-                y_min = -y_max
-
-            if mode == "adaptive":
-                y_range = y_max - y_min
-                y_min_rounded = -5
-                y_max_rounded = 5
-                for i in [10000, 1000, 100, 10]:
-                    if y_range >= i:
-                        y_min_rounded = np.floor(y_min / i) * i
-                        y_max_rounded = np.ceil(y_max / i) * i
-                        break
-
-                y_min = np.min([y_min_rounded, -5])
-                y_max = np.max([y_max_rounded, 5])
-
-            ymin = y_min
-            ymax = y_max
-        if ymin == ymax:
-            ymin -= 1
-            ymax += 1
+        resolved = self.resolveYAxisDisplayRange(ax=ax)
+        if resolved is None:
+            return False
+        ymin, ymax, padding = resolved
         with self.axisViewUpdateGuard():
-            ax.setYRange(ymin, ymax, padding=0 if mode == "manual" else 0.05)
+            ax.setYRange(ymin, ymax, padding=padding)
+        return True
 
-    def setManualYRange(self, axis_name, lower=None, upper=None):
-        """Store and preview manual bounds on exactly one plot axis."""
-        state = self.settings_model.y_axis
-        if axis_name == "residual":
-            state = replace(state, policy="manual", residual_manual=AxisManualRange(lower, upper))
-            axis = self.ax_residuals
-            parms = self.parms["residual plot"]
-        else:
-            state = replace(state, policy="manual", series_manual=AxisManualRange(lower, upper))
-            axis = self.ax
-            parms = self.parms["time series plot"]
+    def resetYAxisFromData(self, ax=None):
+        """Restore one local Y axis using its canonical From Data display range."""
+        if ax is None:
+            ax = self.ax
+        resolved = self.resolveYAxisDisplayRange(ax=ax, mode="from_data")
+        if resolved is None:
+            return False
+        ymin, ymax, padding = resolved
+        ax.setYRange(ymin, ymax, padding=padding)
+        return True
+
+    def setManualYRanges(self, series_manual, residual_manual, residual_available):
+        """Preview the complete Y editor draft through the committed render paths."""
+        state = replace(
+            self.settings_model.y_axis,
+            series_manual=series_manual,
+            residual_manual=residual_manual,
+            series_display_mode=(
+                "manual" if series_manual.lower is not None or series_manual.upper is not None
+                else "from_data"
+            ),
+        )
+        if residual_available:
+            state = replace(
+                state, residual_display_mode=(
+                    "manual" if residual_manual.lower is not None or residual_manual.upper is not None
+                    else "from_data"
+                ),
+            )
+        state = replace(
+            state, policy=state.policy_for_effective_display(residual_available)
+        )
         self.settings_model.replace_domain("y_axis", state)
-        if axis is not None:
-            self.setYlims(ax=axis, parms=parms)
-            self._draw()
+        with self.axisViewUpdateGuard():
+            if self.ax is not None:
+                self.setYlims(ax=self.ax, parms=self.parms["time series plot"])
+            if residual_available and self.ax_residuals is not None:
+                self.setYlims(ax=self.ax_residuals, parms=self.parms["residual plot"])
+        self._draw()
 
     def captureViewport(self):
         """Return current plot ranges for restoration after graphics-only redraws."""
@@ -1086,36 +1173,36 @@ class PlotTs():
             )
 
     def _connectAutoButton(self, plot_item):
+        """Replace all native Auto receivers with one application-owned handler."""
         auto_button = getattr(plot_item, 'autoBtn', None)
         if auto_button is None:
             return
         try:
-            auto_button.clicked.disconnect(plot_item.autoBtnClicked)
+            auto_button.clicked.disconnect()
         except (TypeError, RuntimeError):
             pass
-        auto_button.clicked.connect(lambda *args, plot_item=plot_item: self._resetPlotView(plot_item))
+        auto_button.clicked.connect(
+            lambda *args, plot_item=plot_item: self._resetPlotView(plot_item)
+        )
 
     def _resetPlotView(self, plot_item):
-        """Route pyqtgraph Auto through the controller-owned policy reset."""
+        """Route pyqtgraph Auto through one guarded application reset transaction."""
         if self.dates is None:
             return
         callback = getattr(self, "auto_view_requested_callback", None)
         if callback is not None:
-            callback("combined" if plot_item is self.ax else "residual_y")
-            return
-
-        with self.axisViewUpdateGuard():
-            self.updateSettings()
-            if self.ax is not None:
-                self.setXlims(ax=self.ax)
-            if plot_item is self.ax_residuals:
-                self.setYlims(ax=self.ax_residuals, parms=self.parms['residual plot'])
-            else:
-                self.setYlims(ax=self.ax, parms=self.parms['time series plot'])
+            callback()
+        else:
+            with self.axisViewUpdateGuard():
+                self.updateSettings()
+                self.resetSharedXAxisFromData()
+                self.resetYAxisFromData(self.ax)
+                if self.ax_residuals is not None:
+                    self.resetYAxisFromData(self.ax_residuals)
+            self._draw()
         auto_button = getattr(plot_item, 'autoBtn', None)
         if auto_button is not None:
             auto_button.hide()
-        self._draw()
 
     def _stylePlotFrame(self, plot_item):
         plot_item.showAxis('top')

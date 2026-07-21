@@ -1,9 +1,9 @@
 """Compact popup for persistent plot-export defaults."""
 
-from qgis.PyQt.QtCore import pyqtSignal
+from qgis.PyQt.QtCore import Qt, pyqtSignal
 from qgis.PyQt.QtWidgets import (
-    QComboBox, QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QVBoxLayout, QWidget,
+    QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel,
+    QVBoxLayout, QWidget,
 )
 
 from .defaults_menu import createDefaultsMenu
@@ -12,7 +12,7 @@ from .defaults_menu import createDefaultsMenu
 class ExportSettingsPopup(QWidget):
     """Edit persistent export defaults with immediate commit semantics."""
 
-    settingsChanged = pyqtSignal(str, float, str)
+    settingsChanged = pyqtSignal(str, float, bool)
     applySavedDefaultRequested = pyqtSignal()
     saveCurrentAsDefaultRequested = pyqtSignal()
     applyFactoryDefaultRequested = pyqtSignal()
@@ -49,14 +49,21 @@ class ExportSettingsPopup(QWidget):
             "Controls the width-to-height ratio of the exported plot area."
         )
 
-        self.credit_edit = QLineEdit(self)
-        self.credit_edit.setObjectName("edit_export_credit")
-        self.credit_edit.setMaximumWidth(260)
-        self.credit_edit.setToolTip("Leave empty to omit export credit.")
+        self.attribution_checkbox = QCheckBox(
+            "Include InSAR Explorer attribution", self
+        )
+        self.attribution_checkbox.setObjectName("check_export_attribution")
+        self.attribution_checkbox.setAccessibleName(
+            "Include InSAR Explorer attribution"
+        )
+        self.attribution_checkbox.setToolTip(
+            "Include a Created with InSAR Explorer footer in exported plots."
+        )
+        self.attribution_checkbox.setChecked(True)
 
         form.addRow("Resolution", self.resolution_combo)
         form.addRow("Aspect ratio", self.aspect_ratio_spin)
-        form.addRow("Credit", self.credit_edit)
+        form.addRow(self.attribution_checkbox)
         layout.addLayout(form)
 
         actions = QHBoxLayout()
@@ -72,22 +79,30 @@ class ExportSettingsPopup(QWidget):
 
         self.resolution_combo.currentIndexChanged.connect(self._emitSettings)
         self.aspect_ratio_spin.valueChanged.connect(self._emitSettings)
-        self.credit_edit.textChanged.connect(self._emitSettings)
+        self.attribution_checkbox.toggled.connect(self._emitSettings)
 
     def settings(self):
         """Return the normalized values currently displayed by the popup."""
         dpi = self.resolution_combo.currentData() or "300"
-        return str(dpi), float(self.aspect_ratio_spin.value()), self.credit_edit.text()
+        return (
+            str(dpi),
+            float(self.aspect_ratio_spin.value()),
+            self.attribution_checkbox.isChecked(),
+        )
 
     def setSettings(self, settings):
         """Refresh controls without emitting persistence writes."""
-        widgets = (self.resolution_combo, self.aspect_ratio_spin, self.credit_edit)
+        widgets = (
+            self.resolution_combo,
+            self.aspect_ratio_spin,
+            self.attribution_checkbox,
+        )
         previous = [widget.blockSignals(True) for widget in widgets]
         try:
             index = self.resolution_combo.findData(str(settings.dpi))
             self.resolution_combo.setCurrentIndex(max(0, index))
             self.aspect_ratio_spin.setValue(float(settings.aspect_ratio))
-            self.credit_edit.setText(settings.credit)
+            self.attribution_checkbox.setChecked(settings.include_attribution)
         finally:
             for widget, blocked in zip(widgets, previous):
                 widget.blockSignals(blocked)
