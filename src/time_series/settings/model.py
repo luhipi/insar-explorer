@@ -186,10 +186,24 @@ class ReplicaSettings:
 
 @dataclass(frozen=True)
 class AxisManualRange:
-    """Optional lower and upper limits for one manual axis."""
+    """Session-only Y editor policies and retained numeric bound values.
+
+    ``lower`` and ``upper`` are the active editor endpoints: ``None`` means
+    Auto and a finite number means Manual.  ``retained_lower`` and
+    ``retained_upper`` preserve the last numeric draft even while the
+    corresponding endpoint is Auto.
+    """
 
     lower: Optional[float] = None
     upper: Optional[float] = None
+    retained_lower: Optional[float] = None
+    retained_upper: Optional[float] = None
+
+    def __post_init__(self):
+        if self.lower is not None and self.retained_lower is None:
+            object.__setattr__(self, "retained_lower", self.lower)
+        if self.upper is not None and self.retained_upper is None:
+            object.__setattr__(self, "retained_upper", self.upper)
 
 
 @dataclass(frozen=True)
@@ -201,6 +215,24 @@ class YAxisSettings:
     residual_manual: AxisManualRange = field(default_factory=AxisManualRange)
     series_custom_view: bool = False
     residual_custom_view: bool = False
+
+    def relevant_manual_ranges(self, residual_available=False):
+        """Return the editor ranges that participate in the active Y policy."""
+        ranges = (self.series_manual,)
+        if residual_available:
+            ranges += (self.residual_manual,)
+        return ranges
+
+    def has_configured_manual(self, residual_available=False):
+        """Return whether any currently relevant endpoint is explicitly Manual."""
+        return any(
+            manual.lower is not None or manual.upper is not None
+            for manual in self.relevant_manual_ranges(residual_available)
+        )
+
+    def policy_for_manual_editor(self, residual_available=False):
+        """Return the truthful aggregate policy for the current editor state."""
+        return "manual" if self.has_configured_manual(residual_available) else "from_data"
 
 
 @dataclass(frozen=True, init=False)

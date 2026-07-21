@@ -14,6 +14,7 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
 )
 
+from ...time_series.y_axis_range import resolve_manual_y_range
 from ...qt_compat import (
     FRAME_SHAPE_STYLED_PANEL,
     POPUP_WINDOW_FLAG,
@@ -25,7 +26,7 @@ class ManualYAxisPopup(QFrame):
     """Anchored transactional editor for independent Series and Residual ranges."""
 
     previewChanged = pyqtSignal(str, object, object)
-    applyRequested = pyqtSignal(object, object, object, object, object, object)
+    applyRequested = pyqtSignal(object, object, object, object, object, object, object, object, object, object)
     cancelRequested = pyqtSignal()
     currentViewRequested = pyqtSignal(str)
 
@@ -40,6 +41,7 @@ class ManualYAxisPopup(QFrame):
         self._control_axes = {}
         self._changed = {"series": False, "residual": False}
         self._captured_exact = {"series": None, "residual": None}
+        self._data_bounds = {"series": None, "residual": None}
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 8, 10, 8)
@@ -113,24 +115,28 @@ class ManualYAxisPopup(QFrame):
         controls["use_current_view"] = use_current_view
         return tab
 
-    def openForBounds(self, series_bounds, residual_bounds, series_view, residual_view, residual_active):
-        """Load stored bounds, seeding unset values from each visible viewport."""
+    def openForBounds(self, series_range, residual_range, series_data, residual_data, residual_active):
+        """Load endpoint policies and retained values, seeding only missing drafts from data."""
         self._loading = True
         self._changed = {"series": False, "residual": False}
         self._captured_exact = {"series": None, "residual": None}
-        for axis_name, bounds, view in (
-            ("series", series_bounds, series_view),
-            ("residual", residual_bounds, residual_view),
+        self._data_bounds = {
+            "series": tuple(series_data),
+            "residual": tuple(residual_data),
+        }
+        for axis_name, manual, data_bounds in (
+            ("series", series_range, series_data),
+            ("residual", residual_range, residual_data),
         ):
-            lower, upper = bounds
-            view_lower, view_upper = view
-            for bound_name, stored, seeded in (
-                ("lower", lower, view_lower),
-                ("upper", upper, view_upper),
+            data_lower, data_upper = data_bounds
+            for bound_name, active, retained, seeded in (
+                ("lower", manual.lower, manual.retained_lower, data_lower),
+                ("upper", manual.upper, manual.retained_upper, data_upper),
             ):
                 auto, value = self._editors[axis_name][bound_name]
-                value.setValue(float(stored if stored is not None else seeded))
-                auto.setChecked(stored is None)
+                draft = retained if retained is not None else seeded
+                value.setValue(float(draft))
+                auto.setChecked(active is None)
         self._loading = False
         self.setResidualActive(residual_active)
         self._updateState()
@@ -174,9 +180,21 @@ class ManualYAxisPopup(QFrame):
             for name in ("lower", "upper")
         )
 
+
+    def retainedBounds(self, axis_name):
+        """Return both numeric editor drafts regardless of Auto checkbox state."""
+        captured = self._captured_exact.get(axis_name)
+        if captured is not None:
+            return captured
+        controls = self._editors[axis_name]
+        return tuple(float(controls[name][1].value()) for name in ("lower", "upper"))
+
     def _isValid(self, axis_name):
+        data_bounds = self._data_bounds.get(axis_name)
+        if data_bounds is None:
+            return False
         lower, upper = self.bounds(axis_name)
-        return lower is None or upper is None or lower < upper
+        return resolve_manual_y_range(*data_bounds, lower, upper) is not None
 
     def _updateState(self):
         residual_active = self._editors["residual"]["lower"][0].isEnabled()
@@ -207,6 +225,8 @@ class ManualYAxisPopup(QFrame):
         self.applyRequested.emit(
             *self.bounds("series"),
             *self.bounds("residual"),
+            *self.retainedBounds("series"),
+            *self.retainedBounds("residual"),
             self._changed["series"],
             self._changed["residual"],
         )

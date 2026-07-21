@@ -1526,8 +1526,40 @@ class GuiController(QObject):
                     plotter.setYlims(ax=plotter.ax_residuals, parms=plotter.parms["residual plot"])
             plotter._draw()
 
+    def _hasValidConfiguredManualYAxis(self):
+        """Return whether relevant stored Y bounds are configured and resolvable."""
+        plotter = self.choose_point_click_handler.plot_ts
+        if plotter.ax is None:
+            return False
+        state = self.time_series_settings.y_axis
+        residual_available = plotter.ax_residuals is not None
+        if not state.has_configured_manual(residual_available):
+            return False
+        if plotter.resolveManualYAxisRange(
+            ax=plotter.ax, manual=state.series_manual
+        ) is None:
+            return False
+        if residual_available and plotter.resolveManualYAxisRange(
+            ax=plotter.ax_residuals, manual=state.residual_manual
+        ) is None:
+            return False
+        return True
+
     def setTimeSeriesYAxisMode(self, mode):
         """Apply a toolbar-selected shared Y-axis policy immediately."""
+        if mode == "manual":
+            plotter = self.choose_point_click_handler.plot_ts
+            if plotter.ax is None:
+                self._syncTimeSeriesYAxisControls(
+                    self.time_series_settings.y_axis.policy
+                )
+                return
+            if not self._hasValidConfiguredManualYAxis():
+                self._syncTimeSeriesYAxisControls(
+                    self.time_series_settings.y_axis.policy
+                )
+                self.showManualYAxisPopup()
+                return
         self._applyTimeSeriesYAxisMode(mode)
         messages = {
             "from_data": "Y-axis range set from data.",
@@ -1540,18 +1572,35 @@ class GuiController(QObject):
     def showManualYAxisPopup(self):
         """Open the editor and capture both policies and viewports transactionally."""
         plotter = self.choose_point_click_handler.plot_ts
+        if plotter.ax is None:
+            self._syncTimeSeriesYAxisControls(self.time_series_settings.y_axis.policy)
+            return
+        if self._manual_y_axis_session is not None:
+            self.manual_y_axis_popup.show()
+            self.manual_y_axis_popup.raise_()
+            self.manual_y_axis_popup.activateWindow()
+            return
+        series_data = plotter.dataYAxisRange(plotter.ax)
+        if series_data is None:
+            self._syncTimeSeriesYAxisControls(self.time_series_settings.y_axis.policy)
+            return
+        residual_available = plotter.ax_residuals is not None
+        residual_data = (
+            plotter.dataYAxisRange(plotter.ax_residuals) if residual_available else None
+        )
+        if residual_available and residual_data is None:
+            self._syncTimeSeriesYAxisControls(self.time_series_settings.y_axis.policy)
+            return
         viewport = plotter.captureViewport()
         self._manual_y_axis_session = {
             "y_axis": self.time_series_settings.y_axis,
             "viewport": viewport,
         }
-        series_view = viewport.get("main", ((0, 1), tuple(plotter.ax.viewRange()[1])))[1]
-        residual_view = viewport.get("residual", ((0, 1), (0, 1)))[1]
         popup = self.manual_y_axis_popup
         popup.openForBounds(
-            (self.time_series_manual_y_lower, self.time_series_manual_y_upper),
-            (self.residual_manual_y_lower, self.residual_manual_y_upper),
-            series_view, residual_view, plotter.ax_residuals is not None,
+            self.time_series_settings.y_axis.series_manual,
+            self.time_series_settings.y_axis.residual_manual,
+            series_data, residual_data or (0.0, 1.0), residual_available,
         )
         popup.adjustSize()
         button = self.ui.time_series_toolbar.y_axis_button
@@ -1576,38 +1625,80 @@ class GuiController(QObject):
             self.residual_manual_y_upper = upper
             axis_state = self.time_series_settings.y_axis
             self.time_series_settings.replace_domain(
-                "y_axis", replace(axis_state, residual_manual=AxisManualRange(lower, upper))
+                "y_axis", replace(
+                    axis_state, policy="manual",
+                    residual_manual=AxisManualRange(lower, upper, lower, upper),
+                )
             )
         else:
             self.time_series_manual_y_lower = lower
             self.time_series_manual_y_upper = upper
             axis_state = self.time_series_settings.y_axis
             self.time_series_settings.replace_domain(
-                "y_axis", replace(axis_state, series_manual=AxisManualRange(lower, upper))
+                "y_axis", replace(
+                    axis_state, policy="manual",
+                    series_manual=AxisManualRange(lower, upper, lower, upper),
+                )
             )
         self._manual_y_axis_session = None
         self.manual_y_axis_popup.closeAfterCommit()
         self._applyTimeSeriesYAxisMode("manual", refresh=True)
 
     def previewManualYAxisRange(self, axis_name, lower, upper):
-        """Preview one tab without changing the other axis or persisted settings."""
-        if self._manual_y_axis_session is not None:
-            self.choose_point_click_handler.plot_ts.setManualYRange(axis_name, lower, upper)
+        """Preview the complete draft through the same paths used by Apply."""
+        if self._manual_y_axis_session is None:
+            return
+        popup = self.manual_y_axis_popup
+        series_lower, series_upper = popup.bounds("series")
+        residual_lower, residual_upper = popup.bounds("residual")
+        series_retained = popup.retainedBounds("series")
+        residual_retained = popup.retainedBounds("residual")
+        plotter = self.choose_point_click_handler.plot_ts
+        plotter.setManualYRanges(
+            AxisManualRange(
+                series_lower, series_upper, *series_retained
+            ),
+            AxisManualRange(
+                residual_lower, residual_upper, *residual_retained
+            ),
+            plotter.ax_residuals is not None,
+        )
 
     def applyManualYAxisRange(
         self, series_lower, series_upper, residual_lower, residual_upper,
+        series_retained_lower, series_retained_upper,
+        residual_retained_lower, residual_retained_upper,
         series_changed, residual_changed,
     ):
-        """Persist the editor transaction and activate the shared Manual policy."""
-        # Apply is a commit even when the user accepts viewport-seeded Series values.
-        self.time_series_manual_y_lower = series_lower
-        self.time_series_manual_y_upper = series_upper
+        """Commit editor memory and activate Manual or truthful From Data mode."""
+        state = self.time_series_settings.y_axis
+        state = replace(
+            state,
+            series_manual=AxisManualRange(
+                series_lower, series_upper,
+                series_retained_lower, series_retained_upper,
+            ),
+        )
         if residual_changed:
-            self.residual_manual_y_lower = residual_lower
-            self.residual_manual_y_upper = residual_upper
-
+            state = replace(
+                state,
+                residual_manual=AxisManualRange(
+                    residual_lower, residual_upper,
+                    residual_retained_lower, residual_retained_upper,
+                ),
+            )
+        residual_available = self.choose_point_click_handler.plot_ts.ax_residuals is not None
+        resulting_policy = state.policy_for_manual_editor(residual_available)
+        self.time_series_settings.replace_domain(
+            "y_axis", replace(state, policy=resulting_policy)
+        )
         self._manual_y_axis_session = None
-        self._applyTimeSeriesYAxisMode("manual", refresh=True)
+        self._applyTimeSeriesYAxisMode(resulting_policy, refresh=True)
+        message = (
+            "Y-axis range set from data." if resulting_policy == "from_data"
+            else "Stored manual Y-axis ranges applied."
+        )
+        self.msg_signal.emit(message, "i", 0)
 
     def cancelManualYAxisRange(self):
         """Restore both original policies and all captured X/Y view ranges."""

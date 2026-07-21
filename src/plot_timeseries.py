@@ -13,6 +13,9 @@ from qgis.PyQt.QtGui import QColor, QFont
 from .model_fitting import calculateFitStatistics, FittingModels, ModelFitError
 from .export_plot import TimeSeriesPlotExporter
 from .time_series.settings.model import AxisManualRange, ResidualStyleSettings
+from .time_series.y_axis_range import (
+    resolve_manual_y_range, resolve_y_axis_display_range,
+)
 from .time_series.settings.persistence import TimeSeriesSettingsPersistence, build_legacy_plot_params
 from .time_series.fit_style_controller import FitStyle
 from .models.time_series import (
@@ -904,64 +907,102 @@ class PlotTs():
         with self.axisViewUpdateGuard():
             ax.setYRange(y_min, y_max, padding=0.05)
 
+    def dataYAxisRange(self, ax=None):
+        """Return the canonical finite plotted-data extent for one Y axis."""
+        if ax is None:
+            ax = self.ax
+        if ax is None:
+            return None
+        data_range = self._y_data_ranges.get(id(ax))
+        if data_range is None:
+            return None
+        y_min, y_max = (float(value) for value in data_range)
+        if not np.isfinite(y_min) or not np.isfinite(y_max) or y_min > y_max:
+            return None
+        return y_min, y_max
+
+    def resolveManualYAxisRange(self, ax=None, manual=None):
+        """Resolve one axis Manual range from the same data extent as From Data."""
+        if ax is None:
+            ax = self.ax
+        data_range = self.dataYAxisRange(ax)
+        if data_range is None:
+            return None
+        if manual is None:
+            manual = (self.settings_model.y_axis.series_manual if ax is self.ax
+                      else self.settings_model.y_axis.residual_manual)
+        return resolve_manual_y_range(*data_range, manual.lower, manual.upper)
+
+    def resolveYAxisDisplayRange(self, ax=None, mode=None, manual=None):
+        """Resolve one axis independently for preview and committed rendering."""
+        if ax is None:
+            ax = self.ax
+        if ax is None:
+            return None
+        if mode is None:
+            mode = self.settings_model.y_axis.policy
+        data_range = self.dataYAxisRange(ax)
+        if data_range is None:
+            return None
+
+        y_min, y_max = data_range
+        if mode == "manual":
+            if manual is None:
+                manual = (self.settings_model.y_axis.series_manual if ax is self.ax
+                          else self.settings_model.y_axis.residual_manual)
+            return resolve_y_axis_display_range(
+                y_min, y_max, manual.lower, manual.upper
+            )
+
+        if mode in {"symmetric", "adaptive"}:
+            y_max = np.abs([y_min, y_max]).max()
+            y_min = -y_max
+
+        if mode == "adaptive":
+            y_range = y_max - y_min
+            y_min_rounded = -5
+            y_max_rounded = 5
+            for i in [10000, 1000, 100, 10]:
+                if y_range >= i:
+                    y_min_rounded = np.floor(y_min / i) * i
+                    y_max_rounded = np.ceil(y_max / i) * i
+                    break
+            y_min = np.min([y_min_rounded, -5])
+            y_max = np.max([y_max_rounded, 5])
+
+        if y_min == y_max:
+            y_min -= 1
+            y_max += 1
+        return y_min, y_max, 0.05
+
     def setYlims(self, ax=None, parms={}):
         if not ax:
             ax = self.ax
-
-        # get min/max from axis
-        y_min, y_max = self._y_data_ranges.get(id(ax), ax.viewRange()[1])
-        mode = self.settings_model.y_axis.policy
-        if mode == "manual":
-            manual = (self.settings_model.y_axis.series_manual if ax is self.ax
-                      else self.settings_model.y_axis.residual_manual)
-            lower = manual.lower
-            upper = manual.upper
-            data_span = y_max - y_min
-            from_data_lower = y_min - data_span * 0.05
-            from_data_upper = y_max + data_span * 0.05
-            ymin = from_data_lower if lower is None else lower
-            ymax = from_data_upper if upper is None else upper
-        else:
-            if mode in {"symmetric", "adaptive"}:
-                y_max = np.abs([y_min, y_max]).max()
-                y_min = -y_max
-
-            if mode == "adaptive":
-                y_range = y_max - y_min
-                y_min_rounded = -5
-                y_max_rounded = 5
-                for i in [10000, 1000, 100, 10]:
-                    if y_range >= i:
-                        y_min_rounded = np.floor(y_min / i) * i
-                        y_max_rounded = np.ceil(y_max / i) * i
-                        break
-
-                y_min = np.min([y_min_rounded, -5])
-                y_max = np.max([y_max_rounded, 5])
-
-            ymin = y_min
-            ymax = y_max
-        if ymin == ymax:
-            ymin -= 1
-            ymax += 1
+        resolved = self.resolveYAxisDisplayRange(ax=ax)
+        if resolved is None:
+            return False
+        ymin, ymax, padding = resolved
         with self.axisViewUpdateGuard():
-            ax.setYRange(ymin, ymax, padding=0 if mode == "manual" else 0.05)
+            ax.setYRange(ymin, ymax, padding=padding)
+        return True
 
-    def setManualYRange(self, axis_name, lower=None, upper=None):
-        """Store and preview manual bounds on exactly one plot axis."""
-        state = self.settings_model.y_axis
-        if axis_name == "residual":
-            state = replace(state, policy="manual", residual_manual=AxisManualRange(lower, upper))
-            axis = self.ax_residuals
-            parms = self.parms["residual plot"]
-        else:
-            state = replace(state, policy="manual", series_manual=AxisManualRange(lower, upper))
-            axis = self.ax
-            parms = self.parms["time series plot"]
+    def setManualYRanges(self, series_manual, residual_manual, residual_available):
+        """Preview the complete Y editor draft through the committed render paths."""
+        state = replace(
+            self.settings_model.y_axis,
+            series_manual=series_manual,
+            residual_manual=residual_manual,
+        )
+        state = replace(
+            state, policy=state.policy_for_manual_editor(residual_available)
+        )
         self.settings_model.replace_domain("y_axis", state)
-        if axis is not None:
-            self.setYlims(ax=axis, parms=parms)
-            self._draw()
+        with self.axisViewUpdateGuard():
+            if self.ax is not None:
+                self.setYlims(ax=self.ax, parms=self.parms["time series plot"])
+            if residual_available and self.ax_residuals is not None:
+                self.setYlims(ax=self.ax_residuals, parms=self.parms["residual plot"])
+        self._draw()
 
     def captureViewport(self):
         """Return current plot ranges for restoration after graphics-only redraws."""
